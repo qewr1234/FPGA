@@ -3,6 +3,10 @@
 Icarus Verilog 12.0 behavioral 시뮬레이션 결과입니다. FPGA 합성, timing, 자원, 보드 실측은 아닙니다.
 실행 로그와 소스 스냅샷은 `verification/included_run/`에 있습니다 (`summary.json`, 케이스별 `rtl_cycles.csv`, `simulation.log`).
 
+> **v4(`banked_window_mac.sv`) 범위 주의.** 이 문서의 표와 동봉 `verification/included_run`은 **v1/v2/v3의 116개 설정**입니다.
+> v4는 합성 벡터 141개 설정(T=1,2,3,4,5,8,9,16 포함)에서 출력값·cycle 모델 모두 통과했으나,
+> 실제 VGG11 창 512개에 대한 실행 결과는 아직 이 문서에 반영하지 않았습니다. v4 숫자는 그 실행 후에 추가합니다.
+
 ## 검증 범위
 
 - 116개 RTL 테스트 설정 (합성 벡터 100개 + 실제 VGG11 `features.3` 창 16개), 세 코어 모두 같은 테스트벤치.
