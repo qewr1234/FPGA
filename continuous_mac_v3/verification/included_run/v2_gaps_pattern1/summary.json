@@ -1,0 +1,23 @@
+{
+  "name": "v2_gaps_pattern1",
+  "vector": "synthetic_k27_c9",
+  "K": 27,
+  "COUT": 9,
+  "P": 4,
+  "DEPTH": 2,
+  "N": 32,
+  "IMPL": 1,
+  "STALL_LEN": 12,
+  "PATTERN": 1,
+  "INPUT_GAPS": 1,
+  "MODE_SEQ": 2,
+  "RESET_TEST": 1,
+  "checked_values": 576,
+  "windows": 64,
+  "cycle_rows": 64,
+  "cycle_model_mismatches": 0,
+  "total_cycles": 6712,
+  "cycles_per_window": 104.875,
+  "mean_dense_latency": 122.4375,
+  "mean_sparse_latency": 85.34375
+}

@@ -1,0 +1,98 @@
+{
+  "build": "build/stream_20260919_081539_277352",
+  "utc": "2026-09-19T08:46:11.503466+00:00",
+  "rows": [
+    {
+      "vector": "calibration",
+      "P": 2,
+      "DEPTH": 2,
+      "stall": 0,
+      "cycles_per_window": {
+        "v1": 30129.8740234375,
+        "v2": 29751.8740234375,
+        "v3": 29169.4423828125
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 58306.001953125,
+      "v3_mean_sparse_latency": 58341.75,
+      "v3_vs_v2_pct": 1.9576300980777894,
+      "v3_vs_v1_pct": 3.187639084975591
+    },
+    {
+      "vector": "evaluation",
+      "P": 2,
+      "DEPTH": 2,
+      "stall": 0,
+      "cycles_per_window": {
+        "v1": 29881.0615234375,
+        "v2": 29503.0615234375,
+        "v3": 28920.6298828125
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 57818.251953125,
+      "v3_mean_sparse_latency": 57844.125,
+      "v3_vs_v2_pct": 1.9741396673776057,
+      "v3_vs_v1_pct": 3.214181798299487
+    },
+    {
+      "vector": "evaluation",
+      "P": 8,
+      "DEPTH": 2,
+      "stall": 0,
+      "cycles_per_window": {
+        "v1": 7999.0146484375,
+        "v2": 7819.0146484375,
+        "v3": 7230.5888671875
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 14464.408203125,
+      "v3_mean_sparse_latency": 14470.03125,
+      "v3_vs_v2_pct": 7.525574611470864,
+      "v3_vs_v1_pct": 9.606505488774186
+    },
+    {
+      "vector": "evaluation",
+      "P": 8,
+      "DEPTH": 2,
+      "stall": 12,
+      "cycles_per_window": {
+        "v1": 8307.65625,
+        "v2": 7838.015625,
+        "v3": 7230.609375
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 14485.408203125,
+      "v3_mean_sparse_latency": 14491.03125,
+      "v3_vs_v2_pct": 7.74949016512072,
+      "v3_vs_v1_pct": 12.964509394572021
+    },
+    {
+      "vector": "evaluation",
+      "P": 16,
+      "DEPTH": 2,
+      "stall": 0,
+      "cycles_per_window": {
+        "v2": 4212.0068359375,
+        "v3": 3615.5888671875
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 7245.767578125,
+      "v3_mean_sparse_latency": 7248.015625,
+      "v3_vs_v2_pct": 14.15994778691404
+    },
+    {
+      "vector": "evaluation",
+      "P": 32,
+      "DEPTH": 2,
+      "stall": 0,
+      "cycles_per_window": {
+        "v2": 2420.5029296875,
+        "v3": 1808.1005859375
+      },
+      "windows": 1024,
+      "v3_mean_dense_latency": 3648.447265625,
+      "v3_mean_sparse_latency": 3649.0078125,
+      "v3_vs_v2_pct": 25.300623942193056
+    }
+  ]
+}

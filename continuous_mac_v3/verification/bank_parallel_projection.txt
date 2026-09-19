@@ -1,0 +1,25 @@
+evaluation: 512 windows, K=576, COUT=128, mean nnz=327.8 (43.1% zero activations)
+
+Static interleave imbalance (sparse mode, per group):
+  T  ideal nnz/T  max bank    loss
+  1        327.8     327.8    0.0%
+  2        163.9     174.1    6.2%
+  4         81.9      94.8   15.7%
+  8         41.0      55.3   35.1%
+
+Projected mean cycles per window, sparse mode (v3 overlap: load hidden when GROUPS*cost >= K):
+  P   T    issue  per window  vs v3 T=1  DSPs(P*T)
+  2   1  20976.1     20978.1       0.0%          2
+  2   2  11141.0     11143.0      46.9%          4
+  2   4   6064.9      6066.9      71.1%          8
+  2   8   3541.1      3543.1      83.1%         16
+  8   1   5244.0      5246.0       0.0%          8
+  8   2   2785.2      2787.2      46.9%         16
+  8   4   1516.2      1518.2      71.1%         32
+  8   8    885.3       888.0      83.1%         64
+ 16   1   2622.0      2624.0       0.0%         16
+ 16   2   1392.6      1394.6      46.9%         32
+ 16   4    758.1       762.5      70.9%         64
+ 16   8    442.6       578.0      78.0%        128
+
+wrote verification/bank_parallel_projection.json

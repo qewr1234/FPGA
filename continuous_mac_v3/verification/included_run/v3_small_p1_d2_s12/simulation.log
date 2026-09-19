@@ -1,0 +1,2 @@
+PASS ALL checked_values=252 windows=28 total_cycles=2430 K=9 COUT=9 P=1 DEPTH=2 IMPL=2 STALL=12 PATTERN=0 GAPS=0 RESET=0
+/home/user/smart-fault-diagnosis/fpga/continuous_mac_v3/build/stream_20260919_081539_277352/sources/sim/tb_stream_compare.sv:213: $finish called at 25330000 (1ps)

@@ -1,0 +1,23 @@
+{
+  "name": "v3_calibration_p2_d2_s0",
+  "vector": "calibration",
+  "K": 576,
+  "COUT": 128,
+  "P": 2,
+  "DEPTH": 2,
+  "N": 512,
+  "IMPL": 2,
+  "STALL_LEN": 0,
+  "PATTERN": 0,
+  "INPUT_GAPS": 0,
+  "MODE_SEQ": 2,
+  "RESET_TEST": 0,
+  "checked_values": 131072,
+  "windows": 1024,
+  "cycle_rows": 1024,
+  "cycle_model_mismatches": 0,
+  "total_cycles": 29869509,
+  "cycles_per_window": 29169.4423828125,
+  "mean_dense_latency": 58306.001953125,
+  "mean_sparse_latency": 58341.75
+}
