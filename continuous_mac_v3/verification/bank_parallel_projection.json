@@ -1,0 +1,105 @@
+{
+  "split": "evaluation",
+  "K": 576,
+  "COUT": 128,
+  "windows": 512,
+  "mean_nnz": 327.751953125,
+  "rows": [
+    {
+      "P": 2,
+      "T": 1,
+      "mean_issue_cycles": 20976.125,
+      "mean_cycles_per_window": 20978.125,
+      "reduction_vs_T1_pct": 0.0,
+      "multipliers": 2
+    },
+    {
+      "P": 2,
+      "T": 2,
+      "mean_issue_cycles": 11141,
+      "mean_cycles_per_window": 11143,
+      "reduction_vs_T1_pct": 46.88276478474601,
+      "multipliers": 4
+    },
+    {
+      "P": 2,
+      "T": 4,
+      "mean_issue_cycles": 6064.875,
+      "mean_cycles_per_window": 6066.875,
+      "reduction_vs_T1_pct": 71.07999404141219,
+      "multipliers": 8
+    },
+    {
+      "P": 2,
+      "T": 8,
+      "mean_issue_cycles": 3541.125,
+      "mean_cycles_per_window": 3543.125,
+      "reduction_vs_T1_pct": 83.11038283926709,
+      "multipliers": 16
+    },
+    {
+      "P": 8,
+      "T": 1,
+      "mean_issue_cycles": 5244.03125,
+      "mean_cycles_per_window": 5246.03125,
+      "reduction_vs_T1_pct": 0.0,
+      "multipliers": 8
+    },
+    {
+      "P": 8,
+      "T": 2,
+      "mean_issue_cycles": 2785.25,
+      "mean_cycles_per_window": 2787.25,
+      "reduction_vs_T1_pct": 46.8693595753933,
+      "multipliers": 16
+    },
+    {
+      "P": 8,
+      "T": 4,
+      "mean_issue_cycles": 1516.21875,
+      "mean_cycles_per_window": 1518.21875,
+      "reduction_vs_T1_pct": 71.05967010776003,
+      "multipliers": 32
+    },
+    {
+      "P": 8,
+      "T": 8,
+      "mean_issue_cycles": 885.28125,
+      "mean_cycles_per_window": 887.96875,
+      "reduction_vs_T1_pct": 83.07351390634588,
+      "multipliers": 64
+    },
+    {
+      "P": 16,
+      "T": 1,
+      "mean_issue_cycles": 2622.015625,
+      "mean_cycles_per_window": 2624.015625,
+      "reduction_vs_T1_pct": 0.0,
+      "multipliers": 16
+    },
+    {
+      "P": 16,
+      "T": 2,
+      "mean_issue_cycles": 1392.625,
+      "mean_cycles_per_window": 1394.625,
+      "reduction_vs_T1_pct": 46.851497883134755,
+      "multipliers": 32
+    },
+    {
+      "P": 16,
+      "T": 4,
+      "mean_issue_cycles": 758.109375,
+      "mean_cycles_per_window": 762.46875,
+      "reduction_vs_T1_pct": 70.94267493167081,
+      "multipliers": 64
+    },
+    {
+      "P": 16,
+      "T": 8,
+      "mean_issue_cycles": 442.640625,
+      "mean_cycles_per_window": 578,
+      "reduction_vs_T1_pct": 77.97269214050507,
+      "multipliers": 128
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+warning: Some design elements have no explicit time unit and/or
+       : time precision. This may cause confusing timing results.
+       : Affected design elements are:
+       :   -- module continuous_window_mac declared here: /home/user/smart-fault-diagnosis/fpga/continuous_mac_v3/build/stream_20260919_081539_277352/sources/rtl/continuous_window_mac.sv:8
+       :   -- module overlapped_window_mac declared here: /home/user/smart-fault-diagnosis/fpga/continuous_mac_v3/build/stream_20260919_081539_277352/sources/rtl/overlapped_window_mac.sv:21
+       :   -- module sparse_window_mac declared here: /home/user/smart-fault-diagnosis/fpga/continuous_mac_v3/build/stream_20260919_081539_277352/sources/rtl/sparse_window_mac.sv:5

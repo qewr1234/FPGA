@@ -1,0 +1,23 @@
+{
+  "name": "v2_modeseq1_p4_d2",
+  "vector": "synthetic_k27_c9",
+  "K": 27,
+  "COUT": 9,
+  "P": 4,
+  "DEPTH": 2,
+  "N": 32,
+  "IMPL": 1,
+  "STALL_LEN": 0,
+  "PATTERN": 0,
+  "INPUT_GAPS": 0,
+  "MODE_SEQ": 1,
+  "RESET_TEST": 0,
+  "checked_values": 288,
+  "windows": 32,
+  "cycle_rows": 32,
+  "cycle_model_mismatches": 0,
+  "total_cycles": 2420,
+  "cycles_per_window": 75.625,
+  "mean_dense_latency": null,
+  "mean_sparse_latency": 74.65625
+}
