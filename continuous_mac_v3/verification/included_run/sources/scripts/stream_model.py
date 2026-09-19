@@ -300,8 +300,63 @@ class V3:
             self.output_channel = 0 if c['m_last'] else self.output_channel+1
 
 
+class V4(V3):
+    """banked_window_mac: as V3, but a group costs max over banks of that bank's
+    tuple count (the caller passes that cost as the window's `taps`) and the
+    pipeline has one more stage (the T-way product sum)."""
+
+    LATENCY = 4
+
+    def update(self, e, c, take_start, take_input, store):
+        f = self.fifo
+        if take_start:
+            self.load_active = True
+            self.busy[self.load_bank] = True
+            self.count = self.input_tap = 0
+        elif take_input:
+            self.count += store
+            if self.input_tap == self.k-1:
+                self.loaded[self.load_bank] = True
+                self.win_count[self.load_bank] = self.count
+                self.load_active = False
+                self.load_bank ^= 1
+            else:
+                self.input_tap += 1
+        f.apply_pending(e)
+        f.reserved += int(c['reserve'])-int(c['release'])
+        assert 0 <= f.reserved <= self.depth
+        slot = f.tail if self.issue_pos == 0 else f.issue_slot
+        if c['reserve']:
+            f.issue_slot = f.tail
+            f.tail = (f.tail+1) % self.depth
+        if c['issue']:
+            if c['last_pos']:
+                f.pending.append((e+self.LATENCY, slot))
+                self.issue_pos = 0
+                if self.issue_group == self.groups-1:
+                    self.issue_group = 0
+                    self.loaded[self.run_bank] = False
+                    self.busy[self.run_bank] = False
+                    self.run_bank ^= 1
+                else:
+                    self.issue_group += 1
+            else:
+                self.issue_pos += 1
+        if c['take_output']:
+            if c['end_group']:
+                f.slot_ready[f.head] = False
+                f.head = (f.head+1) % self.depth
+                self.emit_lane = 0
+            else:
+                self.emit_lane += 1
+            self.output_channel = 0 if c['m_last'] else self.output_channel+1
+
+
 def stream_model(k, cout, p, depth, impl, taps, stall=0, pattern=0, gaps=0, limit=400000000):
-    core = {0: V1, 1: V2, 2: V3}[impl](k, cout, p, depth)
+    """`taps[w]` is the per-group issue cost of window w: stored tuples for
+    impl 0-2 (K dense, nnz sparse); for impl 3 the max over banks of the
+    tuples stored in that bank."""
+    core = {0: V1, 1: V2, 2: V3, 3: V4}[impl](k, cout, p, depth)
     prod = Producer(k, taps, gaps)
     starts, ends = [], []
     e = 0
@@ -313,8 +368,9 @@ def stream_model(k, cout, p, depth, impl, taps, stall=0, pattern=0, gaps=0, limi
         take_input = s_valid and c['s_ready']
         store = 0
         if take_input:
-            # Dense windows store every beat; sparse windows store nonzero beats.
-            store = 1 if prod.taps[prod.w] == k or prod.tuple_of_beat() else 0
+            # Only the final per-window cost matters for timing, so the first
+            # `taps` beats are treated as the stored ones.
+            store = 1 if prod.tuple_of_beat() else 0
         if take_start:
             starts.append(e)
         if c['take_output'] and c['m_last']:

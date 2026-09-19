@@ -43,15 +43,25 @@ def windows_of(meta, mode_seq):
     return [(w, mode_seq) for w in range(n)]
 
 
+def bank_max(row, t):
+    """Group cost of the banked core: max over banks of nonzero taps in that bank."""
+    counts = [0]*t
+    for i, v in enumerate(row):
+        if v:
+            counts[i % t] += 1
+    return max(counts)
+
+
 def run_case(case, out, vectors, iverilog, vvp):
-    name, vec, impl, p, depth, stall, pattern, gaps, mode_seq, reset = case
+    name, vec, impl, p, depth, stall, pattern, gaps, mode_seq, reset, t = case
     dest = out/name
     dest.mkdir()
     meta = vectors[vec]
     params = dict(K=meta['K'], COUT=meta['COUT'], P=p, DEPTH=depth, N=meta['N'], IMPL=impl,
-                  STALL_LEN=stall, PATTERN=pattern, INPUT_GAPS=gaps, MODE_SEQ=mode_seq, RESET_TEST=reset)
+                  STALL_LEN=stall, PATTERN=pattern, INPUT_GAPS=gaps, MODE_SEQ=mode_seq, RESET_TEST=reset, T=t)
     sources = [out/'sources/rtl/sparse_window_mac.sv', out/'sources/rtl/continuous_window_mac.sv',
-               out/'sources/rtl/overlapped_window_mac.sv', out/'sources/sim/tb_stream_compare.sv']
+               out/'sources/rtl/overlapped_window_mac.sv', out/'sources/rtl/banked_window_mac.sv',
+               out/'sources/sim/tb_stream_compare.sv']
     argv = [iverilog, '-g2012', '-Wall', '-s', 'tb_stream_compare', '-o', dest/'sim.vvp']
     argv += [f'-Ptb_stream_compare.{key}={value}' for key, value in params.items()]
     command(argv+sources, dest, dest/'compile.log')
@@ -65,8 +75,14 @@ def run_case(case, out, vectors, iverilog, vvp):
         rows = [{key: int(v) for key, v in row.items()} for row in csv.DictReader(f)]
     assert len(rows) == len(wins)
     nz = meta['nonzero']
-    taps = [nz[frame] if mode else meta['K'] for frame, mode in wins]
-    model = stream_model(meta['K'], meta['COUT'], p, depth, impl, taps, stall, pattern, gaps)
+    k = meta['K']
+    if impl == 3:
+        text = (out/'vectors'/vec/'input.hex').read_text(encoding='ascii').split()
+        x = [[int(v, 16) for v in text[i*k:(i+1)*k]] for i in range(meta['N'])]
+        taps = [bank_max(x[frame], t) if mode else (k+t-1)//t for frame, mode in wins]
+    else:
+        taps = [nz[frame] if mode else k for frame, mode in wins]
+    model = stream_model(k, meta['COUT'], p, depth, impl, taps, stall, pattern, gaps)
     t0 = rows[0]['start_cycle']
     for w, (row, (frame, mode)) in enumerate(zip(rows, wins)):
         assert row['window'] == w and row['frame'] == frame and row['sparse_mode'] == mode
@@ -102,8 +118,8 @@ def main():
     out.mkdir(parents=True)
     print(f'Fresh RTL run: {out}', flush=True)
     sources = ['rtl/sparse_window_mac.sv', 'rtl/continuous_window_mac.sv', 'rtl/overlapped_window_mac.sv',
-               'sim/tb_stream_compare.sv', 'scripts/run_stream_checks.py', 'scripts/stream_model.py',
-               'scripts/legacy_run_checks.py']
+               'rtl/banked_window_mac.sv', 'sim/tb_stream_compare.sv', 'scripts/run_stream_checks.py',
+               'scripts/stream_model.py', 'scripts/legacy_run_checks.py']
     source_hashes = {}
     for relative in sources:
         saved = out/'sources'/relative
@@ -119,22 +135,37 @@ def main():
         x, w, b = fixture(k, c)
         vectors[name] = export_vectors(out/'vectors'/name, x, w, b, source={'synthetic_seed': 20260916+k*100+c})
     cases = []
-    # (name, vector, impl, P, DEPTH, stall, pattern, gaps, mode_seq, reset)
+    # (name, vector, impl, P, DEPTH, stall, pattern, gaps, mode_seq, reset, T)
     for impl in (0, 1, 2):
         for p in (1, 2, 4, 8):
             for depth in (1, 2, 3):
                 for stall in (0, 12):
-                    cases.append((f'v{impl+1}_small_p{p}_d{depth}_s{stall}', 'synthetic_k9_c9', impl, p, depth, stall, 0, 0, 2, 0))
+                    cases.append((f'v{impl+1}_small_p{p}_d{depth}_s{stall}', 'synthetic_k9_c9', impl, p, depth, stall, 0, 0, 2, 0, 1))
     for k, c, p, depth, stall in [(1, 1, 1, 1, 0), (1, 1, 8, 2, 12), (1, 9, 1, 4, 0), (1, 9, 3, 2, 12),
                                   (9, 17, 8, 2, 4), (9, 9, 3, 3, 4), (9, 9, 8, 8, 12)]:
-        cases.append((f'v3_edge_k{k}_c{c}_p{p}_d{depth}_s{stall}', f'synthetic_k{k}_c{c}', 2, p, depth, stall, 0, 0, 2, 0))
+        cases.append((f'v3_edge_k{k}_c{c}_p{p}_d{depth}_s{stall}', f'synthetic_k{k}_c{c}', 2, p, depth, stall, 0, 0, 2, 0, 1))
     for impl in (0, 1, 2):
         for pattern in (0, 1, 2):
-            cases.append((f'v{impl+1}_gaps_pattern{pattern}', 'synthetic_k27_c9', impl, 4, 2, 12, pattern, 1, 2, 1))
+            cases.append((f'v{impl+1}_gaps_pattern{pattern}', 'synthetic_k27_c9', impl, 4, 2, 12, pattern, 1, 2, 1, 1))
         for p in (1, 8):
-            cases.append((f'v{impl+1}_minimum_p{p}', 'synthetic_k1_c9', impl, p, 2, 12, 0, 0, 2, 1))
+            cases.append((f'v{impl+1}_minimum_p{p}', 'synthetic_k1_c9', impl, p, 2, 12, 0, 0, 2, 1, 1))
         for mode_seq in (0, 1):
-            cases.append((f'v{impl+1}_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9', impl, 4, 2, 0, 0, 0, mode_seq, 0))
+            cases.append((f'v{impl+1}_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9', impl, 4, 2, 0, 0, 0, mode_seq, 0, 1))
+    # v4 banked core: T=1 must reproduce v3 plus one pipeline stage; T>1 exercises bank splits.
+    for t in (1, 2, 4, 8):
+        for p in (1, 2, 8):
+            for stall in (0, 12):
+                cases.append((f'v4_small_t{t}_p{p}_d2_s{stall}', 'synthetic_k9_c9', 3, p, 2, stall, 0, 0, 2, 0, t))
+        cases.append((f'v4_k27_t{t}_p4_d3_s4', 'synthetic_k27_c9', 3, 4, 3, 4, 0, 0, 2, 0, t))
+    for k, c, p, depth, stall, t in [(1, 1, 1, 1, 0, 4), (1, 9, 3, 2, 12, 2), (9, 17, 8, 2, 4, 3),
+                                     (9, 9, 3, 3, 4, 5), (9, 9, 8, 8, 12, 9), (27, 9, 2, 1, 0, 16)]:
+        cases.append((f'v4_edge_k{k}_c{c}_p{p}_d{depth}_s{stall}_t{t}', f'synthetic_k{k}_c{c}', 3, p, depth, stall, 0, 0, 2, 0, t))
+    for pattern in (0, 1, 2):
+        cases.append((f'v4_gaps_pattern{pattern}', 'synthetic_k27_c9', 3, 4, 2, 12, pattern, 1, 2, 1, 4))
+    for p in (1, 8):
+        cases.append((f'v4_minimum_p{p}', 'synthetic_k1_c9', 3, p, 2, 12, 0, 0, 2, 1, 2))
+    for mode_seq in (0, 1):
+        cases.append((f'v4_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9', 3, 4, 2, 0, 0, 0, mode_seq, 0, 4))
     if args.suite == 'full':
         for split in ('calibration', 'evaluation'):
             path = ROOT/'data'/(split+'.wpr')
@@ -142,13 +173,18 @@ def main():
             vectors[split] = export_vectors(out/'vectors'/split, x, w, b, y, ids,
                                             {'file': split+'.wpr', 'sha256': sha(path), 'selection': 'all 512 recorded windows'})
             for impl in (0, 1, 2):
-                cases.append((f'v{impl+1}_{split}_p2_d2_s0', split, impl, 2, 2, 0, 0, 0, 2, 0))
+                cases.append((f'v{impl+1}_{split}_p2_d2_s0', split, impl, 2, 2, 0, 0, 0, 2, 0, 1))
         for impl in (0, 1, 2):
             for stall in (0, 12):
-                cases.append((f'v{impl+1}_evaluation_p8_d2_s{stall}', 'evaluation', impl, 8, 2, stall, 0, 0, 2, 0))
+                cases.append((f'v{impl+1}_evaluation_p8_d2_s{stall}', 'evaluation', impl, 8, 2, stall, 0, 0, 2, 0, 1))
         for p in (16, 32):
             for impl in (1, 2):
-                cases.append((f'v{impl+1}_evaluation_p{p}_d2_s0', 'evaluation', impl, p, 2, 0, 0, 0, 2, 0))
+                cases.append((f'v{impl+1}_evaluation_p{p}_d2_s0', 'evaluation', impl, p, 2, 0, 0, 0, 2, 0, 1))
+        for t in (1, 2, 4, 8):
+            cases.append((f'v4_evaluation_p8_d2_s0_t{t}', 'evaluation', 3, 8, 2, 0, 0, 0, 2, 0, t))
+        cases.append(('v4_evaluation_p8_d2_s12_t4', 'evaluation', 3, 8, 2, 12, 0, 0, 2, 0, 4))
+        cases.append(('v4_evaluation_p2_d2_s0_t4', 'evaluation', 3, 2, 2, 0, 0, 0, 2, 0, 4))
+        cases.append(('v4_calibration_p8_d2_s0_t4', 'calibration', 3, 8, 2, 0, 0, 0, 2, 0, 4))
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         futures = [pool.submit(run_case, case, out, vectors, iverilog, vvp) for case in cases]

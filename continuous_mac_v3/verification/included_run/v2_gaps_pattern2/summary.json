@@ -12,6 +12,7 @@
   "INPUT_GAPS": 1,
   "MODE_SEQ": 2,
   "RESET_TEST": 1,
+  "T": 1,
   "checked_values": 576,
   "windows": 64,
   "cycle_rows": 64,

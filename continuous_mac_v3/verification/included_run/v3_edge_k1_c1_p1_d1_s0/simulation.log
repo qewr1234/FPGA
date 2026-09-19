@@ -1,2 +1,2 @@
-PASS ALL checked_values=12 windows=12 total_cycles=50 K=1 COUT=1 P=1 DEPTH=1 IMPL=2 STALL=0 PATTERN=0 GAPS=0 RESET=0
-/home/user/smart-fault-diagnosis/fpga/continuous_mac_v3/build/stream_20260919_081539_277352/sources/sim/tb_stream_compare.sv:213: $finish called at 650000 (1ps)
+PASS ALL checked_values=12 windows=12 total_cycles=50 K=1 COUT=1 P=1 DEPTH=1 IMPL=2 T=1 STALL=0 PATTERN=0 GAPS=0 RESET=0
+/home/user/fpga/continuous_mac_v3/build/stream_20260919_090100_076103/sources/sim/tb_stream_compare.sv:236: $finish called at 650000 (1ps)
