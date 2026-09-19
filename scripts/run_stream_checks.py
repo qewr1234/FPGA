@@ -1,9 +1,10 @@
 """Back-to-back window stream: RTL runs, integer oracle, and a second cycle model.
 
-Runs tb_stream_compare.sv on v1 (sparse_window_mac), v2 (continuous_window_mac)
-and v3 (overlapped_window_mac) with the same window stream, checks every output
-value against the Python integer oracle, and checks every window's start/end
-edge against an independent per-edge protocol model of each core (stream_model).
+Runs tb_stream_compare.sv on v1 (sparse_window_mac), v2 (continuous_window_mac),
+v3 (overlapped_window_mac) and v4 (banked_window_mac) with the same window
+stream, checks every output value against the Python integer oracle, and checks
+every window's start/end edge against an independent per-edge protocol model of
+each core (stream_model).
 
 Python 3.9+ standard library only. Requires Icarus Verilog (iverilog and vvp).
 No synthesis, post-route timing, power, full-classifier accuracy or board data.
@@ -185,6 +186,13 @@ def main():
         cases.append(('v4_evaluation_p8_d2_s12_t4', 'evaluation', 3, 8, 2, 12, 0, 0, 2, 0, 4))
         cases.append(('v4_evaluation_p2_d2_s0_t4', 'evaluation', 3, 2, 2, 0, 0, 0, 2, 0, 4))
         cases.append(('v4_calibration_p8_d2_s0_t4', 'calibration', 3, 8, 2, 0, 0, 0, 2, 0, 4))
+        # Equal-multiplier points. v4 at (P, T) costs P*T multipliers, so its only
+        # honest baseline is v3 at P*T lanes, not v3 at P lanes. P=64 pairs with
+        # v4 P=8 T=8 and P=16 T=4; P=128 is where v3 alone reaches the K-beat
+        # input wall, which is the ceiling for both cores on this layer.
+        cases.append(('v3_evaluation_p64_d2_s0', 'evaluation', 2, 64, 2, 0, 0, 0, 2, 0, 1))
+        cases.append(('v4_evaluation_p16_d2_s0_t4', 'evaluation', 3, 16, 2, 0, 0, 0, 2, 0, 4))
+        cases.append(('v3_evaluation_p128_d2_s0', 'evaluation', 2, 128, 2, 0, 0, 0, 2, 0, 1))
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         futures = [pool.submit(run_case, case, out, vectors, iverilog, vvp) for case in cases]

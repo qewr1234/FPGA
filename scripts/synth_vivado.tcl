@@ -1,7 +1,7 @@
 # OOC synthesis / place / route of the four window MAC cores on the same
 # part, clock and parameters. Not a board project or programmable bitstream.
 # Usage (Vivado Tcl console, no project open):
-#   cd {C:/fpga/continuous_mac_v3}
+#   cd {C:/fpga/FPGA}
 #   set ::env(CNN_P) 8 ; set ::env(CNN_DEPTH) 2 ; set ::env(CNN_T) 4 ; set ::env(CNN_CLOCK_NS) 10.0
 #   source scripts/synth_vivado.tcl
 # or: vivado -mode batch -source scripts/synth_vivado.tcl
