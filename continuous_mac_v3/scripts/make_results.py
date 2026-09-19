@@ -15,11 +15,15 @@ def main():
     args = ap.parse_args()
     summary = json.loads((args.build/'summary.json').read_text(encoding='utf-8'))
     by_cfg = defaultdict(dict)
+    banked = []
     for case in summary['cases']:
         if not case['vector'] in ('calibration', 'evaluation'):
             continue
         key = (case['vector'], case['P'], case['DEPTH'], case['STALL_LEN'])
-        by_cfg[key][case['IMPL']] = case
+        if case['IMPL'] == 3:
+            banked.append(case)
+        else:
+            by_cfg[key][case['IMPL']] = case
     rows = []
     print(f'{"data":<12}{"P":>3}{"D":>3}{"stall":>6} | {"v1 serial":>10}{"v2 cont.":>10}{"v3 overlap":>11} | '
           f'{"v3 vs v2":>9}{"v3 vs v1":>9} | {"v3 dense lat":>13}{"v3 sparse lat":>14}')
@@ -43,6 +47,27 @@ def main():
               f'{row.get("v3_vs_v2_pct", float("nan")):>8.2f}%{row.get("v3_vs_v1_pct", float("nan")):>8.2f}% | '
               f'{(v3 or {}).get("mean_dense_latency") or float("nan"):>13.1f}{(v3 or {}).get("mean_sparse_latency") or float("nan"):>14.1f}')
     print('\ncycles per window = stream total / (512 windows x 2 modes); dense and sparse windows alternate in the stream.')
+    if banked:
+        print(f'\n{"data":<12}{"P":>3}{"D":>3}{"stall":>6}{"T":>3} | {"v4 banked":>10}{"v3 overlap":>11} | '
+              f'{"v4 vs v3":>9}{"v4 vs v2":>9} | {"mults P*T":>10}{"v4 sparse lat":>14}')
+        for case in sorted(banked, key=lambda c: (c['vector'], c['P'], c['STALL_LEN'], c['T'])):
+            key = (case['vector'], case['P'], case['DEPTH'], case['STALL_LEN'])
+            ref = by_cfg.get(key, {})
+            v3 = ref.get(2, {}).get('cycles_per_window')
+            v2 = ref.get(1, {}).get('cycles_per_window')
+            row = dict(vector=key[0], P=key[1], DEPTH=key[2], stall=key[3], T=case['T'],
+                       v4_cycles_per_window=case['cycles_per_window'], multipliers=case['P']*case['T'],
+                       v4_mean_dense_latency=case['mean_dense_latency'],
+                       v4_mean_sparse_latency=case['mean_sparse_latency'])
+            if v3:
+                row['v4_vs_v3_pct'] = 100*(1-case['cycles_per_window']/v3)
+            if v2:
+                row['v4_vs_v2_pct'] = 100*(1-case['cycles_per_window']/v2)
+            rows.append(row)
+            print(f'{key[0]:<12}{key[1]:>3}{key[2]:>3}{key[3]:>6}{case["T"]:>3} | {case["cycles_per_window"]:>10.1f}'
+                  f'{(v3 or float("nan")):>11.1f} | {row.get("v4_vs_v3_pct", float("nan")):>8.2f}%'
+                  f'{row.get("v4_vs_v2_pct", float("nan")):>8.2f}% | {case["P"]*case["T"]:>10}'
+                  f'{case["mean_sparse_latency"] or float("nan"):>14.1f}')
     if args.json:
         args.json.write_text(json.dumps(dict(build=str(args.build), utc=summary['utc'], rows=rows), indent=2)+'\n', encoding='utf-8')
         print(f'wrote {args.json}')

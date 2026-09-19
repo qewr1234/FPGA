@@ -2,7 +2,7 @@
 // Streams a sequence of windows back to back into one core and checks every
 // output against the integer gold values. Works for all three cores:
 //   IMPL=0 sparse_window_mac (v1)   IMPL=1 continuous_window_mac (v2)
-//   IMPL=2 overlapped_window_mac (v3)
+//   IMPL=2 overlapped_window_mac (v3)   IMPL=3 banked_window_mac (v4, T banks)
 // The producer offers the next start on the same negedge it drops the last
 // input beat, so a core that can overlap windows is allowed to. Cores that
 // cannot simply hold start_ready low and are measured on the same stream.
@@ -10,7 +10,7 @@
 // as posedge indices. The stream total is end[last]-start[0].
 module tb_stream_compare;
     parameter integer K=27,COUT=9,P=2,DEPTH=2,N=8,IMPL=2;
-    parameter integer STALL_LEN=0,PATTERN=0,INPUT_GAPS=0,MODE_SEQ=2,RESET_TEST=0;
+    parameter integer STALL_LEN=0,PATTERN=0,INPUT_GAPS=0,MODE_SEQ=2,RESET_TEST=0,T=1;
     localparam integer KW=(K<2 ? 1:$clog2(K)),CW=(COUT<2 ? 1:$clog2(COUT));
     localparam integer NWIN=(MODE_SEQ==2) ? 2*N : N;
     localparam integer GROUPS=(COUT+P-1)/P;
@@ -34,10 +34,26 @@ module tb_stream_compare;
             if(dut.release_slot && dut.reserved==0) $fatal(1,"result reservation underflow");
             if(dut.c_valid && dut.c_last && dut.slot_ready[dut.c_slot]) $fatal(1,"overwriting an unconsumed result");
         end
-    end else begin: v3
+    end else if(IMPL==2) begin: v3
         overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH)) dut(.*);
         assign issue=dut.issue;assign tap_issue=dut.tap_issue;assign issue_pos=dut.issue_pos;
         always @(posedge clk) if(rst_n) begin
+            if(dut.reserved>DEPTH) $fatal(1,"result reservations overflow");
+            if(dut.release_slot && dut.reserved==0) $fatal(1,"result reservation underflow");
+            if(dut.c_valid && dut.c_last && dut.slot_ready[dut.c_slot]) $fatal(1,"overwriting an unconsumed result");
+            if(dut.head>=DEPTH || dut.tail>=DEPTH) $fatal(1,"FIFO pointer outside depth");
+            // Bank ownership: never write the bank being issued, never issue an unloaded bank.
+            if(dut.store_input && dut.issue && dut.load_bank==dut.run_bank) $fatal(1,"tuple bank read/write collision");
+            if(dut.take_start && dut.busy[dut.load_bank]) $fatal(1,"start accepted into a busy bank");
+            if(dut.issue && !dut.loaded[dut.run_bank]) $fatal(1,"issue from an unloaded bank");
+            if(dut.take_cfg && !dut.core_idle) $fatal(1,"configuration accepted while not idle");
+        end
+    end else begin: v4
+        banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T)) dut(.*);
+        assign issue=dut.issue;assign tap_issue=dut.tap_issue;assign issue_pos=dut.issue_pos;
+        always @(posedge clk) if(rst_n) begin
+            if(dut.d_valid && dut.d_last && dut.slot_ready[dut.d_slot]) $fatal(1,"overwriting an unconsumed result");
+            if(dut.issue && dut.issue_pos>=dut.eff_max) $fatal(1,"issue position beyond group cost");
             if(dut.reserved>DEPTH) $fatal(1,"result reservations overflow");
             if(dut.release_slot && dut.reserved==0) $fatal(1,"result reservation underflow");
             if(dut.c_valid && dut.c_last && dut.slot_ready[dut.c_slot]) $fatal(1,"overwriting an unconsumed result");
@@ -68,7 +84,8 @@ module tb_stream_compare;
     integer end_cycle [0:NWIN-1];
     integer t0=0;
     integer win_out=0,ch_out=0,checked=0,input_beats=0,issues=0,previous_issue=-1;
-    integer csv,ci,t,idx,age,w,nz,fr,md,expect_issues,output_stalls=0;
+    integer csv,ci,t,idx,age,w,nz,fr,md,expect_issues,output_stalls=0,b,bank_max;
+    integer bank_nz [0:T-1];
     reg active=0,force_block=0,held=0;
     reg [31:0] held_data;reg [CW-1:0] held_channel;reg held_last;
     function automatic integer win_frame(input integer wi);
@@ -167,7 +184,7 @@ module tb_stream_compare;
         $readmemh({vec,"/weights.hex"},weights);$readmemh({vec,"/bias.hex"},biases);
         $readmemh({vec,"/input.hex"},inputs);$readmemh({vec,"/gold.hex"},gold);
         csv=$fopen("rtl_cycles.csv","w");if(!csv) $fatal(1,"CSV open failed");
-        $fwrite(csv,"window,frame,sparse_mode,K,COUT,P,depth,implementation,nonzero_inputs,start_cycle,end_cycle,stall_len,pattern,input_gaps\n");
+        $fwrite(csv,"window,frame,sparse_mode,K,COUT,P,depth,implementation,banks,nonzero_inputs,start_cycle,end_cycle,stall_len,pattern,input_gaps\n");
         repeat(4) @(negedge clk);rst_n=1;
         configure();
         if(RESET_TEST) begin
@@ -179,17 +196,23 @@ module tb_stream_compare;
             // 3. abort with output blocked (and, for v3, a second window loading)
             force_block=1;@(negedge clk);offer_start(0,dummy);send_input(1,K);wait(m_valid);
             repeat(24) @(negedge clk);
-            if(IMPL==2) begin
+            if(IMPL>=2) begin
                 @(negedge clk);offer_start(1,dummy);send_input(0,(K>=2) ? K/2 : 1);
                 repeat(8) @(negedge clk);
             end
             abort_and_reset();
         end
-        // Main stream.
+        // Main stream. Expected issue cycles: GROUPS x stored tuples (v1-v3) or
+        // GROUPS x max over banks of stored tuples in that bank (v4).
         expect_issues=0;
         for(w=0;w<NWIN;w=w+1) begin
-            nz=0;for(t=0;t<K;t=t+1) if(inputs[win_frame(w)*K+t]!=0) nz=nz+1;
-            expect_issues=expect_issues+GROUPS*(win_mode(w) ? nz : K);
+            for(b=0;b<T;b=b+1) bank_nz[b]=0;
+            nz=0;
+            for(t=0;t<K;t=t+1) if(!win_mode(w) || inputs[win_frame(w)*K+t]!=0) begin
+                nz=nz+1;bank_nz[t%T]=bank_nz[t%T]+1;
+            end
+            bank_max=0;for(b=0;b<T;b=b+1) if(bank_nz[b]>bank_max) bank_max=bank_nz[b];
+            expect_issues=expect_issues+GROUPS*((IMPL==3) ? bank_max : nz);
         end
         @(negedge clk);active=1;
         for(w=0;w<NWIN;w=w+1) begin
@@ -204,12 +227,12 @@ module tb_stream_compare;
         if(m_valid || !start_ready || !cfg_ready) $fatal(1,"not idle after completion");
         for(w=0;w<NWIN;w=w+1) begin
             nz=0;for(t=0;t<K;t=t+1) if(inputs[win_frame(w)*K+t]!=0) nz=nz+1;
-            $fwrite(csv,"%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
-                w,win_frame(w),win_mode(w),K,COUT,P,DEPTH,IMPL,nz,start_cycle[w],end_cycle[w],STALL_LEN,PATTERN,INPUT_GAPS);
+            $fwrite(csv,"%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
+                w,win_frame(w),win_mode(w),K,COUT,P,DEPTH,IMPL,T,nz,start_cycle[w],end_cycle[w],STALL_LEN,PATTERN,INPUT_GAPS);
         end
         $fclose(csv);
-        $display("PASS ALL checked_values=%0d windows=%0d total_cycles=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d STALL=%0d PATTERN=%0d GAPS=%0d RESET=%0d",
-                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],K,COUT,P,DEPTH,IMPL,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST);
+        $display("PASS ALL checked_values=%0d windows=%0d total_cycles=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d STALL=%0d PATTERN=%0d GAPS=%0d RESET=%0d",
+                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],K,COUT,P,DEPTH,IMPL,T,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST);
         $finish;
     end
 endmodule
