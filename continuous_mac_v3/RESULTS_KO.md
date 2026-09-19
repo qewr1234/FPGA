@@ -1,7 +1,19 @@
 # Continuous MAC v3 / v4 — RTL 검증 결과
 
 Icarus Verilog 12.0 behavioral 시뮬레이션 결과입니다. FPGA 합성, timing, 자원, 보드 실측은 아닙니다.
-실행 로그와 소스 스냅샷은 `verification/included_run/`에 있습니다 (`summary.json`, 케이스별 `rtl_cycles.csv`, `simulation.log`).
+
+동봉한 실행 증거는 `verification/included_run/`입니다:
+
+| 파일 | 내용 |
+|---|---|
+| `sources/` | 그 실행에서 실제로 컴파일한 RTL·테스트벤치·스크립트 스냅샷 |
+| `summary.json`, `summary.csv` | 164개 케이스 전체 결과 (설정, 통과 개수, cycle) |
+| `<케이스>/rtl_cycles.csv` | 창별 start/end cycle 원본, 총 167,936행 |
+| `<케이스>/simulation.log` | `vvp`가 출력한 PASS 문자열 |
+
+케이스별 `summary.json`은 집계 `summary.json`에 그대로 들어 있어 중복이라 제외했고, `compile.log`는 164개가 모두 같은
+timescale 경고 한 종류뿐이라 제외했습니다. 두 파일은 재실행하면 `build/stream_*/`에 다시 생깁니다.
+전체 재생성은 `python scripts/run_stream_checks.py --suite full` 입니다 (결정론적이라 같은 숫자가 나옵니다).
 
 ## 검증 범위
 
