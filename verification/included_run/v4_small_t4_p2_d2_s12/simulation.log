@@ -1,2 +1,2 @@
 PASS ALL checked_values=252 windows=28 total_cycles=1135 K=9 COUT=9 P=2 DEPTH=2 IMPL=3 T=4 STALL=12 PATTERN=0 GAPS=0 RESET=0
-/home/user/fpga/continuous_mac_v3/build/stream_20260919_090100_076103/sources/sim/tb_stream_compare.sv:236: $finish called at 12380000 (1ps)
+/home/user/FPGA/build/stream_20260919_113112_881810/sources/sim/tb_stream_compare.sv:236: $finish called at 12380000 (1ps)

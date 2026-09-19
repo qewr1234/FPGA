@@ -1,0 +1,2 @@
+PASS ALL checked_values=131072 windows=1024 total_cycles=591194 K=576 COUT=128 P=128 DEPTH=2 IMPL=2 T=1 STALL=0 PATTERN=0 GAPS=0 RESET=0
+/home/user/FPGA/build/stream_20260919_113112_881810/sources/sim/tb_stream_compare.sv:236: $finish called at 6650630000 (1ps)
