@@ -27,10 +27,14 @@ set WM_CFG_WORDS    [expr {$WM_COUT * $WM_K + $WM_COUT}]
 set WM_INPUT_WORDS  [expr {$WM_NWIN * $WM_K / 4}]
 set WM_RESULT_WORDS [expr {$WM_NWIN * $WM_COUT}]
 
-set ADDR_CONFIG 0x10000000
-set ADDR_INPUT  0x10100000
-set ADDR_RESULT 0x10200000
-set ADDR_GOLD   0x10300000
+# Buffers sit 1 MB apart from a base chosen at run time. 0x10000000 is what
+# export_board_data.py documents, but it is past the end of a 256 MB board, so a
+# lower base is tried before giving up. Total footprint is under 4 MB.
+set WM_BASE_CANDIDATES {0x10000000 0x01000000}
+set ADDR_CONFIG 0
+set ADDR_INPUT  0
+set ADDR_RESULT 0
+set ADDR_GOLD   0
 
 # ---------------- register maps ----------------
 set WM_BASE   0x43C00000
@@ -86,6 +90,30 @@ proc wm_need {path what} {
 }
 
 proc wm_hex {v} { return [format 0x%08x $v] }
+
+# Whatever goes wrong, print everything that would otherwise need another run to
+# find out. Every read is guarded: the point is to report, not to fail again.
+proc wm_dump_state {} {
+    global REG_CTRL REG_NWIN REG_STATUS REG_CYCLES REG_WINDONE REG_INSTALL
+    global REG_OUTSTALL REG_OUTCOUNT REG_CFGCOUNT REG_ID
+    global MM2S_CR MM2S_SR MM2S_SA MM2S_LEN S2MM_CR S2MM_SR S2MM_DA S2MM_LEN
+    puts ""
+    puts "--- state at the point of failure ---"
+    foreach {name addr} [list \
+            CTRL $REG_CTRL NWINDOWS $REG_NWIN STATUS $REG_STATUS CYCLES $REG_CYCLES \
+            WINDONE $REG_WINDONE IN_STALL $REG_INSTALL OUT_STALL $REG_OUTSTALL \
+            OUTCOUNT $REG_OUTCOUNT CFGCOUNT $REG_CFGCOUNT ID $REG_ID \
+            MM2S_DMACR $MM2S_CR MM2S_DMASR $MM2S_SR MM2S_SA $MM2S_SA MM2S_LENGTH $MM2S_LEN \
+            S2MM_DMACR $S2MM_CR S2MM_DMASR $S2MM_SR S2MM_DA $S2MM_DA S2MM_LENGTH $S2MM_LEN] {
+        if {[catch {wm_rd $addr} v]} {
+            puts [format "  %-12s unreadable (%s)" $name $v]
+        } else {
+            puts [format "  %-12s %s  (%d)" $name [wm_hex $v] $v]
+        }
+    }
+    puts "-------------------------------------"
+    puts ""
+}
 
 proc wm_dma_reset {} {
     global MM2S_CR S2MM_CR DMACR_RESET
@@ -238,6 +266,10 @@ rst -system
 after 2000
 
 targets -set -filter {name =~ "ARM*#0"}
+# Halt the processor before it can run anything. If this board boots from SD or
+# QSPI, the reset above starts its boot image, and an FSBL would reprogram the PL
+# out from under us and scribble on DDR. It may already be halted; that is fine.
+catch {stop}
 # Let mrd/mwr reach memory without halting the core first.
 catch {configparams force-mem-access 1}
 
@@ -251,14 +283,38 @@ if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
 ps7_init
 ps7_post_config
 
-# A PS preset whose DDR settings do not match this board fails here, which is far
-# easier to read than the mismatched MAC results it would otherwise produce.
-mwr $ADDR_CONFIG 0xA5A5F00F
-if {[wm_rd $ADDR_CONFIG] != 0xa5a5f00f} {
-    error "DDR read back [wm_hex [wm_rd $ADDR_CONFIG]] where 0xA5A5F00F was written to\
-           [wm_hex $ADDR_CONFIG]. The PS preset's memory settings do not match this board."
+# From here on the board is doing the work. Any failure prints every register
+# first, so one paste of the output carries the diagnosis and there is no need to
+# run the whole thing again just to find out what the counters said. The dump
+# only touches PL registers, so it still works when DDR is the thing that is bad.
+if {[catch {
+
+# Find usable memory before trusting any of it. Two distinct patterns 3 MB apart
+# must both survive: one pattern alone passes on a board whose memory aliases,
+# and aliasing would show up later as results that are wrong for no clear reason.
+# A PS preset whose DDR settings do not match this board fails here too, which is
+# far easier to read than the mismatched MAC results it would otherwise produce.
+set ddr_base 0
+foreach cand $WM_BASE_CANDIDATES {
+    set lo [expr {$cand}]
+    set hi [expr {$cand + 0x300000}]
+    if {[catch {
+        mwr $lo 0xA5A5F00F
+        mwr $hi 0x5A5A0FF0
+    }]} continue
+    if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
+    if {$ok} { set ddr_base $lo; break }
 }
-puts "DDR responds."
+if {$ddr_base == 0} {
+    error "no usable DDR at any of $WM_BASE_CANDIDATES: a written pattern did not read\
+           back. The PS preset's memory settings do not match this board."
+}
+set ADDR_CONFIG $ddr_base
+set ADDR_INPUT  [expr {$ddr_base + 0x100000}]
+set ADDR_RESULT [expr {$ddr_base + 0x200000}]
+set ADDR_GOLD   [expr {$ddr_base + 0x300000}]
+puts "DDR responds. Buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
+      [wm_hex $ADDR_RESULT] / [wm_hex $ADDR_GOLD]."
 
 # ---------------- identify the core ----------------
 set id [wm_rd $REG_ID]
@@ -317,7 +373,7 @@ set outcount [wm_rd $REG_OUTCOUNT]
 
 # ---------------- compare ----------------
 puts "Comparing $WM_RESULT_WORDS results..."
-set fh [open $f_gold rb]
+set fh [open $f_gold r]
 fconfigure $fh -translation binary
 set golddata [read $fh]
 close $fh
@@ -327,23 +383,62 @@ set bad 0
 set first_bad -1
 set first_got 0
 set first_want 0
-set chunk 4096
-for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
-    set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
-    set vals [mrd -value [expr {$ADDR_RESULT + $off * 4}] $n]
-    for {set j 0} {$j < $n} {incr j} {
-        set hex [lindex $vals $j]
-        regsub {^0[xX]} $hex "" hex
-        scan $hex %x got
-        set got [expr {$got & 0xffffffff}]
-        set want [lindex $gold [expr {$off + $j}]]
-        if {$got != $want} {
+
+# Preferred: let xsdb dump the range to a file in one go. Falling back to reading
+# it register-style still works but is far slower over JTAG, so try the fast path
+# and verify it actually produced the bytes rather than assuming it did.
+set dumpfile [file join $boarddir results.bin]
+file delete -force $dumpfile
+set fast 0
+if {[catch {mrd -bin -file $dumpfile $ADDR_RESULT $WM_RESULT_WORDS}] == 0} {
+    if {[file exists $dumpfile] && [file size $dumpfile] == $WM_RESULT_WORDS * 4} {
+        set fast 1
+    }
+}
+
+if {$fast} {
+    set fh [open $dumpfile r]
+    fconfigure $fh -translation binary
+    set gotdata [read $fh]
+    close $fh
+    binary scan $gotdata iu* got
+    for {set i 0} {$i < $WM_RESULT_WORDS} {incr i} {
+        if {[lindex $got $i] != [lindex $gold $i]} {
             if {$bad == 0} {
-                set first_bad [expr {$off + $j}]
-                set first_got $got
-                set first_want $want
+                set first_bad $i
+                set first_got [lindex $got $i]
+                set first_want [lindex $gold $i]
             }
             incr bad
+        }
+    }
+} else {
+    puts "  (bulk read unavailable, reading in blocks -- this takes a minute)"
+    set chunk 4096
+    for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
+        set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
+        set vals [mrd -value [expr {$ADDR_RESULT + $off * 4}] $n]
+        if {[llength $vals] != $n} {
+            error "mrd returned [llength $vals] values where $n were asked for.\
+                   This build of xsdb does not take a word count, so the results\
+                   cannot be read back in blocks."
+        }
+        for {set j 0} {$j < $n} {incr j} {
+            set hex [lindex $vals $j]
+            regsub {^0[xX]} $hex "" hex
+            if {![scan $hex %x got]} {
+                error "could not parse '$hex' as a result value at word [expr {$off + $j}]"
+            }
+            set got [expr {$got & 0xffffffff}]
+            set want [lindex $gold [expr {$off + $j}]]
+            if {$got != $want} {
+                if {$bad == 0} {
+                    set first_bad [expr {$off + $j}]
+                    set first_got $got
+                    set first_want $want
+                }
+                incr bad
+            }
         }
     }
 }
@@ -373,4 +468,9 @@ if {$bad != 0} {
 } else {
     puts "RESULT: PASS -- core bound. CYCLES is comparable with total_cycles in"
     puts "        verification/included_run/summary.json for this configuration."
+}
+
+} wm_err wm_opts]} {
+    catch {wm_dump_state}
+    return -options $wm_opts $wm_err
 }

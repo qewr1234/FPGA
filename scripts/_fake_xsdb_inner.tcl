@@ -54,7 +54,7 @@ proc dma_run_mm2s {bytes} {
     } elseif {$ARMED} {
         # produce the results the receive channel is waiting for
         if {$PENDING_RX == 0} { error "HARNESS: send started with no receive armed" }
-        set src 0x10300000         ;# gold
+        set src [expr {$D(s2mm_da) + 0x100000}]   ;# gold sits 1 MB above results
         set dst $D(s2mm_da)
         for {set i 0} {$i < $PENDING_RX} {incr i} {
             set MEM([expr {$dst + $i * 4}]) [memrd [expr {$src + $i * 4}]]
@@ -105,11 +105,18 @@ proc mwr {addr val} {
         return
     }
     if {$FAULT eq "ddr"} { return }
+    # FAULT=smallddr: a 256 MB board, so anything at or above 0x10000000 is gone.
+    if {$FAULT eq "smallddr" && $addr >= 0x10000000 && $addr < 0x40000000} { return }
     set MEM($addr) $val
 }
 
 proc mrd {args} {
     global MEM WM_BASE DMA_BASE CORE D FAULT
+    if {[lsearch -exact $args "-bin"] >= 0} {
+        set fi [lsearch -exact $args "-file"]
+        return [mrd_bin_file [lindex $args [expr {$fi + 1}]] \
+                             [expr {[lindex $args end-1] & 0xffffffff}] [lindex $args end]]
+    }
     set idx 0
     while {$idx < [llength $args] && [string match "-*" [lindex $args $idx]]} { incr idx }
     set addr [expr {[lindex $args $idx] & 0xffffffff}]
@@ -137,6 +144,19 @@ proc mrd {args} {
     return $out
 }
 
+# The real xsdb can dump a memory range straight to a file; the script prefers
+# that over block reads. FAULT=nobulk withholds it to exercise the fallback.
+proc mrd_bin_file {file addr n} {
+    global FAULT
+    if {$FAULT eq "nobulk"} { error "mrd: bad option -bin" }
+    set fh [open $file w]
+    fconfigure $fh -translation binary
+    for {set i 0} {$i < $n} {incr i} {
+        puts -nonewline $fh [binary format i [memrd [expr {$addr + $i * 4}]]]
+    }
+    close $fh
+}
+
 proc dow {args} {
     global MEM
     if {[lindex $args 0] ne "-data"} { return }
@@ -155,6 +175,8 @@ proc dow {args} {
 proc connect {args} { puts "  \[stub\] connect" }
 proc targets {args} { }
 proc rst {args} { }
+proc stop {args} { }
+proc configparams {args} { }
 proc fpga {args} { puts "  \[stub\] fpga [lindex $args 1]" }
 proc loadhw {args} { puts "  \[stub\] loadhw" }
 # loadhw normally defines these. The "nops7*" cases leave them undefined, which is

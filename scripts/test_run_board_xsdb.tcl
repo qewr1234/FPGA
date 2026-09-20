@@ -24,6 +24,8 @@ set cases {
     {config stream cut short}  {0 cfgshort "configuration items, expected 73856"}
     {DMA reports an error}     {0 dmaerr   "DMA reported an error"}
     {results do not match}     {0 mismatch "RESULT: FAIL"}
+    {no bulk memory read}      {0 nobulk   "RESULT: PASS"}
+    {256 MB board}             {0 smallddr "RESULT: PASS"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init nowhere to be found} {0 nops7missing "ps7_init is not defined"}
 }
