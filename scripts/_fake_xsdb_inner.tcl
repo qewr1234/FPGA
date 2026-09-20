@@ -55,7 +55,7 @@ if {$FAULT in {mmusctlr mmudiscover}} {
 proc ps_healthy {} {
     global FAULT RST_COUNT
     if {$FAULT eq "psdead"} { return 0 }
-    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 2}] }
+    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 1}] }
     return 1
 }
 
@@ -85,7 +85,7 @@ proc mmu_blocking {} {
     # the second core does not help either.
     if {$FAULT eq "mmu"} { return 1 }
     if {$PHYS} { return 0 }
-    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 2}] }
+    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 1}] }
     return $MMU_ON
 }
 
@@ -267,7 +267,8 @@ proc dow {args} {
     puts "  \[stub\] dow -data [file tail $f] -> [format 0x%08X $addr] ([llength $words] words)"
 }
 
-proc connect {args} { puts "  \[stub\] connect" }
+proc connect {args} { }
+proc disconnect {args} { }
 proc targets {args} {
     global PHYS
     # The second core sees physical memory: the boot image never starts it.

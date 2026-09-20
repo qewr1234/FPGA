@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 i (force-mem-access off; it was blocking SLCR writes)"
+set WM_SCRIPT_VERSION "2026-09-20 j (no stop hammering; use the board as it is first)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -473,55 +473,67 @@ proc wm_find_ddr {} {
     return 0
 }
 
+# A wedged debug port stays wedged, and every read after it returns junk, so each
+# attempt starts from a fresh channel.
+proc wm_fresh_connection {} {
+    catch {disconnect}
+    after 300
+    catch {connect}
+    after 300
+}
+
 # Returns "" when the board is ready, otherwise why this attempt did not work.
+#
+#   asis     do not reset at all. The board has already booted and its own FSBL
+#            has configured the PS -- clocks, DDR, the lot -- so there is nothing
+#            for ps7_init to do. This is the sequence that worked when typed by
+#            hand, and it is tried first because it disturbs the least.
+#   booted   reset, let the boot image run to the end, then halt. Same idea, but
+#            from a known starting point.
+#   bootrom  reset and halt quickly, before a boot image gets going, and bring
+#            the PS up with ps7_init. Halting is one request after a pause: the
+#            previous version hammered stop for 300 ms straight after the reset
+#            and put the debug port into an APB AP transaction error, after which
+#            every read returned bus junk -- including the device id code, which
+#            reads correctly by hand.
 proc wm_attempt {mode} {
     global bit xsa build REG_ID PSS_IDCODE
     global ADDR_CONFIG ADDR_INPUT ADDR_RESULT ADDR_GOLD wm_access_via
 
-    catch {targets -set -filter {name =~ "APU*"}}
-    catch {rst -system}
-    if {$mode eq "bootrom"} {
-        # Take the core as soon as it answers, before anything it loads can
-        # switch the MMU on.
-        for {set i 0} {$i < 60} {incr i} {
-            catch {targets -set -filter {name =~ "ARM*#0"}}
-            catch {stop}
-            after 5
-        }
-    } else {
-        # Let the boot image run all the way, so its FSBL configures the PS.
-        after 6000
+    wm_fresh_connection
+    if {$mode ne "asis"} {
+        catch {targets -set -filter {name =~ "APU*"}}
+        catch {rst -system}
+        after [expr {$mode eq "booted" ? 6000 : 400}]
     }
     catch {targets -set -filter {name =~ "ARM*#0"}}
-    catch {stop}
+    for {set i 0} {$i < 5} {incr i} {
+        if {![catch {stop}]} break
+        after 200
+    }
     # Leave this off. Turning it on lets memory be read without halting the core
     # first, but it also routes accesses around the processor, and on this board
-    # that silently drops every write to SLCR -- so ps7_init configured nothing,
-    # the level shifters were never switched back on after the PL was programmed,
-    # and the core's ID register read as bus junk. The core is halted above, so
-    # nothing here needs it.
+    # that silently drops every write -- to SLCR, and to DDR. The core is halted
+    # above, so nothing here needs it.
     catch {configparams force-mem-access 0}
 
-    # Before trusting a single other value: the device's own ID code. Its low 12
-    # bits are Xilinx's JEDEC id, so a right answer here means the memory path is
-    # real, and a wrong one means nothing read afterwards is worth anything.
+    # Before trusting a single other value: the device's own id code. Its low 12
+    # bits are Xilinx's JEDEC id, so a right answer means the memory path is real
+    # and a wrong one means nothing read afterwards is worth anything.
     set idc -1
     catch {set idc [wm_rd $PSS_IDCODE]}
     if {($idc & 0xfff) != 0x093} {
-        # An enabled MMU makes even this read fail or lie, so clear it and retry
-        # once before concluding the memory path is no good.
         wm_mmu_off
         set idc -1
         catch {set idc [wm_rd $PSS_IDCODE]}
     }
     if {($idc & 0xfff) != 0x093} {
-        return "PSS_IDCODE at [wm_hex $PSS_IDCODE] reads [wm_hex $idc], which is not a\
-                Xilinx device id. Memory access is not reaching the PS at all, so\
-                nothing else read here would mean anything."
+        return "PSS_IDCODE at [wm_hex $PSS_IDCODE] reads [wm_hex $idc], not a Xilinx\
+                device id, so the debug path is not reaching the PS"
     }
 
     set lock [wm_slcr_unlock]
-    if {$lock ne "unlocked"} { puts "  SLCR: $lock" }
+    if {$lock ne "unlocked"} { return "SLCR did not unlock ($lock)" }
 
     if {$mode eq "bootrom"} {
         if {[catch {wm_ensure_ps7_init $build $xsa} e]} { return "ps7_init unavailable: $e" }
@@ -533,9 +545,7 @@ proc wm_attempt {mode} {
     catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
 
     set why [wm_connect_pl]
-    if {$why ne ""} {
-        return "$why -- SLCR writes are being ignored, so the PL cannot be connected to the PS"
-    }
+    if {$why ne ""} { return $why }
 
     set via [wm_access_for_id]
     if {$via eq ""} {
@@ -561,10 +571,13 @@ set wm_access_via ""
 set wm_core_id 0
 set wm_reasons {}
 set wm_ready 0
-foreach mode {bootrom booted} {
-    puts "Bring-up : trying with the processor [expr {$mode eq {bootrom} ?
-            {caught in BootROM, PS brought up by ps7_init} :
-            {allowed to boot, PS brought up by its own FSBL}}]"
+array set wm_modes {
+    asis    {the board left as it is, PS as its own boot left it}
+    booted  {reset, allowed to boot, PS brought up by its FSBL}
+    bootrom {reset and halted early, PS brought up by ps7_init}
+}
+foreach mode {asis booted bootrom} {
+    puts "Bring-up : trying with $wm_modes($mode)"
     if {[catch {wm_attempt $mode} why]} { set why "raised an error: $why" }
     if {$why eq ""} { set wm_ready 1 ; break }
     puts "           did not work -- $why"
