@@ -22,7 +22,13 @@
 # what to check.
 
 if {[llength [get_projects -quiet]] != 0} {
-    error "Save and close the current project before sourcing this script."
+    puts "A project is open in this Vivado session: [get_projects -quiet]"
+    puts "This script creates its own in-memory projects and cannot run alongside one."
+    puts "Save anything you need, then:"
+    puts "    close_project"
+    puts "    source [info script]"
+    puts "Or start a fresh Vivado Tcl Shell, which opens with no project."
+    error "Close the open project before sourcing this script."
 }
 set root [file normalize [file join [file dirname [info script]] ..]]
 
