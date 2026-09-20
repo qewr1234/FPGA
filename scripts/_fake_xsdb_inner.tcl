@@ -15,6 +15,25 @@ set FAULT  [lindex $argv 2]
 
 array set MEM {}
 
+# A boot image that reached the point of enabling the MMU: every debugger read is
+# translated and the PL is not in the tables. "mmusctlr" additionally exposes the
+# SCTLR register, which is what lets the run script recover on its own.
+set MMU_ON [expr {$FAULT in {mmu mmusctlr}}]
+set SCTLR  0x00C51878
+if {$FAULT eq "mmusctlr"} {
+    proc rrd {name} {
+        global SCTLR
+        if {$name ne "cp15.SCTLR"} { error "no such register $name" }
+        return [format "cp15.SCTLR: %08X" $SCTLR]
+    }
+    proc rwr {name val} {
+        global SCTLR MMU_ON
+        if {$name ne "cp15.SCTLR"} { error "no such register $name" }
+        set SCTLR $val
+        if {($val & 1) == 0} { set MMU_ON 0 }
+    }
+}
+
 set WM_BASE   0x43C00000
 set DMA_BASE  0x40400000
 
@@ -75,8 +94,9 @@ proc dma_run_mm2s {bytes} {
 }
 
 proc mwr {addr val} {
-    global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
+    global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT MMU_ON
     set addr [expr {$addr & 0xffffffff}]
+    if {$MMU_ON} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
     set val  [expr {$val & 0xffffffff}]
 
     if {$addr >= $WM_BASE && $addr < $WM_BASE + 0x40} {
@@ -112,6 +132,12 @@ proc mwr {addr val} {
 
 proc mrd {args} {
     global MEM WM_BASE DMA_BASE CORE D FAULT
+    global MMU_ON
+    if {$MMU_ON} {
+        set a0 [lindex $args end]
+        if {[string match "-*" $a0] || ![string is integer -strict $a0]} { set a0 [lindex $args end] }
+        error "Memory read error at $a0. MMU section translation fault"
+    }
     if {[lsearch -exact $args "-bin"] >= 0} {
         set fi [lsearch -exact $args "-file"]
         return [mrd_bin_file [lindex $args [expr {$fi + 1}]] \

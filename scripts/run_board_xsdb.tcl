@@ -93,6 +93,32 @@ proc wm_hex {v} { return [format 0x%08x $v] }
 
 # Whatever goes wrong, print everything that would otherwise need another run to
 # find out. Every read is guarded: the point is to report, not to fail again.
+# Returns "" when the address is readable, the error text otherwise.
+proc wm_probe {addr} {
+    if {[catch {mrd -value $addr} e]} { return $e }
+    return ""
+}
+
+# A boot image that got as far as enabling the MMU makes every debugger read go
+# through its page tables, and the PL is not in them: reads of the core and the
+# DMA come back "MMU section translation fault". Clearing SCTLR.M puts the core
+# back on physical addresses. xsdb spells the register differently across
+# versions, so each spelling is tried and the result is checked by re-reading the
+# address that was failing -- nothing here is assumed to have worked.
+proc wm_clear_mmu {probe_addr} {
+    foreach name {cp15.SCTLR SCTLR cp15_SCTLR cp15.c1.SCTLR} {
+        if {[catch {rrd $name} raw]} continue
+        set hex ""
+        regexp {([0-9a-fA-F]{2,8})\s*$} $raw -> hex
+        if {$hex eq "" || ![scan $hex %x v]} continue
+        # M (MMU), C (data cache), I (instruction cache)
+        set new [expr {$v & ~0x1 & ~0x4 & ~0x1000}]
+        if {[catch {rwr $name $new}]} continue
+        if {[wm_probe $probe_addr] eq ""} { return $name }
+    }
+    return ""
+}
+
 proc wm_dump_state {} {
     global REG_CTRL REG_NWIN REG_STATUS REG_CYCLES REG_WINDONE REG_INSTALL
     global REG_OUTSTALL REG_OUTCOUNT REG_CFGCOUNT REG_ID
@@ -263,12 +289,19 @@ puts "Connecting..."
 connect
 targets -set -filter {name =~ "APU*"}
 rst -system
-after 2000
 
+# Take the core the moment it is accessible and keep taking it. If this board has
+# a boot image, every millisecond spent waiting is the FSBL getting further: it
+# reprograms the PL out from under the bitstream about to be downloaded, writes
+# over DDR, and -- worst -- turns the MMU on, after which the debugger's reads go
+# through its page tables and the PL is no longer reachable at its real
+# addresses. Hammering stop for a moment catches it while it is still in BootROM.
+for {set i 0} {$i < 60} {incr i} {
+    catch {targets -set -filter {name =~ "ARM*#0"}}
+    catch {stop}
+    after 5
+}
 targets -set -filter {name =~ "ARM*#0"}
-# Halt the processor before it can run anything. If this board boots from SD or
-# QSPI, the reset above starts its boot image, and an FSBL would reprogram the PL
-# out from under us and scribble on DDR. It may already be halted; that is fine.
 catch {stop}
 # Let mrd/mwr reach memory without halting the core first.
 catch {configparams force-mem-access 1}
@@ -282,6 +315,26 @@ set ps7src [wm_ensure_ps7_init $build $xsa]
 if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
 ps7_init
 ps7_post_config
+
+# Nothing below can work if the debugger's reads are being translated, and the
+# failure would otherwise look like dead DDR rather than a live MMU.
+set mmu_err [wm_probe $REG_ID]
+if {$mmu_err ne ""} {
+    if {[string match -nocase "*translation fault*" $mmu_err]} {
+        set fixed [wm_clear_mmu $REG_ID]
+        if {$fixed ne ""} {
+            puts "  MMU was on from a boot image; cleared it via $fixed."
+        } else {
+            error "the processor has its MMU on, so reads of the PL come back as\
+                   translation faults and nothing can be reached at its real address.\
+                   This board ran a boot image out of SD or QSPI before it could be\
+                   halted. Remove the SD card (or set the boot mode jumpers to JTAG),\
+                   power-cycle the board, and run this again."
+        }
+    } else {
+        error "cannot read the core's ID register at [wm_hex $REG_ID]: $mmu_err"
+    }
+}
 
 # From here on the board is doing the work. Any failure prints every register
 # first, so one paste of the output carries the diagnosis and there is no need to

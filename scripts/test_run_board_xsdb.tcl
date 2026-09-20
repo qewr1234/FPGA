@@ -26,6 +26,8 @@ set cases {
     {results do not match}     {0 mismatch "RESULT: FAIL"}
     {no bulk memory read}      {0 nobulk   "RESULT: PASS"}
     {256 MB board}             {0 smallddr "RESULT: PASS"}
+    {MMU on, SCTLR reachable}  {0 mmusctlr "RESULT: PASS"}
+    {MMU on, no way to clear}  {0 mmu      "Remove the SD card"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init nowhere to be found} {0 nops7missing "ps7_init is not defined"}
 }
