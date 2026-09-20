@@ -1,4 +1,7 @@
-# Zedboard 브링업 — v3/v4 코어를 실제로 돌리기
+# 보드 브링업 — v3/v4 코어를 실제로 돌리기
+
+대상: XC7Z020-CLG484 기반 Zynq 보드. 보드 파트는 PS(DDR·MIO·클럭) 프리셋만 정하므로,
+같은 디바이스의 보드 파트면 일단 빌드는 됩니다. DDR이 실제로 다르면 보드에서 돌릴 때 드러납니다.
 
 `window_mac_axis`(AXI-Stream 래퍼) + Zynq PS + AXI DMA로 실제 VGG11 `features.3` 창을 코어에 흘리고,
 모든 출력을 정수 oracle과 대조하며, 코어 내부 cycle 카운터를 읽어 시뮬레이션 수치와 비교합니다.
@@ -136,9 +139,8 @@ P=64/P=128은 7020에서 자원과 Fmax가 빡빡할 수 있습니다. weight RA
 | 증상 | 원인 / 대응 |
 |---|---|
 | `Vivado was not found` | Vivado는 설치해도 PATH에 안 잡힙니다. `.cmd`가 흔한 설치 경로를 뒤지지만 못 찾으면 `set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2` 후 다시 실행하거나, 시작 메뉴의 **Vivado Tcl Shell**에서 `source` 하세요 |
-| `Board part ... is not installed` | **가장 흔한 첫 실패.** Vivado `Tools → Vivado Store → Boards → 'zed' 검색 → ZedBoard → Install` 후 Vivado 재시작. 확인: `get_board_parts -quiet *zed*`. 이름이 다르면 `set ::env(CNN_BOARD) <이름>`. 스토어가 안 되면 `git clone https://github.com/Digilent/vivado-boards` 후 `set_param board.repoPaths {.../new/board_files}` |
-| `The PS has no S_AXI_HP0 port` | 보드 프리셋 없이 PS7이 생성돼 HP 포트가 안 열린 것. 위와 같은 해결 — 보드 파일부터 설치하세요 |
-| `No valid slave interface could be found to connect to .../M_AXI_MM2S` | 같은 원인. 스크립트가 이제 SmartConnect 수동 연결로 우회를 시도하지만, 근본 해결은 보드 파일입니다 |
+| 보드 파트 관련 에러 | **먼저 `get_board_parts`를 치세요.** 설치된 목록이 나옵니다. 님 FPGA 파트(`xc7z020clg484`)와 같은 게 있으면 그걸 쓰면 됩니다 — `xilinx.com:zc702:part0:1.4`가 바로 그것입니다. 스크립트가 이제 자동으로 같은 파트의 보드를 찾아 씁니다. 직접 지정하려면 `set ::env(CNN_BOARD) <이름>` |
+| `No installed board part uses xc7z020clg484` | 같은 디바이스 보드가 하나도 없는 경우. `Tools → Vivado Store → Boards`에서 ZC702 등을 설치하세요 |
 | BD에서 `window_mac_top`의 AXI 인터페이스 미인식 | 모듈 참조의 인터페이스 추론 실패. BD에서 해당 셀 우클릭 → 인터페이스 수동 지정, 또는 `ipx::package_project`로 IP 패키징 후 사용 |
 | `aclk`/`aresetn` 미연결 | 스크립트가 `proc_sys_reset` 셀 이름을 못 찾은 경우. BD에서 `FCLK_CLK0`와 `peripheral_aresetn`을 직접 연결 |
 | DMA 전송이 끝나지 않음 | `c_sg_length_width`가 작으면 전송 길이가 잘립니다. 스크립트는 26으로 설정하지만 IP 버전에 따라 이름이 다를 수 있으니 DMA 설정에서 확인 |

@@ -55,28 +55,44 @@ set dest [file join $root build "zed_${tag}_[clock seconds]"]
 file mkdir $dest
 
 create_project system $dest -part $part -force
-# Stop here rather than three quarters of the way in. Without the board preset the
-# PS7 comes up bare: no HP port for the DMA to reach memory, and DDR settings that
-# do not match this board, so even a bitstream that builds will not run.
+# The board part only supplies the PS preset (DDR model, MIO map, PS clock). If the
+# configured one is not installed, look for any installed board part on the same
+# FPGA device before giving up: the first board build here failed on a missing
+# ZedBoard part while ZC702 -- the same xc7z020clg484 -- was installed all along,
+# and that cost an hour of chasing vendor files that were never needed.
 if {[llength [get_board_parts -quiet $board]] == 0} {
-    puts ""
-    puts "Board part '$board' is not installed."
-    puts ""
-    puts "Install it:  Tools -> Vivado Store (or XHUB Store) -> Boards -> search 'zed'"
-    puts "             -> ZedBoard -> Install, then restart Vivado."
-    puts "Or clone https://github.com/Digilent/vivado-boards and point Vivado at it:"
-    puts "             set_param board.repoPaths {C:/path/vivado-boards/new/board_files}"
-    puts ""
-    puts "Check what is available with:   get_board_parts -quiet *zed*"
-    puts "If the name differs, pass it:   set ::env(CNN_BOARD) <name>"
-    puts ""
-    puts "To build anyway (the result will not run on a board):"
-    puts "             set ::env(CNN_ALLOW_NO_BOARD) 1"
-    if {![info exists ::env(CNN_ALLOW_NO_BOARD)] || $::env(CNN_ALLOW_NO_BOARD) == 0} {
-        close_project
-        error "Zedboard board files are required. See the instructions above."
+    set device $part
+    regsub {-[0-9A-Za-z]+$} $part "" device
+    set matches {}
+    foreach bp [get_board_parts -quiet] {
+        if {[catch {set bppart [get_property PART_NAME [get_board_parts -quiet $bp]]}]} { continue }
+        if {[string equal $bppart $part] || [string match "${device}*" $bppart]} { lappend matches $bp }
     }
-    puts "CNN_ALLOW_NO_BOARD is set: continuing without the preset."
+    if {[llength $matches] != 0} {
+        set board [lindex [lsort $matches] end]
+        puts ""
+        puts "Configured board part is not installed; using '$board', which is on the same"
+        puts "device ($part). Installed board parts on this device: $matches"
+        puts "Its PS preset (DDR part, MIO map) belongs to that board. The bitstream builds"
+        puts "either way; if your board's DDR differs, that shows up when you run it, and"
+        puts "only the PS configuration needs changing. Override with CNN_BOARD."
+        puts ""
+        set_property board_part $board [current_project]
+    } else {
+        puts ""
+        puts "No installed board part uses $part, so the PS cannot be preset."
+        puts "Without it the PS7 has no HP port for the DMA and no valid DDR settings."
+        puts ""
+        puts "See what is installed:   get_board_parts"
+        puts "Pick one on your device: set ::env(CNN_BOARD) <name>"
+        puts "Or install more:         Tools -> Vivado Store -> Boards"
+        puts ""
+        if {![info exists ::env(CNN_ALLOW_NO_BOARD)] || $::env(CNN_ALLOW_NO_BOARD) == 0} {
+            close_project
+            error "No board part available for $part. See above."
+        }
+        puts "CNN_ALLOW_NO_BOARD is set: continuing without a preset."
+    }
 } else {
     set_property board_part $board [current_project]
 }
