@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 e (mmu-off before ps7_init)"
+set WM_SCRIPT_VERSION "2026-09-20 f (checks what ps7_init actually did)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -57,6 +57,19 @@ set CTRL_CORE_RST 0x01
 set CTRL_CFG_MODE 0x02
 set CTRL_ARM      0x10
 set CTRL_CFG_RST  0x20
+
+# Zynq PS registers that say whether ps7_init had any effect. Writes to a locked
+# SLCR are dropped silently, which looks exactly like ps7_init succeeding and
+# nothing working afterwards.
+set SLCR_UNLOCK   0xF8000008
+set SLCR_LOCKSTA  0xF800000C
+set PLL_STATUS    0xF800010C
+set FPGA0_CLK_CTRL 0xF8000170
+set FPGA_RST_CTRL 0xF8000240
+set LVL_SHFTR_EN  0xF8000900
+set DDRC_CTRL     0xF8006000
+set DDRC_MODE_STS 0xF8006054
+set DEVCFG_INT_STS 0xF8007010
 
 # AXI DMA, simple mode (PG021 table 2-1).
 set DMA_BASE  0x40400000
@@ -152,6 +165,25 @@ proc wm_mmu_off {} {
 proc wm_probe {addr} {
     if {[catch {mrd -value $addr} e]} { return $e }
     return ""
+}
+
+proc wm_dump_ps {} {
+    global SLCR_LOCKSTA PLL_STATUS FPGA0_CLK_CTRL FPGA_RST_CTRL LVL_SHFTR_EN
+    global DDRC_CTRL DDRC_MODE_STS DEVCFG_INT_STS
+    puts ""
+    puts "--- PS state (what ps7_init left behind) ---"
+    foreach {name addr} [list \
+            SLCR_LOCKSTA $SLCR_LOCKSTA PLL_STATUS $PLL_STATUS \
+            FPGA0_CLK_CTRL $FPGA0_CLK_CTRL FPGA_RST_CTRL $FPGA_RST_CTRL \
+            LVL_SHFTR_EN $LVL_SHFTR_EN DDRC_CTRL $DDRC_CTRL \
+            DDRC_MODE_STS $DDRC_MODE_STS DEVCFG_INT_STS $DEVCFG_INT_STS] {
+        if {[catch {wm_rd $addr} v]} {
+            puts [format "  %-15s unreadable (%s)" $name $v]
+        } else {
+            puts [format "  %-15s %s" $name [wm_hex $v]]
+        }
+    }
+    puts "--------------------------------------------"
 }
 
 proc wm_dump_state {} {
@@ -357,10 +389,50 @@ fpga -file $bit
 loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]
 
 puts "Initialising the PS..."
+# Writes to a locked SLCR are dropped without an error, so ps7_init would appear
+# to succeed while configuring nothing at all. Unlock it and check that it took.
+catch {mwr $SLCR_UNLOCK 0x0000DF0D}
+if {![catch {wm_rd $SLCR_LOCKSTA} lock] && $lock != 0} {
+    puts "  warning: SLCR still reads locked ($lock); its writes may be ignored."
+}
 set ps7src [wm_ensure_ps7_init $build $xsa]
 if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
 ps7_init
 ps7_post_config
+
+# ps7_init reports nothing, so check its effects by hand. Each of these failing
+# explains everything downstream, and saying which one it is beats another run.
+set ps_ok 1
+foreach {what addr test why} [list \
+    "the PLLs"        $PLL_STATUS      {($v & 0x7) == 0x7} \
+        "ARM, DDR and IO PLLs are not all locked" \
+    "the PL clock"    $FPGA0_CLK_CTRL  {(($v >> 8) & 0x3f) != 0 && (($v >> 20) & 0x3f) != 0} \
+        "FCLK_CLK0 has a zero divisor, so the PL has no clock" \
+    "the PL reset"    $FPGA_RST_CTRL   {$v == 0} \
+        "FCLK_RESET is still asserted, so the PL is held in reset" \
+    "the level shifters" $LVL_SHFTR_EN {($v & 0xf) == 0xf} \
+        "PS-to-PL level shifters are off, so nothing in the PL can be reached" \
+    "the DDR controller" $DDRC_CTRL    {($v & 0x1) == 0x1} \
+        "the DDR controller is not enabled"] {
+    if {[catch {wm_rd $addr} v]} {
+        puts "  $what: [wm_hex $addr] unreadable"
+        set ps_ok 0
+        continue
+    }
+    if {![expr $test]} {
+        puts "  $what: [wm_hex $addr] = [wm_hex $v] -- $why"
+        set ps_ok 0
+    }
+}
+if {!$ps_ok} {
+    wm_dump_ps
+    error "ps7_init ran but the PS is not configured, as listed above. This board\
+           boots from QSPI, and halting it partway through BootROM leaves the PS in a\
+           state ps7_init cannot finish from. Set the board's boot mode jumpers to\
+           JTAG and power-cycle: BootROM then completes, finds nothing to boot, and\
+           leaves the processor idle with the MMU off, which is the configuration all\
+           of this expects."
+}
 
 # Nothing below can work if the debugger's reads are still being translated, and
 # the failure would otherwise look like dead DDR rather than a live MMU.
@@ -376,6 +448,16 @@ if {$acc_err ne ""} {
         }
     }
     if {$acc_err ne ""} { catch {targets -set -filter {name =~ "ARM*#0"}} }
+}
+if {$acc_err eq ""} {
+    set idv [wm_rd $REG_ID]
+    if {($idv & 0xffff0000) != 0x4d410000} {
+        wm_dump_ps
+        error "the core's ID register reads [wm_hex $idv] instead of 0x4d41000x.\
+               The PL is answering but not with the design in this bitstream: either\
+               it was reconfigured by something else, or it has no clock. The PS\
+               registers above say which."
+    }
 }
 if {$acc_err ne ""} {
     if {[string match -nocase "*translation fault*" $acc_err]} {
@@ -577,5 +659,6 @@ if {$bad != 0} {
 
 } wm_err wm_opts]} {
     catch {wm_dump_state}
+    catch {wm_dump_ps}
     return -options $wm_opts $wm_err
 }

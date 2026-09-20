@@ -15,6 +15,17 @@ set FAULT  [lindex $argv 2]
 
 array set MEM {}
 
+# Zynq PS registers. Healthy values unless FAULT=psdead, which is what a board
+# whose ps7_init achieved nothing looks like.
+array set PS {}
+if {$FAULT eq "psdead"} {
+    array set PS {0xF800000C 1 0xF800010C 0 0xF8000170 0 0xF8000240 0xF
+                  0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF8007010 0}
+} else {
+    array set PS {0xF800000C 0 0xF800010C 7 0xF8000170 0x00100A00 0xF8000240 0
+                  0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF8007010 0x4}
+}
+
 # A boot image that reached the point of enabling the MMU: every debugger read is
 # translated and the PL is not in the tables. "mmusctlr" additionally exposes the
 # SCTLR register, which is what lets the run script recover on its own.
@@ -141,7 +152,7 @@ proc mwr {addr val} {
 }
 
 proc mrd {args} {
-    global MEM WM_BASE DMA_BASE CORE D FAULT
+    global MEM WM_BASE DMA_BASE CORE D FAULT PS
     global MMU_ON
     if {$MMU_ON} {
         set a0 [lindex $args end]
@@ -173,6 +184,8 @@ proc mrd {args} {
                 52 { lappend out [fmt $D(s2mm_sr)] }
                 default { lappend out [fmt 0] }
             }
+        } elseif {[info exists PS([format 0x%08X $a])]} {
+            lappend out [fmt $PS([format 0x%08X $a])]
         } else {
             lappend out [fmt [memrd $a]]
         }

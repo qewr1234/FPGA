@@ -19,7 +19,6 @@ set inner  [file join $here _fake_xsdb_inner.tcl]
 set cases {
     {clean run, bare hex}      {0 none     "RESULT: PASS"}
     {clean run, 0x-prefix hex} {1 none     "RESULT: PASS"}
-    {wrong bitstream}          {0 badid    "ID register reads"}
     {DDR not answering}        {0 ddr      "do not match this board"}
     {config stream cut short}  {0 cfgshort "configuration items, expected 73856"}
     {DMA reports an error}     {0 dmaerr   "DMA reported an error"}
@@ -29,6 +28,8 @@ set cases {
     {MMU on, SCTLR by name}    {0 mmusctlr    "RESULT: PASS"}
     {MMU on, name discovered}  {0 mmudiscover "RESULT: PASS"}
     {MMU on, no way to clear}  {0 mmu         "boot mode jumpers to JTAG"}
+    {ps7_init achieved nothing} {0 psdead      "the PS is not configured"}
+    {PL answers with wrong ID} {0 badid        "instead of 0x4d41000x"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init nowhere to be found} {0 nops7missing "ps7_init is not defined"}
 }
