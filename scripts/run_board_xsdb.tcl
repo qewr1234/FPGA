@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 l (exactly the sequence that worked by hand)"
+set WM_SCRIPT_VERSION "2026-09-20 m (plain mrd form, the one proven on this board)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -97,25 +97,44 @@ set DMASR_ERR   0x70    ;# DMAIntErr | DMASlvErr | DMADecErr
 # the memory map" -- which is its own bookkeeping, not the board saying no.
 #
 # mrd prints hex with or without the 0x prefix depending on version; normalise.
-proc wm_rd {addr} {
-    # Plain access first. -force only overrides xsdb's own address-map check, and
-    # it is needed for PL addresses ("PL AXI slave ports access is not allowed"),
-    # so it is used on the retry rather than on everything.
-    if {[catch {mrd -value $addr} raw]} {
-        if {[catch {mrd -force -value $addr} raw]} {
+# "mrd <addr> <count>" is the form that reads correctly on this board. The
+# -value form returned 0x7fffffff for PSS_IDCODE where this one returned the real
+# device id from the same prompt seconds earlier, so it is not used at all.
+#
+# -force only overrides xsdb's own address-map check, which PL addresses need
+# ("PL AXI slave ports access is not allowed") and PS addresses do not, so it is
+# the retry rather than the default.
+proc wm_mrd_words {addr n} {
+    if {[catch {mrd $addr $n} raw]} {
+        if {[catch {mrd -force $addr $n} raw]} {
             error "read of [format 0x%08x $addr] failed: $raw"
         }
     }
-    set hex [lindex $raw 0]
-    regsub {^0[xX]} $hex "" hex
-    if {![scan $hex %x n]} {
-        error "could not read [format 0x%08x $addr]: mrd returned '$raw'"
+    set out {}
+    foreach line [split $raw "\n"] {
+        set line [string trim $line]
+        if {$line eq ""} continue
+        # Each line looks like "F8000530:   23727093" -- drop the address label.
+        set colon [string first ":" $line]
+        if {$colon >= 0} { set line [string range $line $colon+1 end] }
+        foreach tok $line {
+            regsub {^0[xX]} $tok "" tok
+            if {[scan $tok %x v]} { lappend out [expr {$v & 0xffffffff}] }
+        }
     }
-    return [expr {$n & 0xffffffff}]
+    return $out
+}
+
+proc wm_rd {addr} {
+    set l [wm_mrd_words $addr 1]
+    if {[llength $l] < 1} {
+        error "read of [format 0x%08x $addr] returned nothing usable"
+    }
+    return [lindex $l 0]
 }
 
 proc wm_wr {addr val} {
-    if {[catch {mwr $addr $val}]} { wm_wr $addr $val }
+    if {[catch {mwr $addr $val}]} { mwr -force $addr $val }
 }
 
 proc wm_need {path what} {
@@ -129,7 +148,7 @@ proc wm_hex {v} { return [format 0x%08x $v] }
 # find out. Every read is guarded: the point is to report, not to fail again.
 # Returns "" when the address is readable, the error text otherwise.
 proc wm_probe {addr} {
-    if {[catch {mrd -force -value $addr} e]} { return $e }
+    if {[catch {wm_rd $addr} e]} { return $e }
     return ""
 }
 
@@ -180,7 +199,7 @@ proc wm_mmu_off {} {
 
 # Returns "" when the address is readable, the error text otherwise.
 proc wm_probe {addr} {
-    if {[catch {mrd -force -value $addr} e]} { return $e }
+    if {[catch {wm_rd $addr} e]} { return $e }
     return ""
 }
 
@@ -657,19 +676,14 @@ if {$fast} {
     set chunk 4096
     for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
         set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
-        set vals [mrd -force -value [expr {$ADDR_RESULT + $off * 4}] $n]
+        set vals [wm_mrd_words [expr {$ADDR_RESULT + $off * 4}] $n]
         if {[llength $vals] != $n} {
             error "mrd returned [llength $vals] values where $n were asked for.\
                    This build of xsdb does not take a word count, so the results\
                    cannot be read back in blocks."
         }
         for {set j 0} {$j < $n} {incr j} {
-            set hex [lindex $vals $j]
-            regsub {^0[xX]} $hex "" hex
-            if {![scan $hex %x got]} {
-                error "could not parse '$hex' as a result value at word [expr {$off + $j}]"
-            }
-            set got [expr {$got & 0xffffffff}]
+            set got [lindex $vals $j]
             set want [lindex $gold [expr {$off + $j}]]
             if {$got != $want} {
                 if {$bad == 0} {

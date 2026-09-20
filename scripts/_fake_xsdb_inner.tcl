@@ -215,6 +215,7 @@ proc mrd {args} {
     if {[llength $args] > $idx + 1} { set n [lindex $args [expr {$idx + 1}]] }
 
     set out {}
+    set lines {}
     for {set i 0} {$i < $n} {incr i} {
         set a [expr {$addr + $i * 4}]
         if {$a >= $WM_BASE && $a < $WM_BASE + 0x40} {
