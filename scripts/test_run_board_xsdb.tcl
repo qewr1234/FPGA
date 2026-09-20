@@ -24,11 +24,14 @@ set cases {
     {config stream cut short}  {0 cfgshort "configuration items, expected 73856"}
     {DMA reports an error}     {0 dmaerr   "DMA reported an error"}
     {results do not match}     {0 mismatch "RESULT: FAIL"}
+    {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
+    {ps7_init nowhere to be found} {0 nops7missing "ps7_init is not defined"}
 }
 
 set failures 0
 foreach {name spec} $cases {
     lassign $spec prefix fault want
+    file delete -force [file join $repo build fake_xsdb_build]
     set rc [catch {exec [info nameofexecutable] $inner $repo $prefix $fault 2>@1} out]
     if {[string first $want $out] >= 0} {
         puts [format "  ok    %-26s %s" $name "-> $want"]

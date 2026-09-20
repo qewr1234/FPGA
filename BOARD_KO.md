@@ -13,7 +13,7 @@
 | 코어 4종 (`rtl/*_window_mac.sv`) | **검증됨** — 167케이스, 출력 3,447,344개 불일치 0 |
 | AXI-Stream 래퍼 (`rtl/window_mac_axis.sv`) | **시뮬레이션 검증됨** — 28케이스, 코어 대비 cycle 오버헤드 0 |
 | 보드 데이터 생성 (`scripts/export_board_data.py`) | **검증됨** — 시뮬레이션 벡터와 바이트 단위 대조 |
-| 실행 스크립트 (`scripts/run_board_xsdb.tcl`) | **스탠드인 검증됨** — 8케이스, 정상 경로와 6개 실패 경로 |
+| 실행 스크립트 (`scripts/run_board_xsdb.tcl`) | **스탠드인 검증됨** — 10케이스 / 보드에서 `connect`·`fpga`·`loadhw`까지 확인 |
 | PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **미실행**, Vitis 있을 때만 필요 |
 | Vivado 빌드 (`scripts/build_zedboard.tcl`) | **실행됨** — xc7z020clg484, v3 P=8 @100MHz, WNS +0.919 ns, 0 errors |
 | 보드 로드 (`scripts/run_board.tcl`) | 미실행 — Vitis ELF 경로용 |
@@ -104,7 +104,8 @@ set ::env(WM_BUILD) C:/fpga/FPGA/build/zed_v3_p8_t4_1789907417
 
 `scripts/test_run_board_xsdb.tcl`이 `xsdb`를 흉내 낸 스탠드인 위에서 실행 스크립트를 돌립니다.
 정상 경로는 PASS에 도달해야 하고, 잘못된 비트스트림·DDR 무응답·설정 스트림 절단·DMA 에러·
-결과 불일치·데이터 크기 불일치는 각각 자기 메시지로 멈춰야 합니다. 8개 케이스 전부 통과합니다.
+결과 불일치·데이터 크기 불일치는 각각 자기 메시지로 멈춰야 합니다. `loadhw`가 `ps7_init`을
+정의하지 않는 경우의 복구 경로도 포함해 10개 케이스 전부 통과합니다.
 
 ```
 python scripts/export_board_data.py --frames 512
@@ -172,6 +173,7 @@ P=64/P=128은 7020에서 자원과 Fmax가 빡빡할 수 있습니다. weight RA
 
 | 증상 | 원인 / 대응 |
 |---|---|
+| `invalid command name "ps7_init"` | `loadhw`가 정의해주는 게 정상인데 안 해주는 설치가 있습니다. 스크립트가 빌드 트리에서 `ps7_init.tcl`(PS7 IP가 생성)을 찾아 직접 `source` 합니다. 그것도 없으면 XSA(zip) 안의 사본을 꺼냅니다 |
 | Vitis에 `Create Platform Component`가 없음 | Vivado 에디션만 설치된 것입니다. Embedded 개발 도구(ARM 컴파일러)가 없습니다. **설치할 필요 없습니다** — 3단계의 `xsdb` 경로를 쓰세요 |
 | `Vivado was not found` | Vivado는 설치해도 PATH에 안 잡힙니다. `.cmd`가 흔한 설치 경로를 뒤지지만 못 찾으면 `set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2` 후 다시 실행하거나, 시작 메뉴의 **Vivado Tcl Shell**에서 `source` 하세요 |
 | 보드 파트 관련 에러 | **먼저 `get_board_parts`를 치세요.** 설치된 목록이 나옵니다. 님 FPGA 파트(`xc7z020clg484`)와 같은 게 있으면 그걸 쓰면 됩니다 — `xilinx.com:zc702:part0:1.4`가 바로 그것입니다. 스크립트가 이제 자동으로 같은 파트의 보드를 찾아 씁니다. 직접 지정하려면 `set ::env(CNN_BOARD) <이름>` |

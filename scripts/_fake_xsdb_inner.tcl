@@ -157,8 +157,12 @@ proc targets {args} { }
 proc rst {args} { }
 proc fpga {args} { puts "  \[stub\] fpga [lindex $args 1]" }
 proc loadhw {args} { puts "  \[stub\] loadhw" }
-proc ps7_init {args} { }
-proc ps7_post_config {args} { }
+# loadhw normally defines these. The "nops7*" cases leave them undefined, which is
+# what a real install did, so the run script has to recover them itself.
+if {$FAULT ni {nops7 nops7missing}} {
+    proc ps7_init {args} { }
+    proc ps7_post_config {args} { }
+}
 
 # The run script insists on a build directory holding a bitstream and an XSA.
 set fake [file join $REPO build fake_xsdb_build]
@@ -166,5 +170,15 @@ file mkdir $fake
 foreach f {system_wrapper.bit system_wrapper.xsa} {
     close [open [file join $fake $f] w]
 }
+# The PS7 IP writes ps7_init.tcl somewhere under the build tree; mimic that depth.
+if {$FAULT eq "nops7"} {
+    set ipdir [file join $fake system.gen sources_1 bd system ip system_processing_system7_0_0]
+    file mkdir $ipdir
+    set fh [open [file join $ipdir ps7_init.tcl] w]
+    puts $fh {proc ps7_init {} { puts "  ps7_init ran from the sourced file" }}
+    puts $fh {proc ps7_post_config {} { }}
+    close $fh
+}
+
 set ::env(WM_BUILD) $fake
 source [file join $REPO scripts run_board_xsdb.tcl]

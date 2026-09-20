@@ -130,6 +130,63 @@ proc wm_dma_wait {sr what {ms 30000}} {
            If this is the send channel the core is not accepting data."
 }
 
+# Breadth-first search, so the shallowest match wins. Returns {} when there is none.
+proc wm_find_file {root name} {
+    set queue [list $root]
+    while {[llength $queue] > 0} {
+        set dir [lindex $queue 0]
+        set queue [lrange $queue 1 end]
+        set hit [glob -nocomplain -directory $dir -types f $name]
+        if {[llength $hit] > 0} { return [lindex [lsort $hit] 0] }
+        foreach d [glob -nocomplain -directory $dir -types d *] { lappend queue $d }
+    }
+    return {}
+}
+
+# loadhw is supposed to define ps7_init and ps7_post_config, and on some installs
+# it does not. Without them the PS never configures DDR or FCLK_CLK0 -- and with
+# no FCLK_CLK0 the core has no clock at all -- so find the generated ps7_init.tcl
+# and source it. The PS7 IP writes it during the build; the XSA also carries a
+# copy.
+proc wm_ensure_ps7_init {build xsa} {
+    if {[llength [info commands ps7_init]] > 0 &&
+        [llength [info commands ps7_post_config]] > 0} { return "loadhw" }
+
+    set f [wm_find_file $build ps7_init.tcl]
+    if {$f ne ""} {
+        uplevel #0 [list source $f]
+    } else {
+        # Fall back to the copy inside the XSA, which is a zip.
+        set tmp [file join $build _ps7_init_from_xsa]
+        file mkdir $tmp
+        set ok 0
+        if {[catch {exec tar -xf $xsa -C $tmp ps7_init.tcl}] == 0} {
+            set ok [file exists [file join $tmp ps7_init.tcl]]
+        }
+        if {!$ok} {
+            set zip [file join $tmp platform.zip]
+            file copy -force $xsa $zip
+            catch {exec powershell -NoProfile -Command \
+                "Expand-Archive -Force -LiteralPath '$zip' -DestinationPath '$tmp'"}
+            set ok [file exists [file join $tmp ps7_init.tcl]]
+        }
+        if {!$ok} {
+            error "ps7_init is not defined and ps7_init.tcl was found neither under\
+                   $build nor inside the XSA. Without it the PS never brings up DDR or\
+                   FCLK_CLK0, so the core would have no clock. Find ps7_init.tcl (the\
+                   PS7 IP writes one under the build's .gen or .srcs tree) and source it\
+                   by hand before re-running this script."
+        }
+        set f [file join $tmp ps7_init.tcl]
+        uplevel #0 [list source $f]
+    }
+
+    if {[llength [info commands ps7_init]] == 0} {
+        error "sourced $f but it did not define ps7_init."
+    }
+    return $f
+}
+
 # ---------------- locate the build and the data ----------------
 set here [file normalize [file join [file dirname [info script]] ..]]
 
@@ -181,11 +238,16 @@ rst -system
 after 2000
 
 targets -set -filter {name =~ "ARM*#0"}
+# Let mrd/mwr reach memory without halting the core first.
+catch {configparams force-mem-access 1}
+
 puts "Configuring the PL..."
 fpga -file $bit
 loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]
 
 puts "Initialising the PS..."
+set ps7src [wm_ensure_ps7_init $build $xsa]
+if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
 ps7_init
 ps7_post_config
 
