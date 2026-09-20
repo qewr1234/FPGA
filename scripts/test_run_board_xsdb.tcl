@@ -28,8 +28,9 @@ set cases {
     {MMU on, SCTLR by name}    {0 mmusctlr    "RESULT: PASS"}
     {MMU on, name discovered}  {0 mmudiscover "RESULT: PASS"}
     {MMU on, no way to clear}  {0 mmu         "boot mode jumpers to JTAG"}
-    {ps7_init achieved nothing} {0 psdead      "the PS is not configured"}
-    {PL answers with wrong ID} {0 badid        "not 0x4d41000x"}
+    {PS never came up}         {0 psdead      "FCLK_CLK0 divisor is zero"}
+    {PL answers with wrong ID} {0 badid        "never read 0x4d41000x"}
+    {SLCR unlock has no effect} {0 slcrstuck   "SLCR writes are being ignored"}
     {this board: BootROM fails, FSBL path works} {0 likeboard "RESULT: PASS"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init gone, FSBL path}  {0 nops7missing "RESULT: PASS"}

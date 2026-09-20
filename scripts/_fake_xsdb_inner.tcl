@@ -21,6 +21,36 @@ array set MEM {}
 # second core -- which the boot image never starts -- sees physical memory.
 set RST_COUNT 0
 set PHYS 0
+set SLCR_LOCKED 1
+set LVLSHFT 0
+
+# A boot image that reached the point of enabling the MMU: every debugger read is
+# translated and the PL is not in the tables. "mmusctlr" also exposes SCTLR under
+# the name the guess list used; "mmudiscover" only under one that "rrd cp15"
+# reveals; "mmu" cannot be recovered from at all. "slcrstuck" is a board where
+# the unlock key has no effect, so SLCR writes stay ignored.
+set MMU_ON [expr {$FAULT in {mmu mmusctlr mmudiscover}}]
+set SCTLR  0x00C51879
+if {$FAULT in {mmusctlr mmudiscover}} {
+    set SCTLR_NAME [expr {$FAULT eq "mmusctlr" ? "cp15.SCTLR" : "cp15.c1_SCTLR"}]
+    proc rrd {args} {
+        global SCTLR SCTLR_NAME FAULT
+        set name [lindex $args 0]
+        if {$name eq "cp15"} {
+            if {$FAULT eq "mmudiscover"} { return "   c1_SCTLR:  [format %08X $SCTLR]" }
+            error "listing not supported"
+        }
+        if {$name ne $SCTLR_NAME} { error "no such register $name" }
+        return "$SCTLR_NAME: [format %08X $SCTLR]"
+    }
+    proc rwr {name val} {
+        global SCTLR SCTLR_NAME MMU_ON
+        if {$name ne $SCTLR_NAME} { error "no such register $name" }
+        set SCTLR $val
+        if {($val & 1) == 0} { set MMU_ON 0 }
+    }
+}
+
 
 proc ps_healthy {} {
     global FAULT RST_COUNT
@@ -30,14 +60,17 @@ proc ps_healthy {} {
 }
 
 proc ps_read {addr} {
+    global SLCR_LOCKED LVLSHFT
+    set k [format 0x%08X $addr]
+    if {$k eq "0xF800000C"} { return $SLCR_LOCKED }
+    if {$k eq "0xF8000900"} { return $LVLSHFT }
     if {[ps_healthy]} {
         array set v {0xF800000C 0 0xF800010C 7 0xF8000170 0x00100A00 0xF8000240 0
-                     0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF8007010 0x4}
+                     0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF800700C 0x4 0xF8007014 0x4000}
     } else {
         array set v {0xF800000C 1 0xF800010C 0 0xF8000170 0 0xF8000240 0xF
-                     0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF8007010 0}
+                     0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF800700C 0 0xF8007014 0}
     }
-    set k [format 0x%08X $addr]
     if {[info exists v($k)]} { return $v($k) }
     return -1
 }
@@ -142,6 +175,17 @@ proc mwr {addr val} {
         }
         return
     }
+    if {$addr == 0xF8000008} {
+        global SLCR_LOCKED FAULT
+        if {$val == 0xDF0D && $FAULT ne "slcrstuck"} { set SLCR_LOCKED 0 }
+        return
+    }
+    if {$addr == 0xF8000900} {
+        global SLCR_LOCKED LVLSHFT
+        if {!$SLCR_LOCKED} { set LVLSHFT $val }
+        return
+    }
+    if {$addr >= 0xF8000000 && $addr < 0xF9000000} { return }
     if {$FAULT eq "ddr"} { return }
     # FAULT=smallddr: a 256 MB board, so anything at or above 0x10000000 is gone.
     if {$FAULT eq "smallddr" && $addr >= 0x10000000 && $addr < 0x40000000} { return }
@@ -170,6 +214,8 @@ proc mrd {args} {
     for {set i 0} {$i < $n} {incr i} {
         set a [expr {$addr + $i * 4}]
         if {$a >= $WM_BASE && $a < $WM_BASE + 0x40} {
+            global LVLSHFT
+            if {($LVLSHFT & 0xF) != 0xF} { lappend out [fmt 0x7FFFFFFF] ; continue }
             lappend out [fmt $CORE([expr {$a - $WM_BASE}])]
         } elseif {$a >= $DMA_BASE && $a < $DMA_BASE + 0x100} {
             set off [expr {$a - $DMA_BASE}]
@@ -225,9 +271,11 @@ proc targets {args} {
     if {[string match "*ARM*#0*" $args]} { set PHYS 0 }
 }
 proc rst {args} {
-    global RST_COUNT PHYS
+    global RST_COUNT PHYS SLCR_LOCKED LVLSHFT
     incr RST_COUNT
     set PHYS 0
+    set SLCR_LOCKED 1
+    set LVLSHFT 0
 }
 proc stop {args} { }
 proc configparams {args} { }
