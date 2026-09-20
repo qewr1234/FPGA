@@ -13,8 +13,8 @@
 | 코어 4종 (`rtl/*_window_mac.sv`) | **검증됨** — 167케이스, 출력 3,447,344개 불일치 0 |
 | AXI-Stream 래퍼 (`rtl/window_mac_axis.sv`) | **시뮬레이션 검증됨** — 28케이스, 코어 대비 cycle 오버헤드 0 |
 | 보드 데이터 생성 (`scripts/export_board_data.py`) | **검증됨** — 시뮬레이션 벡터와 바이트 단위 대조 |
-| 실행 스크립트 (`scripts/run_board_xsdb.tcl`) | **스탠드인 검증됨** — 10케이스 / 보드에서 `connect`·`fpga`·`loadhw`까지 확인 |
-| PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **미실행**, Vitis 있을 때만 필요 |
+| 실행 스크립트 (`scripts/run_board_xsdb.tcl`) | **보드에서 완주함** — 불일치 0, cycle이 시뮬레이션과 일치 |
+| PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **미실행**. xsdb 경로로 대체되어 필요 없습니다 |
 | Vivado 빌드 (`scripts/build_zedboard.tcl`) | **실행됨** — xc7z020clg484, v3 P=8 @100MHz, WNS +0.919 ns, 0 errors |
 | 보드 로드 (`scripts/run_board.tcl`) | 미실행 — Vitis ELF 경로용 |
 
@@ -120,6 +120,23 @@ tclsh scripts/test_run_board_xsdb.tcl
 `sw/window_mac_test.c`를 빌드해 쓰셔도 됩니다. 같은 일을 하고, 결과를 UART(115200)로 냅니다.
 `system_wrapper.xsa`로 플랫폼을 만들고 빈 C 애플리케이션의 소스를 이 파일로 바꾸면 됩니다.
 그 경우 로드는 `scripts/run_board.tcl`이 합니다.
+
+## 하드웨어 결과 (XC7Z020-CLG484, 2026-09-20)
+
+v3 `overlapped_window_mac`, P=8, 100 MHz, 1,024창:
+
+```
+MISMATCHES     : 0
+CYCLES         : 7404123
+  per window   : 7230.59
+IN_STALL       : 0
+OUT_STALL      : 0
+RESULT: PASS -- core bound.
+```
+
+`7,404,123`은 `verification/included_run/summary.json`의 `total_cycles`와 **같은 값**입니다.
+출력 131,072개가 전부 정수 oracle과 일치하고, 두 stall 카운터가 0이므로 이 수치는
+메모리 경로가 아니라 코어를 측정한 것입니다. 100 MHz에서 창당 72.3 µs.
 
 ## 결과 읽는 법
 
