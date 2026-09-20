@@ -8,6 +8,9 @@ rem   set CNN_P=8  /  CNN_DEPTH=2  /  CNN_T=4  /  CNN_CLOCK_NS=10.0
 rem   set CNN_PART=xc7z020clg484-1
 rem   set CNN_CORES=overlapped_window_mac banked_window_mac
 pushd "%~dp0"
+rem Tcl wants forward slashes, so keep a slash-form of this directory for the messages.
+set "WM_HERE=%~dp0"
+set "WM_HERE=%WM_HERE:\=/%"
 
 call "%~dp0scripts\find_vivado.cmd"
 if errorlevel 1 goto missing
@@ -29,15 +32,15 @@ echo.
 echo Option 1 - use the Vivado Tcl Shell, which already has PATH set:
 echo     Start menu -^> Xilinx Design Tools -^> Vivado 20xx.x Tcl Shell
 echo   then in that shell:
-echo     cd {%~dp0}
+echo     cd {%WM_HERE%}
 echo     source scripts/synth_vivado.tcl
 echo.
 echo Option 2 - tell this script where Vivado is, then re-run it:
-echo     set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2
+echo     set XILINX_VIVADO=C:\Xilinx\2026.1\Vivado    (or wherever settings64.bat lives)
 echo     RUN_SYNTH.cmd
 echo.
 echo Option 3 - source the settings script yourself, then re-run this:
-echo     call "C:\Xilinx\Vivado\2023.2\settings64.bat"
+echo     call "C:\Xilinx\2026.1\Vivado\settings64.bat"
 echo.
 echo If no such directory exists, Vivado is not installed on this machine.
 pause

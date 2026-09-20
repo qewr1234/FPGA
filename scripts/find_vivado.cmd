@@ -19,6 +19,26 @@ if defined XILINX_VIVADO (
     )
 )
 
+rem Layout the unified installer has used since 2024.x: <root>\<version>\Vivado.
+for %%R in (
+    "C:\Xilinx"
+    "D:\Xilinx"
+    "E:\Xilinx"
+    "C:\tools\Xilinx"
+    "%ProgramFiles%\Xilinx"
+) do (
+    if exist "%%~R\" (
+        for /f "delims=" %%V in ('dir /b /ad /o-n "%%~R" 2^>nul') do (
+            if exist "%%~R\%%V\Vivado\settings64.bat" (
+                echo Found Vivado %%V in %%~R
+                call "%%~R\%%V\Vivado\settings64.bat"
+                goto :recheck
+            )
+        )
+    )
+)
+
+rem Older layout: <root>\Vivado\<version>.
 for %%R in (
     "C:\Xilinx\Vivado"
     "D:\Xilinx\Vivado"

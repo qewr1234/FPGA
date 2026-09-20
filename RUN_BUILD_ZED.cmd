@@ -13,6 +13,9 @@ rem   RUN_BUILD_ZED.cmd              v3, P=8, 100 MHz  (start here)
 rem   RUN_BUILD_ZED.cmd 3 8 8 100    v4, P=8, T=8
 rem   RUN_BUILD_ZED.cmd 2 64 1 100   v3, P=64  (the equal-multiplier pair with the above)
 pushd "%~dp0"
+rem Tcl wants forward slashes, so keep a slash-form of this directory for the messages.
+set "WM_HERE=%~dp0"
+set "WM_HERE=%WM_HERE:\=/%"
 
 if "%~1"=="" (set CNN_IMPL=2) else (set CNN_IMPL=%~1)
 if "%~2"=="" (set CNN_P=8)    else (set CNN_P=%~2)
@@ -45,7 +48,7 @@ echo.
 echo Option 1 - use the Vivado Tcl Shell, which already has PATH set:
 echo     Start menu -^> Xilinx Design Tools -^> Vivado 20xx.x Tcl Shell
 echo   then in that shell:
-echo     cd {%~dp0}
+echo     cd {%WM_HERE%}
 echo     set ::env(CNN_IMPL) %CNN_IMPL%
 echo     set ::env(CNN_P) %CNN_P%
 echo     set ::env(CNN_T) %CNN_T%
@@ -53,7 +56,7 @@ echo     set ::env(CNN_CLOCK_MHZ) %CNN_CLOCK_MHZ%
 echo     source scripts/build_zedboard.tcl
 echo.
 echo Option 2 - tell this script where Vivado is, then re-run it:
-echo     set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2
+echo     set XILINX_VIVADO=C:\Xilinx\2026.1\Vivado    (or wherever settings64.bat lives)
 echo     RUN_BUILD_ZED.cmd
 echo.
 echo If no such directory exists, Vivado is not installed on this machine.
