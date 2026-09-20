@@ -49,9 +49,18 @@ At `P=128` v3 alone reaches the `K`-beat input wall at 577.3 cycles per window, 
 for both cores here.
 
 So **no measurement in this repository currently supports the v4 banking direction on cycle count.**
-It can still win on `cycles / Fmax`, or on layers where `COUT` caps `P` before the wall is reached —
-neither is established yet. The decisive experiment is an out-of-context synthesis of the three
-64-multiplier configurations above at the same part and clock.
+
+Out-of-context synthesis (Vivado 2026.1, xc7z020clg484-1, 100 MHz) does not rescue it either. At 32
+multipliers, v3 `P=32` closes at 107.40 MHz and v4 `P=8, T=4` at 107.99 MHz — a 0.5% difference, far
+short of the 5.7% Fmax advantage v4 would need to overturn its cycle deficit. Per window that is
+**16.84 µs for v3 against 17.69 µs for v4**. The T-sum adder tree, which this repository previously
+expected to cost v4 its clock, is not on the critical path at T=4: all four cores are limited by the
+same 7x8 multiply carry chain.
+
+Two things keep the question open. Those runs left the port paths unconstrained, which hides the
+`DEPTH*P : 1` output multiplexer — the path that grows with `P`, measured at 12.7 ns for v3 `P=32`
+while WNS still read 0.689 ns. And a layer whose `COUT` caps `P` before the input wall has not been
+measured at all. See `RESULTS_KO.md` for the full tables.
 
 ## Running the checks
 

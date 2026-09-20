@@ -42,10 +42,26 @@ foreach top $cores {
 }
 file copy [info script] [file join $sources synth_vivado.tcl]
 # Same target clock before synthesis, so timing-driven synthesis and
-# implementation share the constraint. External I/O timing is still absent.
+# implementation share the constraint.
+#
+# The I/O delays matter for the core comparison, they are not decoration. Without
+# them the port paths are unconstrained and drop out of WNS entirely, and the one
+# that drops out is the output multiplexer, whose depth is DEPTH*P:1 -- exactly the
+# path that grows when P grows. A P=32 run measured 12.7 ns from emit_lane to
+# m_data (fanout 128, 7.4 ns of it routing) and still reported WNS 0.689 ns,
+# because that path was not timed. That flatters large P against large T.
+#
+# Zero delay models what the wrapper actually does: the core's outputs are captured
+# by a register in the next block (the DMA), and its inputs come from one, so the
+# whole period is available for the port path and nothing more.
+set io_budget 0.0
+if {[info exists ::env(CNN_IO_DELAY_NS)]} {set io_budget $::env(CNN_IO_DELAY_NS)}
+if {![string is double -strict $io_budget] || $io_budget < 0} {error "CNN_IO_DELAY_NS must be >= 0"}
 set clock_xdc [file join $dest core_clock.xdc]
 set f [open $clock_xdc w]
 puts $f [format {create_clock -name core_clk -period %.9g [get_ports clk]} $period]
+puts $f [format {set_input_delay -clock core_clk %.9g [filter [all_inputs] {NAME !~ "clk"}]} $io_budget]
+puts $f [format {set_output_delay -clock core_clk %.9g [all_outputs]} $io_budget]
 close $f
 set f [open [file join $dest settings.txt] w]
 puts $f "tool=[version -short]\npart=$part\nK=576\nCOUT=128\nP=$parallel\nDEPTH=$depth\nT=$banks\nperiod_ns=$period\ncores=$cores"
