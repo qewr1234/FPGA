@@ -55,11 +55,28 @@ set dest [file join $root build "zed_${tag}_[clock seconds]"]
 file mkdir $dest
 
 create_project system $dest -part $part -force
+# Stop here rather than three quarters of the way in. Without the board preset the
+# PS7 comes up bare: no HP port for the DMA to reach memory, and DDR settings that
+# do not match this board, so even a bitstream that builds will not run.
 if {[llength [get_board_parts -quiet $board]] == 0} {
-    puts "WARNING: board part $board not found. Install the Zedboard board files"
-    puts "         (Vivado Store, or the Digilent/Avnet board repo) or set CNN_BOARD."
-    puts "         Continuing with the part only: the PS preset will NOT be applied and"
-    puts "         DDR will not be configured correctly for this board."
+    puts ""
+    puts "Board part '$board' is not installed."
+    puts ""
+    puts "Install it:  Tools -> Vivado Store (or XHUB Store) -> Boards -> search 'zed'"
+    puts "             -> ZedBoard -> Install, then restart Vivado."
+    puts "Or clone https://github.com/Digilent/vivado-boards and point Vivado at it:"
+    puts "             set_param board.repoPaths {C:/path/vivado-boards/new/board_files}"
+    puts ""
+    puts "Check what is available with:   get_board_parts -quiet *zed*"
+    puts "If the name differs, pass it:   set ::env(CNN_BOARD) <name>"
+    puts ""
+    puts "To build anyway (the result will not run on a board):"
+    puts "             set ::env(CNN_ALLOW_NO_BOARD) 1"
+    if {![info exists ::env(CNN_ALLOW_NO_BOARD)] || $::env(CNN_ALLOW_NO_BOARD) == 0} {
+        close_project
+        error "Zedboard board files are required. See the instructions above."
+    }
+    puts "CNN_ALLOW_NO_BOARD is set: continuing without the preset."
 } else {
     set_property board_part $board [current_project]
 }
@@ -138,6 +155,20 @@ set_property -dict [list \
     CONFIG.PCW_EN_CLK0_PORT {1} \
     CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $clkmhz] $ps
 
+# The DMA reaches DDR through S_AXI_HP0, so fail here with something readable
+# rather than inside apply_bd_automation, which only says it found no valid slave.
+if {[llength [get_bd_intf_pins -quiet processing_system7_0/S_AXI_HP0]] == 0} {
+    puts ""
+    puts "The PS has no S_AXI_HP0 port, so the DMA cannot reach DDR."
+    puts "PCW_USE_S_AXI_HP0 did not take effect, which usually means the PS came up"
+    puts "without a board preset. Install the ZedBoard board files and run again."
+    puts ""
+    puts "Interfaces the PS does have:"
+    foreach pin [get_bd_intf_pins -quiet processing_system7_0/*] { puts "    $pin" }
+    puts ""
+    error "processing_system7_0/S_AXI_HP0 is missing."
+}
+
 set dma [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma axi_dma_0]
 # c_sg_length_width must cover the whole transfer: the default 14 bits caps a
 # transfer at 16 KB, and the activation stream is hundreds of kilobytes.
@@ -166,11 +197,29 @@ apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
     [list Master "/processing_system7_0/M_AXI_GP0" Clk "Auto"] [get_bd_intf_pins $dma/S_AXI_LITE]
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
     [list Master "/processing_system7_0/M_AXI_GP0" Clk "Auto"] [get_bd_intf_pins $core/s_axi]
-# Data: DMA masters -> PS HP0.
-apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
-    [list Slave "/processing_system7_0/S_AXI_HP0" Clk "Auto"] [get_bd_intf_pins $dma/M_AXI_MM2S]
-apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
-    [list Slave "/processing_system7_0/S_AXI_HP0" Clk "Auto"] [get_bd_intf_pins $dma/M_AXI_S2MM]
+# Data: both DMA masters -> PS HP0. Try the automation first, and if the rule
+# declines, wire a SmartConnect by hand instead of giving up.
+if {[catch {
+    apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
+        [list Slave "/processing_system7_0/S_AXI_HP0" Clk "Auto"] [get_bd_intf_pins $dma/M_AXI_MM2S]
+    apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config \
+        [list Slave "/processing_system7_0/S_AXI_HP0" Clk "Auto"] [get_bd_intf_pins $dma/M_AXI_S2MM]
+} automation_error]} {
+    puts "AXI automation to S_AXI_HP0 declined ($automation_error); connecting manually."
+    set sc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect axi_mem_sc]
+    set_property -dict [list CONFIG.NUM_SI {2} CONFIG.NUM_MI {1}] $sc
+    connect_bd_intf_net [get_bd_intf_pins $dma/M_AXI_MM2S] [get_bd_intf_pins $sc/S00_AXI]
+    connect_bd_intf_net [get_bd_intf_pins $dma/M_AXI_S2MM] [get_bd_intf_pins $sc/S01_AXI]
+    connect_bd_intf_net [get_bd_intf_pins $sc/M00_AXI] [get_bd_intf_pins $ps/S_AXI_HP0]
+    connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] \
+                   [get_bd_pins processing_system7_0/S_AXI_HP0_ACLK]
+    connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins $sc/aclk]
+    set rstc [get_bd_cells -quiet rst_ps7_0_*]
+    if {[llength $rstc] == 0} { set rstc [get_bd_cells -quiet *proc_sys_reset*] }
+    if {[llength $rstc] != 0} {
+        connect_bd_net [get_bd_pins [lindex $rstc 0]/peripheral_aresetn] [get_bd_pins $sc/aresetn]
+    }
+}
 
 # The core shares the PS fabric clock and the processor system reset.
 set clk [get_bd_pins processing_system7_0/FCLK_CLK0]

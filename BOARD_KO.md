@@ -136,7 +136,9 @@ P=64/P=128은 7020에서 자원과 Fmax가 빡빡할 수 있습니다. weight RA
 | 증상 | 원인 / 대응 |
 |---|---|
 | `Vivado was not found` | Vivado는 설치해도 PATH에 안 잡힙니다. `.cmd`가 흔한 설치 경로를 뒤지지만 못 찾으면 `set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2` 후 다시 실행하거나, 시작 메뉴의 **Vivado Tcl Shell**에서 `source` 하세요 |
-| `board part em.avnet.com:zed:part0:1.4 not found` | Zedboard 보드 파일 미설치. Vivado Store에서 설치하거나 `CNN_BOARD`로 실제 이름 지정. 미설치 상태로 진행하면 DDR 설정이 안 맞아 PS가 안 뜹니다 |
+| `Board part ... is not installed` | **가장 흔한 첫 실패.** Vivado `Tools → Vivado Store → Boards → 'zed' 검색 → ZedBoard → Install` 후 Vivado 재시작. 확인: `get_board_parts -quiet *zed*`. 이름이 다르면 `set ::env(CNN_BOARD) <이름>`. 스토어가 안 되면 `git clone https://github.com/Digilent/vivado-boards` 후 `set_param board.repoPaths {.../new/board_files}` |
+| `The PS has no S_AXI_HP0 port` | 보드 프리셋 없이 PS7이 생성돼 HP 포트가 안 열린 것. 위와 같은 해결 — 보드 파일부터 설치하세요 |
+| `No valid slave interface could be found to connect to .../M_AXI_MM2S` | 같은 원인. 스크립트가 이제 SmartConnect 수동 연결로 우회를 시도하지만, 근본 해결은 보드 파일입니다 |
 | BD에서 `window_mac_top`의 AXI 인터페이스 미인식 | 모듈 참조의 인터페이스 추론 실패. BD에서 해당 셀 우클릭 → 인터페이스 수동 지정, 또는 `ipx::package_project`로 IP 패키징 후 사용 |
 | `aclk`/`aresetn` 미연결 | 스크립트가 `proc_sys_reset` 셀 이름을 못 찾은 경우. BD에서 `FCLK_CLK0`와 `peripheral_aresetn`을 직접 연결 |
 | DMA 전송이 끝나지 않음 | `c_sg_length_width`가 작으면 전송 길이가 잘립니다. 스크립트는 26으로 설정하지만 IP 버전에 따라 이름이 다를 수 있으니 DMA 설정에서 확인 |
