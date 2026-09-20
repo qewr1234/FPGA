@@ -28,6 +28,16 @@ RUN_SYNTH.cmd
 
 ## 1단계 — 비트스트림
 
+탐색기에서 `RUN_BUILD_ZED.cmd`를 더블클릭하거나, 명령 프롬프트에서:
+
+```
+RUN_BUILD_ZED.cmd            :: v3, P=8, 100MHz (여기서 시작하세요)
+RUN_BUILD_ZED.cmd 3 8 8 100  :: v4, P=8, T=8
+RUN_BUILD_ZED.cmd 2 64 1 100 :: v3, P=64 (위와 같은 곱셈기 64개)
+```
+
+인자는 `IMPL P T CLOCK_MHZ` 순서입니다. Vivado Tcl 셸에서 직접 하시려면:
+
 ```tcl
 cd {C:/fpga/FPGA}
 set ::env(CNN_IMPL) 2        ;# 2 = v3 overlapped, 3 = v4 banked
@@ -125,6 +135,7 @@ P=64/P=128은 7020에서 자원과 Fmax가 빡빡할 수 있습니다. weight RA
 
 | 증상 | 원인 / 대응 |
 |---|---|
+| `Vivado was not found` | Vivado는 설치해도 PATH에 안 잡힙니다. `.cmd`가 흔한 설치 경로를 뒤지지만 못 찾으면 `set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2` 후 다시 실행하거나, 시작 메뉴의 **Vivado Tcl Shell**에서 `source` 하세요 |
 | `board part em.avnet.com:zed:part0:1.4 not found` | Zedboard 보드 파일 미설치. Vivado Store에서 설치하거나 `CNN_BOARD`로 실제 이름 지정. 미설치 상태로 진행하면 DDR 설정이 안 맞아 PS가 안 뜹니다 |
 | BD에서 `window_mac_top`의 AXI 인터페이스 미인식 | 모듈 참조의 인터페이스 추론 실패. BD에서 해당 셀 우클릭 → 인터페이스 수동 지정, 또는 `ipx::package_project`로 IP 패키징 후 사용 |
 | `aclk`/`aresetn` 미연결 | 스크립트가 `proc_sys_reset` 셀 이름을 못 찾은 경우. BD에서 `FCLK_CLK0`와 `peripheral_aresetn`을 직접 연결 |
