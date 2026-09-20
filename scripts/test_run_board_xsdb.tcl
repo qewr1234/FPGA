@@ -31,6 +31,7 @@ set cases {
     {PS never came up}         {0 psdead      "FCLK_CLK0 divisor is zero"}
     {PL answers with wrong ID} {0 badid        "never read 0x4d41000x"}
     {SLCR unlock has no effect} {0 slcrstuck   "SLCR writes are being ignored"}
+    {memory never reaches the PS} {0 nopspath   "not a Xilinx device id"}
     {this board: BootROM fails, FSBL path works} {0 likeboard "RESULT: PASS"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init gone, FSBL path}  {0 nops7missing "RESULT: PASS"}

@@ -62,6 +62,10 @@ proc ps_healthy {} {
 proc ps_read {addr} {
     global SLCR_LOCKED LVLSHFT
     set k [format 0x%08X $addr]
+    if {$k eq "0xF8000530"} {
+        global FAULT
+        return [expr {$FAULT eq "nopspath" ? 0x7FFFFFFF : 0x23727093}]
+    }
     if {$k eq "0xF800000C"} { return $SLCR_LOCKED }
     if {$k eq "0xF8000900"} { return $LVLSHFT }
     if {[ps_healthy]} {

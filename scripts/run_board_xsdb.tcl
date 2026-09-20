@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 h (unlock SLCR, drive the level shifters)"
+set WM_SCRIPT_VERSION "2026-09-20 i (force-mem-access off; it was blocking SLCR writes)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -61,6 +61,7 @@ set CTRL_CFG_RST  0x20
 # Zynq PS registers that say whether ps7_init had any effect. Writes to a locked
 # SLCR are dropped silently, which looks exactly like ps7_init succeeding and
 # nothing working afterwards.
+set PSS_IDCODE    0xF8000530
 set SLCR_UNLOCK   0xF8000008
 set SLCR_LOCKSTA  0xF800000C
 set PLL_STATUS    0xF800010C
@@ -474,7 +475,7 @@ proc wm_find_ddr {} {
 
 # Returns "" when the board is ready, otherwise why this attempt did not work.
 proc wm_attempt {mode} {
-    global bit xsa build REG_ID
+    global bit xsa build REG_ID PSS_IDCODE
     global ADDR_CONFIG ADDR_INPUT ADDR_RESULT ADDR_GOLD wm_access_via
 
     catch {targets -set -filter {name =~ "APU*"}}
@@ -493,7 +494,31 @@ proc wm_attempt {mode} {
     }
     catch {targets -set -filter {name =~ "ARM*#0"}}
     catch {stop}
-    catch {configparams force-mem-access 1}
+    # Leave this off. Turning it on lets memory be read without halting the core
+    # first, but it also routes accesses around the processor, and on this board
+    # that silently drops every write to SLCR -- so ps7_init configured nothing,
+    # the level shifters were never switched back on after the PL was programmed,
+    # and the core's ID register read as bus junk. The core is halted above, so
+    # nothing here needs it.
+    catch {configparams force-mem-access 0}
+
+    # Before trusting a single other value: the device's own ID code. Its low 12
+    # bits are Xilinx's JEDEC id, so a right answer here means the memory path is
+    # real, and a wrong one means nothing read afterwards is worth anything.
+    set idc -1
+    catch {set idc [wm_rd $PSS_IDCODE]}
+    if {($idc & 0xfff) != 0x093} {
+        # An enabled MMU makes even this read fail or lie, so clear it and retry
+        # once before concluding the memory path is no good.
+        wm_mmu_off
+        set idc -1
+        catch {set idc [wm_rd $PSS_IDCODE]}
+    }
+    if {($idc & 0xfff) != 0x093} {
+        return "PSS_IDCODE at [wm_hex $PSS_IDCODE] reads [wm_hex $idc], which is not a\
+                Xilinx device id. Memory access is not reaching the PS at all, so\
+                nothing else read here would mean anything."
+    }
 
     set lock [wm_slcr_unlock]
     if {$lock ne "unlocked"} { puts "  SLCR: $lock" }
