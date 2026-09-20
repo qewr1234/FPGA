@@ -1,0 +1,31 @@
+Fig. 1. Window MAC datapaths compared in this work. A window holds K = 576
+activations and produces COUT = 128 outputs. (a) skips multiplications whose
+activation is zero; (b) adds a second window buffer so the load of the next
+window overlaps the compute of the current one; (c) distributes nonzero taps
+over T banks and sums them, spending P x T multipliers instead of P.
+
+Fig. 2. Cycles per window against the multipliers a configuration spends, for
+the 1,024 evaluation windows. The two architectures lie on nearly the same
+curve. The dashed arrow marks the comparison as it was first reported, which
+reads across the axis from an 8-multiplier configuration to a 64-multiplier one.
+The inset reads the same data vertically, at one budget, where the banked core
+costs 5.1% more cycles.
+
+Fig. 3. Window schedule. (a) the sparse baseline alternates load and compute,
+leaving the MAC array idle during each load; (b) with two window buffers the
+load of window n+1 runs underneath the compute of window n.
+
+Fig. 4. Post-route comparison at a fixed budget of 32 multipliers: v3 with
+P = 32 against v4 with P = 8, T = 4. Vivado out-of-context, xc7z020clg484-1,
+10 ns constraint with input and output delays applied. Time per window uses each
+core's own Fmax.
+
+Fig. 5. Hardware run: v3 with P = 8 at 100 MHz on XC7Z020-CLG484, over 1,024
+windows. The measured cycle count equals the simulated one exactly, and the
+stall counters built into the wrapper read zero, so the figure reports the core
+rather than the memory path feeding it. All 131,072 outputs matched the integer
+reference.
+
+Fig. 6. Verification flow. Each stage lists the check applied to it. The cycle
+model is written independently of the RTL, so output correctness and processing
+latency are verified against separate references.
