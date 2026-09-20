@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 j (no stop hammering; use the board as it is first)"
+set WM_SCRIPT_VERSION "2026-09-20 k (-force: xsdb was blocking PL addresses)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -92,9 +92,13 @@ set DMASR_ERR   0x70    ;# DMAIntErr | DMASlvErr | DMADecErr
 
 # ---------------- helpers ----------------
 
+# Every access here is -force. Without it xsdb refuses PL addresses outright --
+# "PL AXI slave ports access is not allowed, this address has not been added to
+# the memory map" -- which is its own bookkeeping, not the board saying no.
+#
 # mrd prints hex with or without the 0x prefix depending on version; normalise.
 proc wm_rd {addr} {
-    set raw [lindex [mrd -value $addr] 0]
+    set raw [lindex [mrd -force -value $addr] 0]
     set hex $raw
     regsub {^0[xX]} $hex "" hex
     if {![scan $hex %x n]} {
@@ -114,7 +118,7 @@ proc wm_hex {v} { return [format 0x%08x $v] }
 # find out. Every read is guarded: the point is to report, not to fail again.
 # Returns "" when the address is readable, the error text otherwise.
 proc wm_probe {addr} {
-    if {[catch {mrd -value $addr} e]} { return $e }
+    if {[catch {mrd -force -value $addr} e]} { return $e }
     return ""
 }
 
@@ -165,7 +169,7 @@ proc wm_mmu_off {} {
 
 # Returns "" when the address is readable, the error text otherwise.
 proc wm_probe {addr} {
-    if {[catch {mrd -value $addr} e]} { return $e }
+    if {[catch {mrd -force -value $addr} e]} { return $e }
     return ""
 }
 
@@ -213,8 +217,8 @@ proc wm_dump_state {} {
 
 proc wm_dma_reset {} {
     global MM2S_CR S2MM_CR DMACR_RESET
-    mwr $MM2S_CR $DMACR_RESET
-    mwr $S2MM_CR $DMACR_RESET
+    mwr -force $MM2S_CR $DMACR_RESET
+    mwr -force $S2MM_CR $DMACR_RESET
     for {set i 0} {$i < 200} {incr i} {
         if {([wm_rd $MM2S_CR] & $DMACR_RESET) == 0 &&
             ([wm_rd $S2MM_CR] & $DMACR_RESET) == 0} { return }
@@ -226,7 +230,7 @@ proc wm_dma_reset {} {
 # Put one channel in run state and hand it a descriptor. Writing LENGTH starts it.
 proc wm_dma_kick {cr sr ar lr addr bytes what} {
     global DMACR_RS DMASR_HALT
-    mwr $cr $DMACR_RS
+    mwr -force $cr $DMACR_RS
     for {set i 0} {$i < 200} {incr i} {
         if {([wm_rd $sr] & $DMASR_HALT) == 0} break
         after 5
@@ -234,8 +238,8 @@ proc wm_dma_kick {cr sr ar lr addr bytes what} {
     if {[wm_rd $sr] & $DMASR_HALT} {
         error "$what channel stayed halted after RS was set (DMASR=[wm_hex [wm_rd $sr]])"
     }
-    mwr $ar $addr
-    mwr $lr $bytes
+    mwr -force $ar $addr
+    mwr -force $lr $bytes
 }
 
 proc wm_dma_wait {sr what {ms 30000}} {
@@ -404,7 +408,7 @@ proc wm_ps_notes {} {
 # nothing. Unlock it and say whether that took.
 proc wm_slcr_unlock {} {
     global SLCR_UNLOCK SLCR_LOCKSTA
-    catch {mwr $SLCR_UNLOCK 0x0000DF0D}
+    catch {mwr -force $SLCR_UNLOCK 0x0000DF0D}
     if {[catch {wm_rd $SLCR_LOCKSTA} v]} { return "unknown" }
     return [expr {$v == 0 ? "unlocked" : "still locked"}]
 }
@@ -417,8 +421,8 @@ proc wm_connect_pl {} {
     global LVL_SHFTR_EN FPGA_RST_CTRL
     wm_slcr_unlock
     catch {ps7_post_config}
-    catch {mwr $FPGA_RST_CTRL 0x00000000}
-    catch {mwr $LVL_SHFTR_EN  0x0000000F}
+    catch {mwr -force $FPGA_RST_CTRL 0x00000000}
+    catch {mwr -force $LVL_SHFTR_EN  0x0000000F}
     after 100
     set lvl "?"
     set rst "?"
@@ -466,7 +470,7 @@ proc wm_find_ddr {} {
     foreach cand $WM_BASE_CANDIDATES {
         set lo [expr {$cand}]
         set hi [expr {$cand + 0x300000}]
-        if {[catch {mwr $lo 0xA5A5F00F ; mwr $hi 0x5A5A0FF0}]} continue
+        if {[catch {mwr -force $lo 0xA5A5F00F ; mwr -force $hi 0x5A5A0FF0}]} continue
         if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
         if {$ok} { return $lo }
     }
@@ -619,7 +623,7 @@ wm_dma_reset
 
 # ---------------- configuration phase ----------------
 puts "Streaming configuration..."
-mwr $REG_CTRL [expr {$CTRL_CFG_MODE | $CTRL_CFG_RST}]
+mwr -force $REG_CTRL [expr {$CTRL_CFG_MODE | $CTRL_CFG_RST}]
 wm_dma_kick $MM2S_CR $MM2S_SR $MM2S_SA $MM2S_LEN \
             $ADDR_CONFIG [expr {$WM_CFG_WORDS * 4}] "configuration"
 after 20
@@ -634,9 +638,9 @@ puts "Configuration loaded: $cfgcount items."
 
 # ---------------- run ----------------
 puts "Running $WM_NWIN windows..."
-mwr $REG_NWIN $WM_NWIN
+mwr -force $REG_NWIN $WM_NWIN
 # Arming clears the input holding register, so it must happen before data moves.
-mwr $REG_CTRL [expr {$CTRL_ARM | (($WM_MODE_SEQ & 3) << 2)}]
+mwr -force $REG_CTRL [expr {$CTRL_ARM | (($WM_MODE_SEQ & 3) << 2)}]
 
 # Receive channel first: it must be ready before the core emits anything.
 wm_dma_kick $S2MM_CR $S2MM_SR $S2MM_DA $S2MM_LEN \
@@ -672,7 +676,7 @@ set first_want 0
 set dumpfile [file join $boarddir results.bin]
 file delete -force $dumpfile
 set fast 0
-if {[catch {mrd -bin -file $dumpfile $ADDR_RESULT $WM_RESULT_WORDS}] == 0} {
+if {[catch {mrd -force -bin -file $dumpfile $ADDR_RESULT $WM_RESULT_WORDS}] == 0} {
     if {[file exists $dumpfile] && [file size $dumpfile] == $WM_RESULT_WORDS * 4} {
         set fast 1
     }
@@ -699,7 +703,7 @@ if {$fast} {
     set chunk 4096
     for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
         set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
-        set vals [mrd -value [expr {$ADDR_RESULT + $off * 4}] $n]
+        set vals [mrd -force -value [expr {$ADDR_RESULT + $off * 4}] $n]
         if {[llength $vals] != $n} {
             error "mrd returned [llength $vals] values where $n were asked for.\
                    This build of xsdb does not take a word count, so the results\

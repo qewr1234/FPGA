@@ -148,7 +148,9 @@ proc dma_run_mm2s {bytes} {
     if {$FAULT eq "dmaerr"} { set D(mm2s_sr) [expr {$D(mm2s_sr) | 0x10}] }
 }
 
-proc mwr {addr val} {
+proc mwr {args} {
+    while {[string match "-*" [lindex $args 0]]} { set args [lrange $args 1 end] }
+    lassign $args addr val
     global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
     set addr [expr {$addr & 0xffffffff}]
     if {[mmu_blocking]} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
