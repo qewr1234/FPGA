@@ -13,9 +13,10 @@
 | 코어 4종 (`rtl/*_window_mac.sv`) | **검증됨** — 167케이스, 출력 3,447,344개 불일치 0 |
 | AXI-Stream 래퍼 (`rtl/window_mac_axis.sv`) | **시뮬레이션 검증됨** — 28케이스, 코어 대비 cycle 오버헤드 0 |
 | 보드 데이터 생성 (`scripts/export_board_data.py`) | **검증됨** — 시뮬레이션 벡터와 바이트 단위 대조 |
-| PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **보드에서 미실행** |
+| 실행 스크립트 (`scripts/run_board_xsdb.tcl`) | **스탠드인 검증됨** — 8케이스, 정상 경로와 6개 실패 경로 |
+| PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **미실행**, Vitis 있을 때만 필요 |
 | Vivado 빌드 (`scripts/build_zedboard.tcl`) | **실행됨** — xc7z020clg484, v3 P=8 @100MHz, WNS +0.919 ns, 0 errors |
-| 보드 로드 (`scripts/run_board.tcl`) | 미실행 — 보드 없음 |
+| 보드 로드 (`scripts/run_board.tcl`) | 미실행 — Vitis ELF 경로용 |
 
 즉 **RTL 경로는 믿을 만하고, 툴체인 스크립트는 첫 실행에서 손볼 가능성이 큽니다.** 아래 "먼저 깨질 것들"을 보세요.
 
@@ -69,50 +70,62 @@ python scripts/export_board_data.py --frames 512
 
 ## 3단계 — 실행
 
-Vitis에서 `system_wrapper.xsa`로 플랫폼을 만들고, 빈 C 애플리케이션의 `main.c`를
-`sw/window_mac_test.c` 내용으로 교체해 빌드하면 `window_mac_test.elf`가 나옵니다.
+**Vitis는 필요 없습니다.** PS 프로그램이 하는 일은 레지스터 몇 개 쓰고, DMA를 걸고,
+메모리를 비교하는 것뿐이고 `xsdb`가 그걸 전부 할 수 있습니다. Vivado만 설치한 환경에는
+ARM 크로스 컴파일러가 없어 `sw/window_mac_test.c`를 빌드할 수 없는데, 그래도 이 경로로 갑니다.
 
-그 다음 Vitis 디버거 셸 — 예전 설치는 `xsct`, 2024.2 이후는 `xsdb`, 명령은 같습니다 — 에서:
+보드 USB(JTAG)를 연결하고:
+
+```
+C:\Vivado\2026.1\Vivado\bin\xsdb.bat
+```
+
+열린 셸에서:
 
 ```tcl
 cd C:/fpga/FPGA
-source scripts/run_board.tcl
+source scripts/run_board_xsdb.tcl
 ```
 
-비트스트림·XSA·데이터·ELF를 찾아서 순서대로 올리고 실행합니다. `build/zed_*` 중 가장 최근 것을
-쓰고, 데이터 크기를 확인하고, DDR에 한 워드를 써봤다 읽어 PS 프리셋이 이 보드에 맞는지 먼저
-확인합니다. 뭔가 빠지면 그 자리에서 멈추고 무엇이 없는지 말합니다.
+비트스트림을 올리고, PS를 초기화하고, DDR이 응답하는지 확인하고, 데이터 세 덩어리를 넣고,
+설정을 스트리밍하고, 1,024창을 돌리고, 결과 131,072개를 `gold.bin`과 대조해 바로 출력합니다.
+UART 터미널도 필요 없습니다 — 결과가 `xsdb` 콘솔에 나옵니다.
 
-다른 빌드나 다른 위치의 ELF를 쓰려면:
+측정은 영향받지 않습니다. JTAG은 준비와 결과 회수에만 쓰이고, DMA를 건 다음부터는
+코어가 fabric 클럭으로 돕니다. `CYCLES`는 코어 내부 카운터 값입니다.
+
+빌드 디렉터리를 직접 고르려면:
 
 ```tcl
 set ::env(WM_BUILD) C:/fpga/FPGA/build/zed_v3_p8_t4_1789907417
-set ::env(WM_ELF)   C:/vitis_ws/window_mac_test/build/window_mac_test.elf
 ```
 
-직접 치실 거면 스크립트가 하는 일은 이겁니다:
+### 이 스크립트는 보드 없이 검증했습니다
 
-```tcl
-connect
-targets -set -filter {name =~ "ARM*#0"}
-fpga -file system_wrapper.bit
-loadhw -hw system_wrapper.xsa -mem-ranges [list {0x40000000 0xbfffffff}]
-ps7_init; ps7_post_config
-dow -data config.bin 0x10000000
-dow -data input.bin  0x10100000
-dow -data gold.bin   0x10300000
-dow window_mac_test.elf
-con
+`scripts/test_run_board_xsdb.tcl`이 `xsdb`를 흉내 낸 스탠드인 위에서 실행 스크립트를 돌립니다.
+정상 경로는 PASS에 도달해야 하고, 잘못된 비트스트림·DDR 무응답·설정 스트림 절단·DMA 에러·
+결과 불일치·데이터 크기 불일치는 각각 자기 메시지로 멈춰야 합니다. 8개 케이스 전부 통과합니다.
+
+```
+python scripts/export_board_data.py --frames 512
+tclsh scripts/test_run_board_xsdb.tcl
 ```
 
-UART(115200)로 결과가 나옵니다.
+검증된 것은 스크립트의 논리와 가드입니다. `connect` / `fpga` / `loadhw` / `ps7_init`은
+스탠드인이므로, 실제 `xsdb`가 이 명령들을 어떻게 받는지는 보드에서 처음 확인됩니다.
+
+### Vitis가 설치돼 있다면
+
+`sw/window_mac_test.c`를 빌드해 쓰셔도 됩니다. 같은 일을 하고, 결과를 UART(115200)로 냅니다.
+`system_wrapper.xsa`로 플랫폼을 만들고 빈 C 애플리케이션의 소스를 이 파일로 바꾸면 됩니다.
+그 경우 로드는 `scripts/run_board.tcl`이 합니다.
 
 ## 결과 읽는 법
 
 ```
 MISMATCHES     : 0
 CYCLES         : 7404123
-  per window   : 7230.58
+  per window   : 7230.59
 IN_STALL       : 0
 OUT_STALL      : 0
 RESULT: PASS -- core bound.
@@ -159,6 +172,7 @@ P=64/P=128은 7020에서 자원과 Fmax가 빡빡할 수 있습니다. weight RA
 
 | 증상 | 원인 / 대응 |
 |---|---|
+| Vitis에 `Create Platform Component`가 없음 | Vivado 에디션만 설치된 것입니다. Embedded 개발 도구(ARM 컴파일러)가 없습니다. **설치할 필요 없습니다** — 3단계의 `xsdb` 경로를 쓰세요 |
 | `Vivado was not found` | Vivado는 설치해도 PATH에 안 잡힙니다. `.cmd`가 흔한 설치 경로를 뒤지지만 못 찾으면 `set XILINX_VIVADO=C:\Xilinx\Vivado\2023.2` 후 다시 실행하거나, 시작 메뉴의 **Vivado Tcl Shell**에서 `source` 하세요 |
 | 보드 파트 관련 에러 | **먼저 `get_board_parts`를 치세요.** 설치된 목록이 나옵니다. 님 FPGA 파트(`xc7z020clg484`)와 같은 게 있으면 그걸 쓰면 됩니다 — `xilinx.com:zc702:part0:1.4`가 바로 그것입니다. 스크립트가 이제 자동으로 같은 파트의 보드를 찾아 씁니다. 직접 지정하려면 `set ::env(CNN_BOARD) <이름>` |
 | `No installed board part uses xc7z020clg484` | 같은 디바이스 보드가 하나도 없는 경우. `Tools → Vivado Store → Boards`에서 ZC702 등을 설치하세요 |
