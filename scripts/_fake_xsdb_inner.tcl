@@ -18,17 +18,27 @@ array set MEM {}
 # A boot image that reached the point of enabling the MMU: every debugger read is
 # translated and the PL is not in the tables. "mmusctlr" additionally exposes the
 # SCTLR register, which is what lets the run script recover on its own.
-set MMU_ON [expr {$FAULT in {mmu mmusctlr}}]
-set SCTLR  0x00C51878
-if {$FAULT eq "mmusctlr"} {
-    proc rrd {name} {
-        global SCTLR
-        if {$name ne "cp15.SCTLR"} { error "no such register $name" }
-        return [format "cp15.SCTLR: %08X" $SCTLR]
+set MMU_ON [expr {$FAULT in {mmu mmusctlr mmudiscover}}]
+set SCTLR  0x00C51879
+
+# mmusctlr: SCTLR answers to the name the old guess list used.
+# mmudiscover: it answers to a different name, which only "rrd cp15" reveals --
+#              the case the guess list would have missed.
+if {$FAULT in {mmusctlr mmudiscover}} {
+    set SCTLR_NAME [expr {$FAULT eq "mmusctlr" ? "cp15.SCTLR" : "cp15.c1_SCTLR"}]
+    proc rrd {args} {
+        global SCTLR SCTLR_NAME FAULT
+        set name [lindex $args 0]
+        if {$name eq "cp15"} {
+            if {$FAULT eq "mmudiscover"} { return "   c1_SCTLR:  [format %08X $SCTLR]\n   ACTLR:  00000001" }
+            error "listing not supported"
+        }
+        if {$name ne $SCTLR_NAME} { error "no such register $name" }
+        return "$SCTLR_NAME: [format %08X $SCTLR]"
     }
     proc rwr {name val} {
-        global SCTLR MMU_ON
-        if {$name ne "cp15.SCTLR"} { error "no such register $name" }
+        global SCTLR SCTLR_NAME MMU_ON
+        if {$name ne $SCTLR_NAME} { error "no such register $name" }
         set SCTLR $val
         if {($val & 1) == 0} { set MMU_ON 0 }
     }

@@ -16,6 +16,10 @@
 # things up and to read results back, so it does not touch the measurement: once
 # the DMA is kicked, the stream runs at fabric speed.
 
+# Bumped whenever this file changes, and printed on every run: "which version am
+# I actually running" should never need guessing.
+set WM_SCRIPT_VERSION "2026-09-20 e (mmu-off before ps7_init)"
+
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
 set WM_COUT     128
@@ -101,21 +105,52 @@ proc wm_probe {addr} {
 
 # A boot image that got as far as enabling the MMU makes every debugger read go
 # through its page tables, and the PL is not in them: reads of the core and the
-# DMA come back "MMU section translation fault". Clearing SCTLR.M puts the core
-# back on physical addresses. xsdb spells the register differently across
-# versions, so each spelling is tried and the result is checked by re-reading the
-# address that was failing -- nothing here is assumed to have worked.
-proc wm_clear_mmu {probe_addr} {
-    foreach name {cp15.SCTLR SCTLR cp15_SCTLR cp15.c1.SCTLR} {
-        if {[catch {rrd $name} raw]} continue
-        set hex ""
-        regexp {([0-9a-fA-F]{2,8})\s*$} $raw -> hex
-        if {$hex eq "" || ![scan $hex %x v]} continue
-        # M (MMU), C (data cache), I (instruction cache)
-        set new [expr {$v & ~0x1 & ~0x4 & ~0x1000}]
-        if {[catch {rwr $name $new}]} continue
-        if {[wm_probe $probe_addr] eq ""} { return $name }
+# DMA come back "MMU section translation fault". This board boots from QSPI, so
+# that is not a race worth trying to win -- the MMU gets turned off instead.
+#
+# xsdb spells SCTLR differently across versions, so the name is discovered from
+# the cp15 register listing rather than guessed, with the old guesses kept as a
+# fallback. Nothing is reported as done without reading the register back.
+proc wm_sctlr_names {} {
+    set names {}
+    if {![catch {rrd cp15} listing]} {
+        foreach tok [regexp -all -inline {[A-Za-z0-9_.]+} $listing] {
+            if {[string match -nocase "*sctlr*" $tok]} {
+                if {![string match -nocase "cp15.*" $tok]} { set tok cp15.$tok }
+                if {[lsearch -exact $names $tok] < 0} { lappend names $tok }
+            }
+        }
     }
+    foreach n {cp15.SCTLR SCTLR cp15_SCTLR cp15.c1.SCTLR} {
+        if {[lsearch -exact $names $n] < 0} { lappend names $n }
+    }
+    return $names
+}
+
+proc wm_sctlr_value {name} {
+    if {[catch {rrd $name} raw]} { return "" }
+    if {![regexp {([0-9a-fA-F]{2,8})\s*$} $raw -> hex]} { return "" }
+    if {![scan $hex %x v]} { return "" }
+    return $v
+}
+
+# Returns a description of what happened, or "" if the MMU could not be reached.
+proc wm_mmu_off {} {
+    foreach name [wm_sctlr_names] {
+        set v [wm_sctlr_value $name]
+        if {$v eq ""} continue
+        if {($v & 1) == 0} { return "already off ($name)" }
+        # M (MMU), C (data cache), I (instruction cache)
+        if {[catch {rwr $name [expr {$v & ~0x1 & ~0x4 & ~0x1000}]}]} continue
+        set v2 [wm_sctlr_value $name]
+        if {$v2 ne "" && ($v2 & 1) == 0} { return "turned off via $name" }
+    }
+    return ""
+}
+
+# Returns "" when the address is readable, the error text otherwise.
+proc wm_probe {addr} {
+    if {[catch {mrd -value $addr} e]} { return $e }
     return ""
 }
 
@@ -279,6 +314,7 @@ foreach {path want} [list $f_cfg  [expr {$WM_CFG_WORDS * 4}] \
     }
 }
 
+puts "Script    : $WM_SCRIPT_VERSION"
 puts "Bitstream : $bit"
 puts "Platform  : $xsa"
 puts "Data      : $boarddir"
@@ -306,6 +342,16 @@ catch {stop}
 # Let mrd/mwr reach memory without halting the core first.
 catch {configparams force-mem-access 1}
 
+# Do this before anything is written through the CPU's view of memory: if the MMU
+# is on, ps7_init's own register writes are translated too, and it would quietly
+# configure the wrong things.
+set mmu [wm_mmu_off]
+if {$mmu eq ""} {
+    puts "MMU      : could not be read; carrying on and checking access below."
+} else {
+    puts "MMU      : $mmu"
+}
+
 puts "Configuring the PL..."
 fpga -file $bit
 loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]
@@ -316,24 +362,30 @@ if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
 ps7_init
 ps7_post_config
 
-# Nothing below can work if the debugger's reads are being translated, and the
-# failure would otherwise look like dead DDR rather than a live MMU.
-set mmu_err [wm_probe $REG_ID]
-if {$mmu_err ne ""} {
-    if {[string match -nocase "*translation fault*" $mmu_err]} {
-        set fixed [wm_clear_mmu $REG_ID]
-        if {$fixed ne ""} {
-            puts "  MMU was on from a boot image; cleared it via $fixed."
-        } else {
-            error "the processor has its MMU on, so reads of the PL come back as\
-                   translation faults and nothing can be reached at its real address.\
-                   This board ran a boot image out of SD or QSPI before it could be\
-                   halted. Remove the SD card (or set the boot mode jumpers to JTAG),\
-                   power-cycle the board, and run this again."
+# Nothing below can work if the debugger's reads are still being translated, and
+# the failure would otherwise look like dead DDR rather than a live MMU.
+set acc_err [wm_probe $REG_ID]
+if {$acc_err ne ""} {
+    # Some targets expose memory without going through the CPU's page tables.
+    foreach filt {{name =~ "APU*"} {name =~ "*DAP*"} {name =~ "xc7z*"}} {
+        if {[catch {targets -set -filter $filt}]} continue
+        if {[wm_probe $REG_ID] eq ""} {
+            puts "Access   : reading through the target matching $filt"
+            set acc_err ""
+            break
         }
-    } else {
-        error "cannot read the core's ID register at [wm_hex $REG_ID]: $mmu_err"
     }
+    if {$acc_err ne ""} { catch {targets -set -filter {name =~ "ARM*#0"}} }
+}
+if {$acc_err ne ""} {
+    if {[string match -nocase "*translation fault*" $acc_err]} {
+        error "the PL is not reachable: reads of [wm_hex $REG_ID] come back as MMU\
+               translation faults, so the processor is still running with page tables\
+               from the boot image in QSPI and the MMU could not be turned off from\
+               here. Set the board's boot mode jumpers to JTAG and power-cycle it;\
+               with nothing to boot, the processor stays in BootROM with the MMU off."
+    }
+    error "cannot read the core's ID register at [wm_hex $REG_ID]: $acc_err"
 }
 
 # From here on the board is doing the work. Any failure prints every register
