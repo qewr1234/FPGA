@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 k (-force: xsdb was blocking PL addresses)"
+set WM_SCRIPT_VERSION "2026-09-20 l (exactly the sequence that worked by hand)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -98,13 +98,24 @@ set DMASR_ERR   0x70    ;# DMAIntErr | DMASlvErr | DMADecErr
 #
 # mrd prints hex with or without the 0x prefix depending on version; normalise.
 proc wm_rd {addr} {
-    set raw [lindex [mrd -force -value $addr] 0]
-    set hex $raw
+    # Plain access first. -force only overrides xsdb's own address-map check, and
+    # it is needed for PL addresses ("PL AXI slave ports access is not allowed"),
+    # so it is used on the retry rather than on everything.
+    if {[catch {mrd -value $addr} raw]} {
+        if {[catch {mrd -force -value $addr} raw]} {
+            error "read of [format 0x%08x $addr] failed: $raw"
+        }
+    }
+    set hex [lindex $raw 0]
     regsub {^0[xX]} $hex "" hex
     if {![scan $hex %x n]} {
         error "could not read [format 0x%08x $addr]: mrd returned '$raw'"
     }
     return [expr {$n & 0xffffffff}]
+}
+
+proc wm_wr {addr val} {
+    if {[catch {mwr $addr $val}]} { wm_wr $addr $val }
 }
 
 proc wm_need {path what} {
@@ -217,8 +228,8 @@ proc wm_dump_state {} {
 
 proc wm_dma_reset {} {
     global MM2S_CR S2MM_CR DMACR_RESET
-    mwr -force $MM2S_CR $DMACR_RESET
-    mwr -force $S2MM_CR $DMACR_RESET
+    wm_wr $MM2S_CR $DMACR_RESET
+    wm_wr $S2MM_CR $DMACR_RESET
     for {set i 0} {$i < 200} {incr i} {
         if {([wm_rd $MM2S_CR] & $DMACR_RESET) == 0 &&
             ([wm_rd $S2MM_CR] & $DMACR_RESET) == 0} { return }
@@ -230,7 +241,7 @@ proc wm_dma_reset {} {
 # Put one channel in run state and hand it a descriptor. Writing LENGTH starts it.
 proc wm_dma_kick {cr sr ar lr addr bytes what} {
     global DMACR_RS DMASR_HALT
-    mwr -force $cr $DMACR_RS
+    wm_wr $cr $DMACR_RS
     for {set i 0} {$i < 200} {incr i} {
         if {([wm_rd $sr] & $DMASR_HALT) == 0} break
         after 5
@@ -238,8 +249,8 @@ proc wm_dma_kick {cr sr ar lr addr bytes what} {
     if {[wm_rd $sr] & $DMASR_HALT} {
         error "$what channel stayed halted after RS was set (DMASR=[wm_hex [wm_rd $sr]])"
     }
-    mwr -force $ar $addr
-    mwr -force $lr $bytes
+    wm_wr $ar $addr
+    wm_wr $lr $bytes
 }
 
 proc wm_dma_wait {sr what {ms 30000}} {
@@ -408,7 +419,7 @@ proc wm_ps_notes {} {
 # nothing. Unlock it and say whether that took.
 proc wm_slcr_unlock {} {
     global SLCR_UNLOCK SLCR_LOCKSTA
-    catch {mwr -force $SLCR_UNLOCK 0x0000DF0D}
+    catch {wm_wr $SLCR_UNLOCK 0x0000DF0D}
     if {[catch {wm_rd $SLCR_LOCKSTA} v]} { return "unknown" }
     return [expr {$v == 0 ? "unlocked" : "still locked"}]
 }
@@ -421,8 +432,8 @@ proc wm_connect_pl {} {
     global LVL_SHFTR_EN FPGA_RST_CTRL
     wm_slcr_unlock
     catch {ps7_post_config}
-    catch {mwr -force $FPGA_RST_CTRL 0x00000000}
-    catch {mwr -force $LVL_SHFTR_EN  0x0000000F}
+    catch {wm_wr $FPGA_RST_CTRL 0x00000000}
+    catch {wm_wr $LVL_SHFTR_EN  0x0000000F}
     after 100
     set lvl "?"
     set rst "?"
@@ -470,134 +481,77 @@ proc wm_find_ddr {} {
     foreach cand $WM_BASE_CANDIDATES {
         set lo [expr {$cand}]
         set hi [expr {$cand + 0x300000}]
-        if {[catch {mwr -force $lo 0xA5A5F00F ; mwr -force $hi 0x5A5A0FF0}]} continue
+        if {[catch {wm_wr $lo 0xA5A5F00F ; wm_wr $hi 0x5A5A0FF0}]} continue
         if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
         if {$ok} { return $lo }
     }
     return 0
 }
 
-# A wedged debug port stays wedged, and every read after it returns junk, so each
-# attempt starts from a fresh channel.
-proc wm_fresh_connection {} {
-    catch {disconnect}
-    after 300
-    catch {connect}
-    after 300
-}
-
-# Returns "" when the board is ready, otherwise why this attempt did not work.
+# One bring-up, and it is the sequence that worked when typed by hand.
 #
-#   asis     do not reset at all. The board has already booted and its own FSBL
-#            has configured the PS -- clocks, DDR, the lot -- so there is nothing
-#            for ps7_init to do. This is the sequence that worked when typed by
-#            hand, and it is tried first because it disturbs the least.
-#   booted   reset, let the boot image run to the end, then halt. Same idea, but
-#            from a known starting point.
-#   bootrom  reset and halt quickly, before a boot image gets going, and bring
-#            the PS up with ps7_init. Halting is one request after a pause: the
-#            previous version hammered stop for 300 ms straight after the reset
-#            and put the debug port into an APB AP transaction error, after which
-#            every read returned bus junk -- including the device id code, which
-#            reads correctly by hand.
-proc wm_attempt {mode} {
-    global bit xsa build REG_ID PSS_IDCODE
-    global ADDR_CONFIG ADDR_INPUT ADDR_RESULT ADDR_GOLD wm_access_via
-
-    wm_fresh_connection
-    if {$mode ne "asis"} {
-        catch {targets -set -filter {name =~ "APU*"}}
-        catch {rst -system}
-        after [expr {$mode eq "booted" ? 6000 : 400}]
-    }
-    catch {targets -set -filter {name =~ "ARM*#0"}}
-    for {set i 0} {$i < 5} {incr i} {
-        if {![catch {stop}]} break
-        after 200
-    }
-    # Leave this off. Turning it on lets memory be read without halting the core
-    # first, but it also routes accesses around the processor, and on this board
-    # that silently drops every write -- to SLCR, and to DDR. The core is halted
-    # above, so nothing here needs it.
-    catch {configparams force-mem-access 0}
-
-    # Before trusting a single other value: the device's own id code. Its low 12
-    # bits are Xilinx's JEDEC id, so a right answer means the memory path is real
-    # and a wrong one means nothing read afterwards is worth anything.
-    set idc -1
-    catch {set idc [wm_rd $PSS_IDCODE]}
-    if {($idc & 0xfff) != 0x093} {
-        wm_mmu_off
-        set idc -1
-        catch {set idc [wm_rd $PSS_IDCODE]}
-    }
-    if {($idc & 0xfff) != 0x093} {
-        return "PSS_IDCODE at [wm_hex $PSS_IDCODE] reads [wm_hex $idc], not a Xilinx\
-                device id, so the debug path is not reaching the PS"
-    }
-
-    set lock [wm_slcr_unlock]
-    if {$lock ne "unlocked"} { return "SLCR did not unlock ($lock)" }
-
-    if {$mode eq "bootrom"} {
-        if {[catch {wm_ensure_ps7_init $build $xsa} e]} { return "ps7_init unavailable: $e" }
-        if {[catch {ps7_init}]} { return "ps7_init raised an error" }
-    }
-
-    puts "  configuring the PL..."
-    fpga -file $bit
-    catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
-
-    set why [wm_connect_pl]
-    if {$why ne ""} { return $why }
-
-    set via [wm_access_for_id]
-    if {$via eq ""} {
-        set notes [wm_ps_notes]
-        set extra [expr {[llength $notes] ? " ([join $notes {; }])" : ""}]
-        return "the core's ID register never read 0x4d41000x through any target$extra"
-    }
-    set wm_access_via $via
-
-    set base [wm_find_ddr]
-    if {$base == 0} { return "the core answers, but no DDR held a written pattern" }
-    set ADDR_CONFIG $base
-    set ADDR_INPUT  [expr {$base + 0x100000}]
-    set ADDR_RESULT [expr {$base + 0x200000}]
-    set ADDR_GOLD   [expr {$base + 0x300000}]
-    return ""
-}
-
+# There is no disconnect and no reset here, deliberately. Reconnecting mid-run
+# left two channels open and target lookups then found no ARM cores at all, and
+# asserting the system reset put the debug port into an APB AP transaction error
+# that only a power cycle clears. Neither is worth risking: the board is already
+# running, its own boot configured the PS, and all that is needed is to halt the
+# processor and program the PL.
 puts "Connecting..."
 connect
+targets -set -filter {name =~ "ARM*#0"}
+catch {stop}
+# Leave this off. On this board, turning it on routes accesses around the
+# processor and silently drops every write -- to SLCR, and to DDR.
+catch {configparams force-mem-access 0}
 
-set wm_access_via ""
-set wm_core_id 0
-set wm_reasons {}
-set wm_ready 0
-array set wm_modes {
-    asis    {the board left as it is, PS as its own boot left it}
-    booted  {reset, allowed to boot, PS brought up by its FSBL}
-    bootrom {reset and halted early, PS brought up by ps7_init}
+# Before trusting a single other value: the device's own id code. Its low twelve
+# bits are Xilinx's JEDEC id, so a right answer means the debug path is real and
+# a wrong one means nothing read afterwards is worth anything.
+set idc -1
+catch {set idc [wm_rd $PSS_IDCODE]}
+if {($idc & 0xfff) != 0x093} {
+    wm_mmu_off
+    set idc -1
+    catch {set idc [wm_rd $PSS_IDCODE]}
 }
-foreach mode {asis booted bootrom} {
-    puts "Bring-up : trying with $wm_modes($mode)"
-    if {[catch {wm_attempt $mode} why]} { set why "raised an error: $why" }
-    if {$why eq ""} { set wm_ready 1 ; break }
-    puts "           did not work -- $why"
-    lappend wm_reasons "$mode: $why"
+if {($idc & 0xfff) != 0x093} {
+    error "PSS_IDCODE at [wm_hex $PSS_IDCODE] reads [wm_hex $idc], which is not a Xilinx\
+           device id, so the debug path is not reaching the PS. If the target list shows\
+           only DAP and xc7z020, with no ARM cores, the debug port is in an APB AP\
+           transaction error: power-cycle the board, restart xsdb, and run this again."
+}
+puts "Device   : PSS_IDCODE [wm_hex $idc]"
+
+set lock [wm_slcr_unlock]
+if {$lock ne "unlocked"} {
+    error "SLCR did not unlock ($lock). Writes to a locked SLCR are dropped without an\
+           error, so nothing below would take effect."
 }
 
-if {!$wm_ready} {
-    foreach n [wm_ps_notes] { puts "  note: $n" }
+puts "Configuring the PL..."
+fpga -file $bit
+catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
+
+set why [wm_connect_pl]
+if {$why ne ""} { error $why }
+
+set wm_access_via [wm_access_for_id]
+if {$wm_access_via eq ""} {
+    set notes [wm_ps_notes]
     catch {wm_dump_ps}
-    catch {wm_dump_state}
-    error "the board could not be brought into a usable state.\n  [join $wm_reasons "\n  "]\n\
-           Both ways of starting it were tried. Set this board's boot mode jumpers to\
-           JTAG and power-cycle it: BootROM then runs to completion, finds nothing to\
-           boot, and leaves the processor idle with its MMU off and the PS configured,\
-           which is the state all of this expects and the one supported for JTAG work."
+    error "the core's ID register never read 0x4d41000x through any target[expr {
+            [llength $notes] ? " ([join $notes {; }])" : ""}]"
 }
+
+set ddr_base [wm_find_ddr]
+if {$ddr_base == 0} {
+    catch {wm_dump_ps}
+    error "the core answers, but no DDR held a written pattern."
+}
+set ADDR_CONFIG $ddr_base
+set ADDR_INPUT  [expr {$ddr_base + 0x100000}]
+set ADDR_RESULT [expr {$ddr_base + 0x200000}]
+set ADDR_GOLD   [expr {$ddr_base + 0x300000}]
 
 puts "Access   : $wm_access_via"
 puts "DDR      : buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
@@ -623,7 +577,7 @@ wm_dma_reset
 
 # ---------------- configuration phase ----------------
 puts "Streaming configuration..."
-mwr -force $REG_CTRL [expr {$CTRL_CFG_MODE | $CTRL_CFG_RST}]
+wm_wr $REG_CTRL [expr {$CTRL_CFG_MODE | $CTRL_CFG_RST}]
 wm_dma_kick $MM2S_CR $MM2S_SR $MM2S_SA $MM2S_LEN \
             $ADDR_CONFIG [expr {$WM_CFG_WORDS * 4}] "configuration"
 after 20
@@ -638,9 +592,9 @@ puts "Configuration loaded: $cfgcount items."
 
 # ---------------- run ----------------
 puts "Running $WM_NWIN windows..."
-mwr -force $REG_NWIN $WM_NWIN
+wm_wr $REG_NWIN $WM_NWIN
 # Arming clears the input holding register, so it must happen before data moves.
-mwr -force $REG_CTRL [expr {$CTRL_ARM | (($WM_MODE_SEQ & 3) << 2)}]
+wm_wr $REG_CTRL [expr {$CTRL_ARM | (($WM_MODE_SEQ & 3) << 2)}]
 
 # Receive channel first: it must be ready before the core emits anything.
 wm_dma_kick $S2MM_CR $S2MM_SR $S2MM_DA $S2MM_LEN \
