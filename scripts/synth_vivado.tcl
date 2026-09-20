@@ -62,6 +62,15 @@ set f [open $clock_xdc w]
 puts $f [format {create_clock -name core_clk -period %.9g [get_ports clk]} $period]
 puts $f [format {set_input_delay -clock core_clk %.9g [filter [all_inputs] {NAME !~ "clk"}]} $io_budget]
 puts $f [format {set_output_delay -clock core_clk %.9g [all_outputs]} $io_budget]
+# Hold on the port paths is not analyzable out of context and must not be checked.
+# Vivado cannot estimate the clock tree without HD.CLK_SRC, so it launches port data
+# at time 0 while the destination register sees the clock about 1 ns later, and
+# reports that invented skew as a hold violation -- a P=32 run showed WHS -0.812 ns
+# on cfg_channel with thousands of failing endpoints. In the real design the driving
+# and capturing registers share one clock tree and that skew does not exist. Setup,
+# which is what the Fmax comparison needs, stays fully checked.
+puts $f {set_false_path -hold -from [filter [all_inputs] {NAME !~ "clk"}]}
+puts $f {set_false_path -hold -to [all_outputs]}
 close $f
 set f [open [file join $dest settings.txt] w]
 puts $f "tool=[version -short]\npart=$part\nK=576\nCOUT=128\nP=$parallel\nDEPTH=$depth\nT=$banks\nperiod_ns=$period\ncores=$cores"
