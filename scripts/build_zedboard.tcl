@@ -237,22 +237,48 @@ if {[catch {
     }
 }
 
-# The core shares the PS fabric clock and the processor system reset.
+# Sweep every clock and reset pin we are responsible for. The automation wires the
+# DMA's memory-side clocks itself; the manual path above does not, and validation
+# then fails on m_axi_mm2s_aclk and m_axi_s2mm_aclk. Doing it here covers both
+# paths and is a no-op for anything already connected.
 set clk [get_bd_pins processing_system7_0/FCLK_CLK0]
-if {[llength [get_bd_nets -quiet -of_objects [get_bd_pins $core/aclk]]] == 0} {
-    connect_bd_net $clk [get_bd_pins $core/aclk]
-}
 set rstcell [get_bd_cells -quiet rst_ps7_0_*]
 if {[llength $rstcell] == 0} { set rstcell [get_bd_cells -quiet *proc_sys_reset*] }
-if {[llength $rstcell] == 0} { error "no proc_sys_reset in the design; connect aresetn by hand" }
-if {[llength [get_bd_nets -quiet -of_objects [get_bd_pins $core/aresetn]]] == 0} {
-    connect_bd_net [get_bd_pins [lindex $rstcell 0]/peripheral_aresetn] [get_bd_pins $core/aresetn]
+if {[llength $rstcell] == 0} { error "no proc_sys_reset in the design; connect the resets by hand" }
+set rstpin [get_bd_pins [lindex $rstcell 0]/peripheral_aresetn]
+foreach cell [list $dma $core [get_bd_cells -quiet axi_mem_sc]] {
+    if {$cell eq ""} { continue }
+    foreach pin [get_bd_pins -quiet $cell/*aclk*] {
+        if {[llength [get_bd_nets -quiet -of_objects $pin]] == 0} { connect_bd_net $clk $pin }
+    }
+    foreach pin [concat [get_bd_pins -quiet $cell/*aresetn*] [get_bd_pins -quiet $cell/*_resetn]] {
+        if {[llength [get_bd_nets -quiet -of_objects $pin]] == 0} { connect_bd_net $rstpin $pin }
+    }
 }
 
 assign_bd_address
-# Fixed offsets so sw/window_mac_test.c does not have to be regenerated.
-catch {set_property offset 0x40400000 [get_bd_addr_segs {processing_system7_0/Data/SEG_axi_dma_0_Reg}]}
-catch {set_property offset 0x43C00000 [get_bd_addr_segs {processing_system7_0/Data/SEG_window_mac_top_0_Reg}]}
+
+# Fixed offsets, because sw/window_mac_test.c has them compiled in. The segment
+# names are generated, so find them by what they point at rather than guessing:
+# a guessed name silently does nothing and leaves the core wherever the automation
+# put it, and the application then reads a different peripheral.
+set core_seg {}
+set dma_seg {}
+foreach seg [get_bd_addr_segs -quiet -of_objects [get_bd_addr_spaces processing_system7_0/Data]] {
+    if {[string match "*window_mac*" $seg]} { set core_seg $seg }
+    if {[string match "*axi_dma*" $seg]} { set dma_seg $seg }
+}
+if {$core_seg eq "" || $dma_seg eq ""} {
+    error "could not find the register segments to place (core='$core_seg' dma='$dma_seg')"
+}
+set_property offset 0x40400000 $dma_seg
+set_property offset 0x43C00000 $core_seg
+set core_off [get_property offset $core_seg]
+set dma_off [get_property offset $dma_seg]
+puts "Register map: window_mac_top at $core_off, AXI DMA at $dma_off"
+if {$core_off != 0x43C00000} {
+    error "window_mac_top landed at $core_off but sw/window_mac_test.c expects 0x43C00000"
+}
 
 regenerate_bd_layout
 validate_bd_design
