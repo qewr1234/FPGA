@@ -15,44 +15,41 @@ set FAULT  [lindex $argv 2]
 
 array set MEM {}
 
-# Zynq PS registers. Healthy values unless FAULT=psdead, which is what a board
-# whose ps7_init achieved nothing looks like.
-array set PS {}
-if {$FAULT eq "psdead"} {
-    array set PS {0xF800000C 1 0xF800010C 0 0xF8000170 0 0xF8000240 0xF
-                  0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF8007010 0}
-} else {
-    array set PS {0xF800000C 0 0xF800010C 7 0xF8000170 0x00100A00 0xF8000240 0
-                  0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF8007010 0x4}
+# Zynq PS registers. Healthy unless the attempt in progress is one that should
+# not work. FAULT=likeboard reproduces this board exactly: caught in BootROM the
+# PS never comes up, and after a full boot it does but the MMU is on and only the
+# second core -- which the boot image never starts -- sees physical memory.
+set RST_COUNT 0
+set PHYS 0
+
+proc ps_healthy {} {
+    global FAULT RST_COUNT
+    if {$FAULT eq "psdead"} { return 0 }
+    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 2}] }
+    return 1
 }
 
-# A boot image that reached the point of enabling the MMU: every debugger read is
-# translated and the PL is not in the tables. "mmusctlr" additionally exposes the
-# SCTLR register, which is what lets the run script recover on its own.
-set MMU_ON [expr {$FAULT in {mmu mmusctlr mmudiscover}}]
-set SCTLR  0x00C51879
+proc ps_read {addr} {
+    if {[ps_healthy]} {
+        array set v {0xF800000C 0 0xF800010C 7 0xF8000170 0x00100A00 0xF8000240 0
+                     0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF8007010 0x4}
+    } else {
+        array set v {0xF800000C 1 0xF800010C 0 0xF8000170 0 0xF8000240 0xF
+                     0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF8007010 0}
+    }
+    set k [format 0x%08X $addr]
+    if {[info exists v($k)]} { return $v($k) }
+    return -1
+}
 
-# mmusctlr: SCTLR answers to the name the old guess list used.
-# mmudiscover: it answers to a different name, which only "rrd cp15" reveals --
-#              the case the guess list would have missed.
-if {$FAULT in {mmusctlr mmudiscover}} {
-    set SCTLR_NAME [expr {$FAULT eq "mmusctlr" ? "cp15.SCTLR" : "cp15.c1_SCTLR"}]
-    proc rrd {args} {
-        global SCTLR SCTLR_NAME FAULT
-        set name [lindex $args 0]
-        if {$name eq "cp15"} {
-            if {$FAULT eq "mmudiscover"} { return "   c1_SCTLR:  [format %08X $SCTLR]\n   ACTLR:  00000001" }
-            error "listing not supported"
-        }
-        if {$name ne $SCTLR_NAME} { error "no such register $name" }
-        return "$SCTLR_NAME: [format %08X $SCTLR]"
-    }
-    proc rwr {name val} {
-        global SCTLR SCTLR_NAME MMU_ON
-        if {$name ne $SCTLR_NAME} { error "no such register $name" }
-        set SCTLR $val
-        if {($val & 1) == 0} { set MMU_ON 0 }
-    }
+proc mmu_blocking {} {
+    global FAULT MMU_ON PHYS RST_COUNT
+    # FAULT=mmu is the hopeless case: no target reaches memory, so switching to
+    # the second core does not help either.
+    if {$FAULT eq "mmu"} { return 1 }
+    if {$PHYS} { return 0 }
+    if {$FAULT eq "likeboard"} { return [expr {$RST_COUNT >= 2}] }
+    return $MMU_ON
 }
 
 set WM_BASE   0x43C00000
@@ -115,9 +112,9 @@ proc dma_run_mm2s {bytes} {
 }
 
 proc mwr {addr val} {
-    global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT MMU_ON
+    global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
     set addr [expr {$addr & 0xffffffff}]
-    if {$MMU_ON} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
+    if {[mmu_blocking]} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
     set val  [expr {$val & 0xffffffff}]
 
     if {$addr >= $WM_BASE && $addr < $WM_BASE + 0x40} {
@@ -152,9 +149,8 @@ proc mwr {addr val} {
 }
 
 proc mrd {args} {
-    global MEM WM_BASE DMA_BASE CORE D FAULT PS
-    global MMU_ON
-    if {$MMU_ON} {
+    global MEM WM_BASE DMA_BASE CORE D FAULT
+    if {[mmu_blocking]} {
         set a0 [lindex $args end]
         if {[string match "-*" $a0] || ![string is integer -strict $a0]} { set a0 [lindex $args end] }
         error "Memory read error at $a0. MMU section translation fault"
@@ -184,8 +180,8 @@ proc mrd {args} {
                 52 { lappend out [fmt $D(s2mm_sr)] }
                 default { lappend out [fmt 0] }
             }
-        } elseif {[info exists PS([format 0x%08X $a])]} {
-            lappend out [fmt $PS([format 0x%08X $a])]
+        } elseif {[ps_read $a] >= 0} {
+            lappend out [fmt [ps_read $a]]
         } else {
             lappend out [fmt [memrd $a]]
         }
@@ -222,8 +218,17 @@ proc dow {args} {
 }
 
 proc connect {args} { puts "  \[stub\] connect" }
-proc targets {args} { }
-proc rst {args} { }
+proc targets {args} {
+    global PHYS
+    # The second core sees physical memory: the boot image never starts it.
+    if {[string match "*ARM*#1*" $args]} { set PHYS 1 }
+    if {[string match "*ARM*#0*" $args]} { set PHYS 0 }
+}
+proc rst {args} {
+    global RST_COUNT PHYS
+    incr RST_COUNT
+    set PHYS 0
+}
 proc stop {args} { }
 proc configparams {args} { }
 proc fpga {args} { puts "  \[stub\] fpga [lindex $args 1]" }

@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 f (checks what ps7_init actually did)"
+set WM_SCRIPT_VERSION "2026-09-20 g (two bring-up strategies, each verified)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -353,166 +353,183 @@ puts "Data      : $boarddir"
 puts ""
 
 # ---------------- bring the board up ----------------
-puts "Connecting..."
-connect
-targets -set -filter {name =~ "APU*"}
-rst -system
+#
+# This board boots from QSPI and there is no SD card to pull, so it can be put in
+# one of two states, each with its own problem:
+#
+#   bootrom  the processor is caught partway through BootROM, before anything it
+#            loads can switch the MMU on, so the debugger's reads are physical --
+#            but the PS is only half configured and ps7_init has to finish from
+#            there, which on this board it does not manage.
+#   booted   the boot image is allowed to run, so its FSBL configures the PS
+#            properly, DDR and clocks and all. But it leaves the MMU on, and the
+#            debugger's reads then go through page tables the PL is not in.
+#
+# So both are tried instead of one being guessed at, and an attempt only counts
+# when the PS registers, the core's ID register and a DDR pattern all check out.
 
-# Take the core the moment it is accessible and keep taking it. If this board has
-# a boot image, every millisecond spent waiting is the FSBL getting further: it
-# reprograms the PL out from under the bitstream about to be downloaded, writes
-# over DDR, and -- worst -- turns the MMU on, after which the debugger's reads go
-# through its page tables and the PL is no longer reachable at its real
-# addresses. Hammering stop for a moment catches it while it is still in BootROM.
-for {set i 0} {$i < 60} {incr i} {
-    catch {targets -set -filter {name =~ "ARM*#0"}}
-    catch {stop}
-    after 5
-}
-targets -set -filter {name =~ "ARM*#0"}
-catch {stop}
-# Let mrd/mwr reach memory without halting the core first.
-catch {configparams force-mem-access 1}
-
-# Do this before anything is written through the CPU's view of memory: if the MMU
-# is on, ps7_init's own register writes are translated too, and it would quietly
-# configure the wrong things.
-set mmu [wm_mmu_off]
-if {$mmu eq ""} {
-    puts "MMU      : could not be read; carrying on and checking access below."
-} else {
-    puts "MMU      : $mmu"
-}
-
-puts "Configuring the PL..."
-fpga -file $bit
-loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]
-
-puts "Initialising the PS..."
-# Writes to a locked SLCR are dropped without an error, so ps7_init would appear
-# to succeed while configuring nothing at all. Unlock it and check that it took.
-catch {mwr $SLCR_UNLOCK 0x0000DF0D}
-if {![catch {wm_rd $SLCR_LOCKSTA} lock] && $lock != 0} {
-    puts "  warning: SLCR still reads locked ($lock); its writes may be ignored."
-}
-set ps7src [wm_ensure_ps7_init $build $xsa]
-if {$ps7src ne "loadhw"} { puts "  ps7_init from $ps7src" }
-ps7_init
-ps7_post_config
-
-# ps7_init reports nothing, so check its effects by hand. Each of these failing
-# explains everything downstream, and saying which one it is beats another run.
-set ps_ok 1
-foreach {what addr test why} [list \
-    "the PLLs"        $PLL_STATUS      {($v & 0x7) == 0x7} \
-        "ARM, DDR and IO PLLs are not all locked" \
-    "the PL clock"    $FPGA0_CLK_CTRL  {(($v >> 8) & 0x3f) != 0 && (($v >> 20) & 0x3f) != 0} \
-        "FCLK_CLK0 has a zero divisor, so the PL has no clock" \
-    "the PL reset"    $FPGA_RST_CTRL   {$v == 0} \
-        "FCLK_RESET is still asserted, so the PL is held in reset" \
-    "the level shifters" $LVL_SHFTR_EN {($v & 0xf) == 0xf} \
-        "PS-to-PL level shifters are off, so nothing in the PL can be reached" \
-    "the DDR controller" $DDRC_CTRL    {($v & 0x1) == 0x1} \
-        "the DDR controller is not enabled"] {
-    if {[catch {wm_rd $addr} v]} {
-        puts "  $what: [wm_hex $addr] unreadable"
-        set ps_ok 0
-        continue
-    }
-    if {![expr $test]} {
-        puts "  $what: [wm_hex $addr] = [wm_hex $v] -- $why"
-        set ps_ok 0
-    }
-}
-if {!$ps_ok} {
-    wm_dump_ps
-    error "ps7_init ran but the PS is not configured, as listed above. This board\
-           boots from QSPI, and halting it partway through BootROM leaves the PS in a\
-           state ps7_init cannot finish from. Set the board's boot mode jumpers to\
-           JTAG and power-cycle: BootROM then completes, finds nothing to boot, and\
-           leaves the processor idle with the MMU off, which is the configuration all\
-           of this expects."
-}
-
-# Nothing below can work if the debugger's reads are still being translated, and
-# the failure would otherwise look like dead DDR rather than a live MMU.
-set acc_err [wm_probe $REG_ID]
-if {$acc_err ne ""} {
-    # Some targets expose memory without going through the CPU's page tables.
-    foreach filt {{name =~ "APU*"} {name =~ "*DAP*"} {name =~ "xc7z*"}} {
-        if {[catch {targets -set -filter $filt}]} continue
-        if {[wm_probe $REG_ID] eq ""} {
-            puts "Access   : reading through the target matching $filt"
-            set acc_err ""
-            break
+# What ps7_init or the FSBL is supposed to have achieved. Returns a list of
+# descriptions of whatever is wrong; empty means the PS is properly configured.
+proc wm_ps_problems {} {
+    global PLL_STATUS FPGA0_CLK_CTRL FPGA_RST_CTRL LVL_SHFTR_EN DDRC_CTRL
+    set bad {}
+    foreach {what addr test why} [list \
+        "PLLs"            $PLL_STATUS     {($v & 0x7) == 0x7} \
+            "ARM, DDR and IO PLLs are not all locked" \
+        "PL clock"        $FPGA0_CLK_CTRL {(($v >> 8) & 0x3f) != 0 && (($v >> 20) & 0x3f) != 0} \
+            "FCLK_CLK0 has a zero divisor, so the PL has no clock" \
+        "PL reset"        $FPGA_RST_CTRL  {$v == 0} \
+            "FCLK_RESET is still asserted, so the PL is held in reset" \
+        "level shifters"  $LVL_SHFTR_EN   {($v & 0xf) == 0xf} \
+            "PS-to-PL level shifters are off, so the PL cannot be reached" \
+        "DDR controller"  $DDRC_CTRL      {($v & 0x1) == 0x1} \
+            "the DDR controller is not enabled"] {
+        if {[catch {wm_rd $addr} v]} {
+            lappend bad "$what: [wm_hex $addr] unreadable"
+        } elseif {![expr $test]} {
+            lappend bad "$what: [wm_hex $addr] = [wm_hex $v] -- $why"
         }
     }
-    if {$acc_err ne ""} { catch {targets -set -filter {name =~ "ARM*#0"}} }
+    return $bad
 }
-if {$acc_err eq ""} {
+
+# Get to memory physically. The processor's own view is used when it works. Then
+# the MMU is turned off if the register can be reached. Then the other targets:
+# core #1 is the good one, because the boot image never starts it, so it sits
+# with its MMU off and its view of memory is the physical one. Every option is
+# checked by actually reading $probe -- none is believed on principle.
+proc wm_access {probe} {
+    if {[wm_probe $probe] eq ""} { return "the processor's own view" }
+    set m [wm_mmu_off]
+    if {$m ne "" && [wm_probe $probe] eq ""} { return "MMU $m" }
+    foreach filt {{name =~ "ARM*#1"} {name =~ "APU*"} {name =~ "*DAP*"} {name =~ "xc7z*"}} {
+        if {[catch {targets -set -filter $filt}]} continue
+        if {[wm_probe $probe] eq ""} { return "the target matching $filt" }
+    }
+    catch {targets -set -filter {name =~ "ARM*#0"}}
+    return ""
+}
+
+# Two distinct patterns 3 MB apart must both survive: one alone passes on memory
+# that aliases, and aliasing surfaces later as results wrong for no clear reason.
+proc wm_find_ddr {} {
+    global WM_BASE_CANDIDATES
+    foreach cand $WM_BASE_CANDIDATES {
+        set lo [expr {$cand}]
+        set hi [expr {$cand + 0x300000}]
+        if {[catch {mwr $lo 0xA5A5F00F ; mwr $hi 0x5A5A0FF0}]} continue
+        if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
+        if {$ok} { return $lo }
+    }
+    return 0
+}
+
+# Returns "" when the board is ready, otherwise why this attempt did not work.
+proc wm_attempt {mode} {
+    global bit xsa build REG_ID SLCR_UNLOCK SLCR_LOCKSTA
+    global ADDR_CONFIG ADDR_INPUT ADDR_RESULT ADDR_GOLD wm_access_via wm_core_id
+
+    catch {targets -set -filter {name =~ "APU*"}}
+    catch {rst -system}
+    if {$mode eq "bootrom"} {
+        # Take the core as soon as it answers and keep taking it, so it is caught
+        # before anything it loads can switch the MMU on.
+        for {set i 0} {$i < 60} {incr i} {
+            catch {targets -set -filter {name =~ "ARM*#0"}}
+            catch {stop}
+            after 5
+        }
+    } else {
+        # Let the boot image run all the way, so its FSBL configures the PS.
+        after 6000
+    }
+    catch {targets -set -filter {name =~ "ARM*#0"}}
+    catch {stop}
+    catch {configparams force-mem-access 1}
+
+    # PCAP configuration does not go through memory, so this works either way.
+    puts "  configuring the PL..."
+    fpga -file $bit
+    catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
+
+    if {$mode eq "bootrom"} {
+        # Writes to a locked SLCR are dropped with no error, which would make
+        # ps7_init look like it succeeded while configuring nothing at all.
+        catch {mwr $SLCR_UNLOCK 0x0000DF0D}
+        if {![catch {wm_rd $SLCR_LOCKSTA} lk] && $lk != 0} {
+            puts "  SLCR still reads locked ([wm_hex $lk]); its writes may be ignored."
+        }
+        if {[catch {wm_ensure_ps7_init $build $xsa} e]} { return "ps7_init unavailable: $e" }
+        if {[catch {ps7_init}]} { return "ps7_init raised an error" }
+        catch {ps7_post_config}
+    }
+
+    # Reprogramming the PL turns the level shifters off, so they are put back
+    # whichever way the PS was brought up.
+    set via [wm_access $REG_ID]
+    if {$via eq ""} {
+        return "the PL cannot be read at all, through any target"
+    }
+    if {$mode ne "bootrom"} { catch {ps7_post_config} }
+    set wm_access_via $via
+
+    set probs [wm_ps_problems]
+    if {[llength $probs] > 0} { return "the PS is not configured: [join $probs {; }]" }
+
     set idv [wm_rd $REG_ID]
     if {($idv & 0xffff0000) != 0x4d410000} {
-        wm_dump_ps
-        error "the core's ID register reads [wm_hex $idv] instead of 0x4d41000x.\
-               The PL is answering but not with the design in this bitstream: either\
-               it was reconfigured by something else, or it has no clock. The PS\
-               registers above say which."
+        return "the core's ID register reads [wm_hex $idv], not 0x4d41000x"
     }
+    set wm_core_id $idv
+
+    set base [wm_find_ddr]
+    if {$base == 0} { return "no DDR held a written pattern" }
+    set ADDR_CONFIG $base
+    set ADDR_INPUT  [expr {$base + 0x100000}]
+    set ADDR_RESULT [expr {$base + 0x200000}]
+    set ADDR_GOLD   [expr {$base + 0x300000}]
+    return ""
 }
-if {$acc_err ne ""} {
-    if {[string match -nocase "*translation fault*" $acc_err]} {
-        error "the PL is not reachable: reads of [wm_hex $REG_ID] come back as MMU\
-               translation faults, so the processor is still running with page tables\
-               from the boot image in QSPI and the MMU could not be turned off from\
-               here. Set the board's boot mode jumpers to JTAG and power-cycle it;\
-               with nothing to boot, the processor stays in BootROM with the MMU off."
-    }
-    error "cannot read the core's ID register at [wm_hex $REG_ID]: $acc_err"
+
+puts "Connecting..."
+connect
+
+set wm_access_via ""
+set wm_core_id 0
+set wm_reasons {}
+set wm_ready 0
+foreach mode {bootrom booted} {
+    puts "Bring-up : trying with the processor [expr {$mode eq {bootrom} ?
+            {caught in BootROM, PS brought up by ps7_init} :
+            {allowed to boot, PS brought up by its own FSBL}}]"
+    if {[catch {wm_attempt $mode} why]} { set why "raised an error: $why" }
+    if {$why eq ""} { set wm_ready 1 ; break }
+    puts "           did not work -- $why"
+    lappend wm_reasons "$mode: $why"
 }
+
+if {!$wm_ready} {
+    catch {wm_dump_ps}
+    catch {wm_dump_state}
+    error "the board could not be brought into a usable state.\n  [join $wm_reasons "\n  "]\n\
+           Both ways of starting it were tried. Set this board's boot mode jumpers to\
+           JTAG and power-cycle it: BootROM then runs to completion, finds nothing to\
+           boot, and leaves the processor idle with its MMU off and the PS configured,\
+           which is the state all of this expects and the one supported for JTAG work."
+}
+
+puts "Access   : $wm_access_via"
+puts "DDR      : buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
+      [wm_hex $ADDR_RESULT] / [wm_hex $ADDR_GOLD]"
+set impl [expr {$wm_core_id & 0xf}]
+puts "Core     : [expr {$impl == 3 ? {v4 banked_window_mac} : {v3 overlapped_window_mac}}]\
+      K=$WM_K COUT=$WM_COUT windows=$WM_NWIN"
+puts ""
 
 # From here on the board is doing the work. Any failure prints every register
 # first, so one paste of the output carries the diagnosis and there is no need to
-# run the whole thing again just to find out what the counters said. The dump
-# only touches PL registers, so it still works when DDR is the thing that is bad.
+# run the whole thing again just to find out what the counters said.
 if {[catch {
-
-# Find usable memory before trusting any of it. Two distinct patterns 3 MB apart
-# must both survive: one pattern alone passes on a board whose memory aliases,
-# and aliasing would show up later as results that are wrong for no clear reason.
-# A PS preset whose DDR settings do not match this board fails here too, which is
-# far easier to read than the mismatched MAC results it would otherwise produce.
-set ddr_base 0
-foreach cand $WM_BASE_CANDIDATES {
-    set lo [expr {$cand}]
-    set hi [expr {$cand + 0x300000}]
-    if {[catch {
-        mwr $lo 0xA5A5F00F
-        mwr $hi 0x5A5A0FF0
-    }]} continue
-    if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
-    if {$ok} { set ddr_base $lo; break }
-}
-if {$ddr_base == 0} {
-    error "no usable DDR at any of $WM_BASE_CANDIDATES: a written pattern did not read\
-           back. The PS preset's memory settings do not match this board."
-}
-set ADDR_CONFIG $ddr_base
-set ADDR_INPUT  [expr {$ddr_base + 0x100000}]
-set ADDR_RESULT [expr {$ddr_base + 0x200000}]
-set ADDR_GOLD   [expr {$ddr_base + 0x300000}]
-puts "DDR responds. Buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
-      [wm_hex $ADDR_RESULT] / [wm_hex $ADDR_GOLD]."
-
-# ---------------- identify the core ----------------
-set id [wm_rd $REG_ID]
-if {($id & 0xffff0000) != 0x4d410000} {
-    error "ID register reads [wm_hex $id], expected 0x4d41000x.\
-           Wrong bitstream, or the core is not at [wm_hex $WM_BASE]."
-}
-set impl [expr {$id & 0xf}]
-puts "Core      : [expr {$impl == 3 ? {v4 banked_window_mac} : {v3 overlapped_window_mac}}]\
-      K=$WM_K COUT=$WM_COUT windows=$WM_NWIN"
-puts ""
 
 # ---------------- load the data ----------------
 puts "Loading [file size $f_cfg] + [file size $f_in] + [file size $f_gold] bytes over JTAG..."
