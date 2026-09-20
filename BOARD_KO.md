@@ -14,7 +14,8 @@
 | AXI-Stream 래퍼 (`rtl/window_mac_axis.sv`) | **시뮬레이션 검증됨** — 28케이스, 코어 대비 cycle 오버헤드 0 |
 | 보드 데이터 생성 (`scripts/export_board_data.py`) | **검증됨** — 시뮬레이션 벡터와 바이트 단위 대조 |
 | PS 애플리케이션 (`sw/window_mac_test.c`) | 문법 검사만 — **보드에서 미실행** |
-| Vivado 빌드 (`scripts/build_zedboard.tcl`) | **미실행** — 이 환경에 Vivado 없음 |
+| Vivado 빌드 (`scripts/build_zedboard.tcl`) | **실행됨** — xc7z020clg484, v3 P=8 @100MHz, WNS +0.919 ns, 0 errors |
+| 보드 로드 (`scripts/run_board.tcl`) | 미실행 — 보드 없음 |
 
 즉 **RTL 경로는 믿을 만하고, 툴체인 스크립트는 첫 실행에서 손볼 가능성이 큽니다.** 아래 "먼저 깨질 것들"을 보세요.
 
@@ -68,10 +69,30 @@ python scripts/export_board_data.py --frames 512
 
 ## 3단계 — 실행
 
-Vitis에서 `system_wrapper.xsa`로 플랫폼을 만들고, Hello World 템플릿의 `main.c`를 `sw/window_mac_test.c`로 교체합니다.
-XSCT에서:
+Vitis에서 `system_wrapper.xsa`로 플랫폼을 만들고, 빈 C 애플리케이션의 `main.c`를
+`sw/window_mac_test.c` 내용으로 교체해 빌드하면 `window_mac_test.elf`가 나옵니다.
 
+그 다음 Vitis 디버거 셸 — 예전 설치는 `xsct`, 2024.2 이후는 `xsdb`, 명령은 같습니다 — 에서:
+
+```tcl
+cd C:/fpga/FPGA
+source scripts/run_board.tcl
 ```
+
+비트스트림·XSA·데이터·ELF를 찾아서 순서대로 올리고 실행합니다. `build/zed_*` 중 가장 최근 것을
+쓰고, 데이터 크기를 확인하고, DDR에 한 워드를 써봤다 읽어 PS 프리셋이 이 보드에 맞는지 먼저
+확인합니다. 뭔가 빠지면 그 자리에서 멈추고 무엇이 없는지 말합니다.
+
+다른 빌드나 다른 위치의 ELF를 쓰려면:
+
+```tcl
+set ::env(WM_BUILD) C:/fpga/FPGA/build/zed_v3_p8_t4_1789907417
+set ::env(WM_ELF)   C:/vitis_ws/window_mac_test/build/window_mac_test.elf
+```
+
+직접 치실 거면 스크립트가 하는 일은 이겁니다:
+
+```tcl
 connect
 targets -set -filter {name =~ "ARM*#0"}
 fpga -file system_wrapper.bit
