@@ -242,5 +242,18 @@ DDR에 있던 것을 본다.
 서로 다른 `input.bin` 두 개가 보드에서 바이트 단위로 같은 출력을 낸 것이 유일한
 단서였다.
 
-미해결: `wm_mmu_off`가 이 보드에서 실패한다(`could not be turned off`). cp15 SCTLR
-레지스터 이름이 이 xsdb 버전에서 다른 것으로 보인다. 확인 후 반영할 것.
+**고친 방법.** 보드에 직접 물어서 레지스터 경로를 확인했다. `rrd`가 보여주는 그룹
+중 `cp15`에는 번호 서브그룹이 있고(`rrd cp15 1` -> `sctlr: 08c5187d`), `l2cache`
+그룹은 PL310 레지스터를 이름으로 노출한다(`reg1_control: 00000001`,
+`reg7_clean_inv_way`). 기존 `wm_mmu_off`는 `cp15.SCTLR` 같은 평평한 이름만 시도해서
+이 계층을 타지 못했고, 그래서 레지스터가 멀쩡히 있는데도 실패했다.
+
+`wm_caches_off`가 데이터를 쓰기 전에 이 순서로 수행한다:
+
+1. `sctlr`에서 M(bit0), C(bit2), I(bit12)를 내린다(`0x08c5187d` -> `0x08c50878`).
+   MMU가 꺼지면 ARMv7은 메모리를 non-cacheable로 다루므로 새 쓰기는 캐시에 안 들어간다.
+2. L2를 way 단위로 clean+invalidate한 뒤 `reg1_control`에 0을 쓴다. way 수는
+   `reg1_aux_control` bit16으로 런타임에 구한다(이 부품은 8-way). 먼저 clean해야
+   이전 실행의 dirty line이 나중에 새 데이터 위로 evict되지 않는다.
+
+각 단계는 쓰기 후 되읽어 확인하고, 실패하면 실제 에러 문구를 출력한다.

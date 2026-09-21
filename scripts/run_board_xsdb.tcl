@@ -274,6 +274,95 @@ proc wm_dump_state {} {
 # and never reach the memory the accelerator actually sees. mrd cannot show that
 # on its own -- it reads the same cached view the write went into -- so this runs
 # after the caches are off, when what is read is what the DMA will get.
+# Turn off the MMU and both cache levels before any data is written.
+#
+# Why this is not optional: dow -data writes through the processor's caches and
+# the AXI DMA reads DDR, so with caches on a download can sit in cache while the
+# accelerator reads whatever DDR held before. That is not a theory here -- on the
+# first genuinely different upload, 832 of 1024 result windows matched an oracle
+# computed on the PREVIOUS run's input.
+#
+# The register paths are the ones this board reports, not guesses: "rrd cp15 1"
+# lists sctlr, and "rrd l2cache" lists reg1_control and reg7_clean_inv_way by
+# name. The older wm_mmu_off tried flat names like cp15.SCTLR, which is why it
+# reported "could not be turned off" on a board where the register is plainly
+# there.
+proc wm_rrd_field {args} {
+    # Ask for the GROUP listing and pick the field out of it. "rrd cp15 1" and
+    # "rrd l2cache" are the forms seen to work on this board; whether rrd also
+    # takes a register name as a further argument was never established, so it
+    # is not relied on.
+    set reg [lindex $args end]
+    set group [lrange $args 0 end-1]
+    if {[catch {rrd {*}$group} raw]} { return "" }
+    # Anchored on whitespace or start, so one name cannot match inside another.
+    if {![regexp -nocase -- "(^|\\s)$reg\\s*:\\s*(\[0-9a-f\]+)" $raw -> _ hex]} {
+        return ""
+    }
+    if {![scan $hex %x v]} { return "" }
+    return $v
+}
+
+proc wm_l2_ways {} {
+    set aux [wm_rrd_field l2cache reg1_aux_control]
+    if {$aux eq ""} { return 8 }
+    # Aux Control bit 16 selects the associativity: 0 is 8-way, 1 is 16-way.
+    return [expr {($aux >> 16) & 1 ? 16 : 8}]
+}
+
+proc wm_caches_off {} {
+    set steps {}
+
+    # 1. MMU and L1. With the MMU off, ARMv7 treats memory as non-cacheable, so
+    #    this alone stops new writes from landing in a cache.
+    set v [wm_rrd_field cp15 1 sctlr]
+    if {$v eq ""} {
+        lappend steps "sctlr unreadable"
+    } elseif {($v & 1) == 0} {
+        lappend steps "MMU already off"
+    } else {
+        set want [expr {$v & ~0x1 & ~0x4 & ~0x1000}]
+        if {[catch {rwr cp15 1 sctlr $want} e]} {
+            lappend steps "sctlr write failed: $e"
+        } else {
+            set now [wm_rrd_field cp15 1 sctlr]
+            lappend steps [expr {$now ne "" && ($now & 1) == 0
+                                 ? "MMU+L1 off (sctlr [wm_hex $v] -> [wm_hex $now])"
+                                 : "sctlr did not take (reads [wm_hex $now])"}]
+        }
+    }
+
+    # 2. L2. Clean and invalidate first, so anything dirty from an earlier run is
+    #    written back rather than evicted later over the fresh data, then disable.
+    set c [wm_rrd_field l2cache reg1_control]
+    if {$c eq ""} {
+        lappend steps "l2 unreadable"
+    } elseif {$c == 0} {
+        lappend steps "L2 already off"
+    } else {
+        set mask [expr {(1 << [wm_l2_ways]) - 1}]
+        if {[catch {rwr l2cache reg7_clean_inv_way $mask} e]} {
+            lappend steps "L2 clean failed: $e"
+        } else {
+            for {set i 0} {$i < 200} {incr i} {
+                set w [wm_rrd_field l2cache reg7_clean_inv_way]
+                if {$w eq "" || $w == 0} break
+                after 5
+            }
+            catch {rwr l2cache reg7_cache_sync 0}
+            if {[catch {rwr l2cache reg1_control 0} e]} {
+                lappend steps "L2 disable failed: $e"
+            } else {
+                set now [wm_rrd_field l2cache reg1_control]
+                lappend steps [expr {$now eq "" || $now == 0
+                                     ? "L2 cleaned and off"
+                                     : "L2 still enabled (reads [wm_hex $now])"}]
+            }
+        }
+    }
+    return [join $steps "; "]
+}
+
 proc wm_file_word {path off} {
     # "rb" as an access mode needs Tcl 8.6; xsdb has shipped 8.5, so configure
     # the channel instead of assuming the shorthand parses.
@@ -655,8 +744,7 @@ if {[catch {
 # the MMU and D-cache on, a download can sit in cache and the accelerator reads
 # whatever DDR held before -- results that are wrong while every file on the host
 # is right. Turn them off before writing, so there is one view of memory.
-set _mmu [wm_mmu_off]
-puts "Caches   : [expr {$_mmu ne "" ? $_mmu : {could not be turned off -- see the readback below}}]"
+puts "Caches   : [wm_caches_off]"
 
 puts "Loading [file size $f_cfg] + [file size $f_in] + [file size $f_gold] bytes over JTAG..."
 dow -data $f_cfg  $ADDR_CONFIG
