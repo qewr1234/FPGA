@@ -268,6 +268,47 @@ proc wm_dump_state {} {
     puts ""
 }
 
+# Read a word back out of DDR and compare it with the file that was supposed to
+# land there. This is the check that was missing: dow -data writes through the
+# processor's caches, while the DMA reads DDR directly, so data can sit in cache
+# and never reach the memory the accelerator actually sees. mrd cannot show that
+# on its own -- it reads the same cached view the write went into -- so this runs
+# after the caches are off, when what is read is what the DMA will get.
+proc wm_file_word {path off} {
+    # "rb" as an access mode needs Tcl 8.6; xsdb has shipped 8.5, so configure
+    # the channel instead of assuming the shorthand parses.
+    set fh [open $path r]
+    fconfigure $fh -translation binary
+    seek $fh $off
+    set raw [read $fh 4]
+    close $fh
+    if {[string length $raw] != 4} { return "" }
+    binary scan $raw iu v
+    return $v
+}
+
+proc wm_check_loaded {path addr words what} {
+    set n [expr {[file size $path] / 4}]
+    set bad 0
+    foreach frac {0 1 2 3} {
+        set idx [expr {$frac * ($n - 1) / 3}]
+        set off [expr {$idx * 4}]
+        set want [wm_file_word $path $off]
+        if {$want eq ""} continue
+        if {[catch {wm_rd [expr {$addr + $off}]} got]} {
+            puts "  $what: word $idx could not be read back: $got"
+            incr bad
+            continue
+        }
+        if {$got != $want} {
+            puts "  $what: word $idx at [wm_hex [expr {$addr + $off}]] reads\
+                  [wm_hex $got], file says [wm_hex $want]"
+            incr bad
+        }
+    }
+    return $bad
+}
+
 proc wm_dma_reset {} {
     global MM2S_CR S2MM_CR DMACR_RESET
     wm_wr $MM2S_CR $DMACR_RESET
@@ -610,10 +651,28 @@ puts ""
 if {[catch {
 
 # ---------------- load the data ----------------
+# The DMA reads DDR, the debugger writes through the processor's caches. With
+# the MMU and D-cache on, a download can sit in cache and the accelerator reads
+# whatever DDR held before -- results that are wrong while every file on the host
+# is right. Turn them off before writing, so there is one view of memory.
+set _mmu [wm_mmu_off]
+puts "Caches   : [expr {$_mmu ne "" ? $_mmu : {could not be turned off -- see the readback below}}]"
+
 puts "Loading [file size $f_cfg] + [file size $f_in] + [file size $f_gold] bytes over JTAG..."
 dow -data $f_cfg  $ADDR_CONFIG
 dow -data $f_in   $ADDR_INPUT
 dow -data $f_gold $ADDR_GOLD
+
+set _bad 0
+incr _bad [wm_check_loaded $f_cfg  $ADDR_CONFIG $WM_CFG_WORDS   "config.bin"]
+incr _bad [wm_check_loaded $f_in   $ADDR_INPUT  $WM_INPUT_WORDS "input.bin"]
+incr _bad [wm_check_loaded $f_gold $ADDR_GOLD   $WM_RESULT_WORDS "gold.bin"]
+if {$_bad} {
+    error "$_bad sampled word(s) in DDR do not match the files just written.\
+           The accelerator would read something other than the data on the host,\
+           so the run is meaningless. This is what stale cache looks like."
+}
+puts "Readback : the sampled words in DDR match the files."
 
 wm_dma_reset
 
