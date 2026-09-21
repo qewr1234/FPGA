@@ -75,3 +75,19 @@ software agreeing, not a reproduction of that probe.
 
 The board script already writes `build/board/results.bin`, so nothing else has
 to change to get the hardware panel.
+
+## fig8_visual_check_PREVIEW.png
+
+A screenshot, kept only so the assembled draft can be read whole from any
+checkout. **It is not the figure and must not go into the paper** -- it is a
+rasterised capture at screen resolution.
+
+The real figure needs `build/board/gold.bin`, `results.bin` and
+`featuremap.json`, which a board run leaves behind and which are not committed.
+On the machine that has them:
+
+    python paper/figures/fig8_visual_check.py --channel 125
+
+That writes the PDF the paper uses. Commit `fig8_visual_check.pdf`,
+`fig8_visual_check.png` and `build/board/featuremap.json` (the last needs
+`git add -f`, since `build/` is ignored), then delete this preview.

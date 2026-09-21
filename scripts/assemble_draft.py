@@ -34,6 +34,17 @@ CAPS = {
 def img(stem, width):
     p = F/f'{stem}.png'
     if not p.exists():
+        # A screenshot kept only so the draft can be read whole. It is a
+        # rasterised capture, not the figure -- the real one is regenerated on
+        # the machine that holds the board data.
+        prev = F/f'{stem}_PREVIEW.png'
+        if prev.exists():
+            b64 = base64.b64encode(prev.read_bytes()).decode()
+            return (f'<img src="data:image/png;base64,{b64}" style="width:{width}">'
+                    f'<div class="provisional">PREVIEW ONLY -- a screenshot, not the '
+                    f'figure. Regenerate with <code>python paper/figures/'
+                    f'fig8_visual_check.py --channel 125</code> on the machine with '
+                    f'the board data, and use the PDF it writes.</div>')
         return (f'<div class="missing"><b>{stem}.png is not in this container.</b><br>'
                 f'It needs the data a board run leaves behind. Rebuild it on your machine with '
                 f'<code>python paper/figures/fig8_visual_check.py --channel 125</code>'
@@ -97,6 +108,9 @@ HTML = f"""<!doctype html><meta charset="utf-8"><title>Paper draft</title>
  figure{{margin:2em 0;text-align:center}}
  figure img{{border:1px solid #e0e0e0}}
  figcaption{{font-size:.82em;color:#555;text-align:left;margin-top:.6em;line-height:1.5}}
+ .provisional{{border:2px dashed #c60;background:#fff8f0;color:#853;padding:.6em .9em;
+              font:.8em/1.5 ui-monospace,Menlo,Consolas,monospace;text-align:left;
+              margin-top:.5em;border-radius:4px}}
  .missing{{border:2px dashed #c33;color:#933;padding:1.4em;font-size:.9em;text-align:left;
           background:#fff6f6;border-radius:4px}}
 </style>
