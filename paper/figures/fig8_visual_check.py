@@ -6,6 +6,7 @@ flat zero, and the figure says so with a number rather than asking the reader to
 trust two pictures that look alike.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import matplotlib.pyplot as plt
-from paperstyle import FULL_W, save, setup
+from paperstyle import FULL_W, save, use_paper_style
 
 ROOT = Path(__file__).resolve().parents[2]
 BOARD = ROOT/'build'/'board'
@@ -30,12 +31,16 @@ def load():
 
 
 def main():
-    setup()
+    use_paper_style()
+    # paperstyle.save() writes relative to the working directory, and this
+    # one is run from the repository root, not from here.
+    os.chdir(Path(__file__).resolve().parent)
     meta, gold, got = load()
     if got is None:
         raise SystemExit('build/board/results.bin is missing -- run the board first')
 
-    ch = int(np.argmax(gold.reshape(-1, gold.shape[-1]).ptp(axis=0)))  # liveliest map
+    flat = gold.reshape(-1, gold.shape[-1])
+    ch = int(np.argmax(np.ptp(flat, axis=0)))   # the liveliest channel
     ref, hw = gold[:, :, ch], got[:, :, ch]
     diff = hw.astype(np.int64) - ref.astype(np.int64)
 
