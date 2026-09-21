@@ -15,6 +15,7 @@ FIGURES = [
     "fig4_iso_tradeoff.py",
     "fig5_hw_validation.py",
     "fig6_verification_flow.py",
+    "fig7_scaling.py",
 ]
 
 here = Path(__file__).parent

@@ -112,6 +112,29 @@ def per_multiplier(core, field):
 # rather than holding everywhere.
 LUTRAM_PER_LANE = 22
 
+
+# The 32-multiplier comparison point, assembled from the rows above so there is
+# one copy of each number. Timing comes from the routed timing reports.
+def _at(core, mult, field):
+    for m, _P, v in points(core, field):
+        if m == mult:
+            return v
+    raise KeyError(f"{core} has no {mult}-multiplier run")
+
+
+ISO32 = {
+    "v3": dict(label="v3  P=32, T=1", mult=32, parallel=32, cycles_per_window=1808.1,
+               wns_ns=0.970, fmax_mhz=110.74, us_per_window=16.33,
+               lut=_at("v3", 32, "lut"), logic_lut=_at("v3", 32, "logic"),
+               lutram=_at("v3", 32, "lutram"), ff=_at("v3", 32, "ff"),
+               bram36=33, bram18=0, dsp=0),
+    "v4": dict(label="v4  P=8, T=4", mult=32, parallel=8, cycles_per_window=1910.7,
+               wns_ns=0.961, fmax_mhz=110.63, us_per_window=17.27,
+               lut=_at("v4", 32, "lut"), logic_lut=_at("v4", 32, "logic"),
+               lutram=_at("v4", 32, "lutram"), ff=_at("v4", 32, "ff"),
+               bram36=32, bram18=4, dsp=0),
+}
+
 # ------------------------------------------------------ hardware measurement ---
 # v3 P=8, DEPTH=2, 100 MHz on XC7Z020-CLG484. Bitstream WNS +0.919 ns, 0 errors.
 HW = dict(
