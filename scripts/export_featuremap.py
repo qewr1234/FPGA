@@ -40,18 +40,43 @@ def round_half_even(a):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--image', type=Path, required=True)
+    ap.add_argument('--image', type=Path)
     ap.add_argument('--size', type=int, default=32,
                     help='side of the square window patch (size*size windows)')
     ap.add_argument('--top', type=int, default=0, help='patch origin row in the 112x112 map')
     ap.add_argument('--left', type=int, default=0, help='patch origin column')
     ap.add_argument('--out', type=Path, default=BOARD)
+    ap.add_argument('--list', action='store_true',
+                    help='print the images the probe was built from, and exit')
     args = ap.parse_args()
+
+    meta_path = ROOT/'data'/'metadata.json'
+    if args.list:
+        # --list is the one mode that needs no image, so it is checked first.
+        man = json.loads(meta_path.read_text(encoding='utf-8'))['manifest']
+        for name, rec in sorted(man.items()):
+            print(f"{rec['split']:12s} {name}  sha256 {rec['file_sha256'][:16]}...")
+        return
+
+    # The repository carries no images -- only their names and hashes in
+    # metadata.json -- so say where the file was looked for instead of letting
+    # PIL report a bare relative path. Any photograph works here: the figure
+    # shows that hardware and software agree, not that this run reproduces the
+    # original probe.
+    if args.image is None:
+        raise SystemExit('--image is required (or use --list)')
+    img_path = args.image if args.image.is_absolute() else ROOT/args.image
+    if not img_path.exists():
+        raise SystemExit(
+            f'no image at {img_path}\n'
+            f'  The repository does not ship the images; metadata.json keeps only\n'
+            f'  their names and hashes (run with --list to see them).\n'
+            f'  Put any photograph there, or pass --image with its full path.')
 
     import torch
     from torchvision.models import vgg11, VGG11_Weights
 
-    meta = json.loads((ROOT/'data'/'metadata.json').read_text(encoding='utf-8'))
+    meta = json.loads(meta_path.read_text(encoding='utf-8'))
     a_scale = meta['activation_scale']
     w_scale = meta['weight_scale']
     assert meta['layer'] == 'features.3' and meta['taps'] == K, meta['layer']
@@ -59,7 +84,7 @@ def main():
     weights = VGG11_Weights.IMAGENET1K_V1
     net = vgg11(weights=weights).eval()
     from PIL import Image
-    x = weights.transforms()(Image.open(args.image).convert('RGB')).unsqueeze(0)
+    x = weights.transforms()(Image.open(img_path).convert('RGB')).unsqueeze(0)
 
     with torch.no_grad():
         act = net.features[:3](x)[0].numpy()          # (64, 112, 112), pre-conv
@@ -98,14 +123,16 @@ def main():
     (args.out/'input.bin').write_bytes(xs.reshape(-1).tobytes())
     (args.out/'gold.bin').write_bytes(y.astype('<i4').reshape(-1).tobytes())
     (args.out/'featuremap.json').write_text(json.dumps({
-        'image': str(args.image), 'size': args.size,
+        'image': str(img_path.relative_to(ROOT) if img_path.is_relative_to(ROOT)
+                     else img_path).replace('\\', '/'),
+        'size': args.size,
         'top': args.top, 'left': args.left,
         'windows': n, 'COUT': COUT, 'K': K,
         'order': 'row-major over the patch; reshape gold to (size, size, COUT)',
         'set_in_tcl': {'WM_FRAMES': n, 'WM_MODE_SEQ': 1},
     }, indent=2), encoding='utf-8')
 
-    print(f'{args.image.name}: {n} contiguous windows ({args.size}x{args.size}) '
+    print(f'{img_path.name}: {n} contiguous windows ({args.size}x{args.size}) '
           f'from the {H}x{W} map')
     print(f'  input.bin  {n*K} bytes')
     print(f'  gold.bin   {n*COUT*4} bytes')
