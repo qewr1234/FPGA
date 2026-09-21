@@ -54,6 +54,13 @@ set WM_CFG_WORDS    [expr {$WM_COUT * $WM_K + $WM_COUT}]
 set WM_INPUT_WORDS  [expr {$WM_NWIN * $WM_K / 4}]
 set WM_RESULT_WORDS [expr {$WM_NWIN * $WM_COUT}]
 
+# The four buffers used to sit a fixed 1 MB apart, which silently caps the run at
+# about 1820 windows -- a 42x42 patch. Space them by the largest buffer instead,
+# rounded up to a megabyte, so a full 112x112 feature map (12544 windows, 6.9 MB
+# of input) lays out without overlapping.
+set WM_SPAN [expr {max($WM_CFG_WORDS, $WM_INPUT_WORDS, $WM_RESULT_WORDS) * 4}]
+set WM_SPAN [expr {(($WM_SPAN + 0xFFFFF) / 0x100000) * 0x100000}]
+
 # Buffers sit 1 MB apart from a base chosen at run time. 0x10000000 is what
 # export_board_data.py documents, but it is past the end of a 256 MB board, so a
 # lower base is tried before giving up. Total footprint is under 4 MB.
@@ -652,7 +659,7 @@ proc wm_find_ddr {} {
     global WM_BASE_CANDIDATES
     foreach cand $WM_BASE_CANDIDATES {
         set lo [expr {$cand}]
-        set hi [expr {$cand + 0x300000}]
+        set hi [expr {$cand + 3 * $::WM_SPAN}]
         if {[catch {wm_wr $lo 0xA5A5F00F ; wm_wr $hi 0x5A5A0FF0}]} continue
         if {[catch {expr {[wm_rd $lo] == 0xa5a5f00f && [wm_rd $hi] == 0x5a5a0ff0}} ok]} continue
         if {$ok} { return $lo }
@@ -721,9 +728,9 @@ if {$ddr_base == 0} {
     error "the core answers, but no DDR held a written pattern."
 }
 set ADDR_CONFIG $ddr_base
-set ADDR_INPUT  [expr {$ddr_base + 0x100000}]
-set ADDR_RESULT [expr {$ddr_base + 0x200000}]
-set ADDR_GOLD   [expr {$ddr_base + 0x300000}]
+set ADDR_INPUT  [expr {$ddr_base + $WM_SPAN}]
+set ADDR_RESULT [expr {$ddr_base + 2 * $WM_SPAN}]
+set ADDR_GOLD   [expr {$ddr_base + 3 * $WM_SPAN}]
 
 puts "Access   : $wm_access_via"
 puts "DDR      : buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
@@ -806,7 +813,10 @@ set fh [open $f_gold r]
 fconfigure $fh -translation binary
 set golddata [read $fh]
 close $fh
-binary scan $golddata iu* gold
+# Only expand to a Tcl list if the raw bytes differ. A full 112x112 feature map
+# is 1,605,632 words, and walking that as a list costs minutes for a comparison
+# that a string equality settles at once when everything matches.
+set gold {}
 
 set bad 0
 set first_bad -1
@@ -830,19 +840,27 @@ if {$fast} {
     fconfigure $fh -translation binary
     set gotdata [read $fh]
     close $fh
-    binary scan $gotdata iu* got
-    for {set i 0} {$i < $WM_RESULT_WORDS} {incr i} {
-        if {[lindex $got $i] != [lindex $gold $i]} {
-            if {$bad == 0} {
-                set first_bad $i
-                set first_got [lindex $got $i]
-                set first_want [lindex $gold $i]
+    # A full 112x112 map is 1,605,632 words; walking that as a Tcl list costs
+    # minutes. When everything matches -- the case that matters -- comparing the
+    # raw bytes settles it at once, and the list is only built to locate the
+    # first difference when there is one.
+    if {$gotdata ne $golddata} {
+        binary scan $golddata iu* gold
+        binary scan $gotdata iu* got
+        for {set i 0} {$i < $WM_RESULT_WORDS} {incr i} {
+            if {[lindex $got $i] != [lindex $gold $i]} {
+                if {$bad == 0} {
+                    set first_bad $i
+                    set first_got [lindex $got $i]
+                    set first_want [lindex $gold $i]
+                }
+                incr bad
             }
-            incr bad
         }
     }
 } else {
     puts "  (bulk read unavailable, reading in blocks -- this takes a minute)"
+    binary scan $golddata iu* gold
     set chunk 4096
     for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
         set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
