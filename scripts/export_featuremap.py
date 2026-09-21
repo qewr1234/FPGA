@@ -101,6 +101,8 @@ def main():
     ap.add_argument('--top', type=int, default=0, help='patch origin row in the 112x112 map')
     ap.add_argument('--left', type=int, default=0, help='patch origin column')
     ap.add_argument('--out', type=Path, default=BOARD)
+    ap.add_argument('--mode', type=int, default=0, choices=[0, 1, 2],
+                    help='0 all dense (default), 1 all sparse, 2 alternate per window')
     ap.add_argument('--list', action='store_true',
                     help='print the images the probe was built from, and exit')
     ap.add_argument('--selftest', action='store_true',
@@ -236,8 +238,20 @@ def main():
             i += 1
     assert i == n
 
+    # mode 2 runs every window twice, dense then sparse, so the stream has to
+    # carry each one twice as well. The outputs are the same either way -- the
+    # whole point of the core -- so this only changes what gets timed.
+    if args.mode == 2:
+        xs = np.repeat(xs, 2, axis=0)
+        n *= 2
+
     y = oracle(xs, pw, pb)
     assert y.shape == (n, COUT) and y.min() >= 0
+
+    nz = (xs != 0).sum(axis=1)
+    print(f'nonzero taps per window: mean {nz.mean():.1f}/{K} '
+          f'({nz.mean()/K:.3f}), min {nz.min()}, max {nz.max()}, '
+          f'{int((nz == 0).sum())} empty')
 
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out/'input.bin').write_bytes(xs.reshape(-1).tobytes())
@@ -249,7 +263,9 @@ def main():
         'top': args.top, 'left': args.left,
         'windows': n, 'COUT': COUT, 'K': K,
         'order': 'row-major over the patch; reshape gold to (size, size, COUT)',
-        'set_in_tcl': {'WM_FRAMES': n, 'WM_MODE_SEQ': 1},
+        'mode': args.mode,
+        'set_in_tcl': {'WM_FRAMES': n//2 if args.mode == 2 else n,
+                       'WM_MODE_SEQ': args.mode},
     }, indent=2), encoding='utf-8')
 
     print(f'{img_path.name}: {n} contiguous windows ({args.size}x{args.size}) '
@@ -257,7 +273,9 @@ def main():
     print(f'  input.bin  {n*K} bytes')
     print(f'  gold.bin   {n*COUT*4} bytes')
     print(f'  config.bin left alone -- weights do not depend on the window choice')
-    print(f'\nRun scripts/run_board_xsdb.tcl -- it picks up frames={n} mode_seq=1'
+    frames = n//2 if args.mode == 2 else n
+    print(f'\nRun scripts/run_board_xsdb.tcl -- it picks up frames={frames} '
+          f'mode_seq={args.mode}'
           f' from featuremap.json, so nothing needs editing -- then'
           f'\n  python paper/figures/fig8_visual_check.py')
 

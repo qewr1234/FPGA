@@ -23,11 +23,16 @@ BOARD = ROOT/'build'/'board'
 def load():
     meta = json.loads((BOARD/'featuremap.json').read_text(encoding='utf-8'))
     s, cout = meta['size'], meta['COUT']
-    gold = np.frombuffer((BOARD/'gold.bin').read_bytes(), dtype='<i4').reshape(s, s, cout)
-    res = BOARD/'results.bin'
-    got = (np.frombuffer(res.read_bytes(), dtype='<i4').reshape(s, s, cout)
-           if res.exists() else None)
-    return meta, gold, got
+
+    def grid(path):
+        if not path.exists():
+            return None
+        a = np.frombuffer(path.read_bytes(), dtype='<i4').reshape(-1, cout)
+        if meta.get('mode') == 2:
+            a = a[0::2]        # mode 2 runs each window twice; keep one copy
+        return a.reshape(s, s, cout)
+
+    return meta, grid(BOARD/'gold.bin'), grid(BOARD/'results.bin')
 
 
 def main():
