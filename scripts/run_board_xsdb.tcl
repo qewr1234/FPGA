@@ -26,26 +26,26 @@ set WM_COUT     128
 set WM_FRAMES   512
 set WM_MODE_SEQ 2
 
-# export_featuremap.py writes a contiguous window patch for the visual-check
-# figure and records the geometry it needs in featuremap.json. Pick that up when
-# it is there, so switching between the two exports does not mean editing this
-# file and mismatching the data by one stale number. mode_seq 1 is all-sparse
-# (0 is all-dense, 2 alternates per window); the outputs are the same either
-# way, but only the sparse path is worth timing.
-set _fm [file join [file dirname [info script]] .. build board featuremap.json]
-if {[file exists $_fm]} {
-    set _fh [open $_fm r]
+# Both exporters write layout.json next to the data, and it records the geometry
+# they actually produced. Read it rather than keeping two numbers in step by hand
+# here: the one time they drifted, the run read the wrong window count against
+# the right data. mode_seq 1 is all-sparse, 0 all-dense, 2 alternating, per the
+# wrapper's register map.
+set _lay [file join [file dirname [info script]] .. build board layout.json]
+if {[file exists $_lay]} {
+    set _fh [open $_lay r]
     set _txt [read $_fh]
     close $_fh
-    if {[regexp {"WM_FRAMES"\s*:\s*(\d+)} $_txt -> _f] &&
-        [regexp {"WM_MODE_SEQ"\s*:\s*(\d+)} $_txt -> _m]} {
+    if {[regexp {"frames"\s*:\s*(\d+)} $_txt -> _f] &&
+        [regexp {"mode_seq"\s*:\s*(\d+)} $_txt -> _m]} {
         set WM_FRAMES   $_f
         set WM_MODE_SEQ $_m
-        puts "Geometry  : featuremap.json -> frames=$WM_FRAMES mode_seq=$WM_MODE_SEQ\
-              (contiguous patch for the visual check)"
+        puts "Geometry  : layout.json -> frames=$WM_FRAMES mode_seq=$WM_MODE_SEQ"
     } else {
-        puts "WARNING: $_fm exists but has no WM_FRAMES/WM_MODE_SEQ; using $WM_FRAMES/$WM_MODE_SEQ"
+        puts "WARNING: $_lay has no frames/mode_seq; using $WM_FRAMES/$WM_MODE_SEQ"
     }
+} else {
+    puts "WARNING: no layout.json; using the built-in $WM_FRAMES/$WM_MODE_SEQ"
 }
 
 set WM_NWIN     [expr {$WM_MODE_SEQ == 2 ? 2 * $WM_FRAMES : $WM_FRAMES}]

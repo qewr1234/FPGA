@@ -256,6 +256,16 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out/'input.bin').write_bytes(xs.reshape(-1).tobytes())
     (args.out/'gold.bin').write_bytes(y.astype('<i4').reshape(-1).tobytes())
+    # The board script takes its geometry from layout.json, whichever exporter
+    # wrote it, so write the same keys export_board_data.py does.
+    (args.out/'layout.json').write_text(json.dumps({
+        'split': 'featuremap', 'K': K, 'COUT': COUT,
+        'frames': n//2 if args.mode == 2 else n,
+        'mode_seq': args.mode, 'windows': n,
+        'input_words': n*K//4, 'gold_words': n*COUT,
+        'addresses': {'config': '0x10000000', 'input': '0x10100000',
+                      'result': '0x10200000', 'gold': '0x10300000'},
+    }, indent=2), encoding='utf-8')
     (args.out/'featuremap.json').write_text(json.dumps({
         'image': str(img_path.relative_to(ROOT) if img_path.is_relative_to(ROOT)
                      else img_path).replace('\\', '/'),
