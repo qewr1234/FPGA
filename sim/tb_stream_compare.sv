@@ -14,6 +14,21 @@ module tb_stream_compare;
     localparam integer KW=(K<2 ? 1:$clog2(K)),CW=(COUT<2 ? 1:$clog2(COUT));
     localparam integer NWIN=(MODE_SEQ==2) ? 2*N : N;
     localparam integer GROUPS=(COUT+P-1)/P;
+    // Runtime geometry for v3. K and COUT are the built maxima; RUN_K and
+    // RUN_COUT say how much of that this run uses. Left at 0 they take the full
+    // built size, so every existing case is bit-identical to before. These are
+    // picked up by the dut's .* connection and ignored by the cores that have no
+    // such ports.
+    parameter integer RUN_K=0, RUN_COUT=0;
+    localparam integer NW=$clog2(K+1);
+    // Effective sizes for this run. Array declarations keep the built maximum so
+    // they are always big enough; loops and vector indexing use these, because
+    // the vector file holds RK taps and RC channels, not K and COUT.
+    localparam integer RK=(RUN_K==0) ? K : RUN_K;
+    localparam integer RC=(RUN_COUT==0) ? COUT : RUN_COUT;
+    localparam integer RGROUPS=(RC+P-1)/P;
+    wire [NW-1:0] run_k    = (RUN_K   ==0) ? K[NW-1:0]  : RUN_K[NW-1:0];
+    wire [CW:0]   run_cout = (RUN_COUT==0) ? COUT[CW:0] : RUN_COUT[CW:0];
     reg clk=0;always #5 clk=~clk;
     reg rst_n=0,cfg_valid=0,cfg_is_bias=0,start_valid=0,sparse_mode=0,s_valid=0,m_ready=1;
     wire cfg_ready,start_ready,s_ready,m_valid,m_last;
@@ -124,19 +139,19 @@ module tb_stream_compare;
         if(m_acc) begin
             if(win_out>=NWIN) $fatal(1,"output after the last window");
             fr=win_frame(win_out);
-            if(m_acc_ch!==ch_out || m_acc_data!==gold[fr*COUT+ch_out] || m_acc_last!==(ch_out==COUT-1))
-                $fatal(1,"mismatch window=%0d frame=%0d mode=%0d ch=%0d got=%h expected=%h",win_out,fr,win_mode(win_out),ch_out,m_acc_data,gold[fr*COUT+ch_out]);
+            if(m_acc_ch!==ch_out || m_acc_data!==gold[fr*RC+ch_out] || m_acc_last!==(ch_out==RC-1))
+                $fatal(1,"mismatch window=%0d frame=%0d mode=%0d ch=%0d got=%h expected=%h",win_out,fr,win_mode(win_out),ch_out,m_acc_data,gold[fr*RC+ch_out]);
             checked=checked+1;
-            if(ch_out==COUT-1) begin end_cycle[win_out]=cycle;win_out=win_out+1;ch_out=0;end
+            if(ch_out==RC-1) begin end_cycle[win_out]=cycle;win_out=win_out+1;ch_out=0;end
             else ch_out=ch_out+1;
         end
     end
     task configure;
         begin
-            for(ci=0;ci<COUT;ci=ci+1) begin
-                for(t=0;t<K;t=t+1) begin
+            for(ci=0;ci<RC;ci=ci+1) begin
+                for(t=0;t<RK;t=t+1) begin
                     @(negedge clk);cfg_valid=1;cfg_is_bias=0;cfg_channel=ci;cfg_tap=t;
-                    cfg_data={{24{weights[ci*K+t][7]}},weights[ci*K+t]};
+                    cfg_data={{24{weights[ci*RK+t][7]}},weights[ci*RK+t]};
                     start_valid=1; // configuration must win in the idle core
                     @(posedge clk);if(!cfg_ready || start_ready) $fatal(1,"configuration priority failed");
                 end
@@ -159,8 +174,8 @@ module tb_stream_compare;
         begin
             idx=0;age=0;
             while(idx<limit) begin
-                s_valid=!(INPUT_GAPS && (age%9==3 || age%9==4));s_data=inputs[f*K+idx][6:0];
-                if(inputs[f*K+idx]>127) $fatal(1,"input outside proof domain");
+                s_valid=!(INPUT_GAPS && (age%9==3 || age%9==4));s_data=inputs[f*RK+idx][6:0];
+                if(inputs[f*RK+idx]>127) $fatal(1,"input outside proof domain");
                 @(negedge clk);if(s_acc) idx=idx+1;
                 age=age+1;
             end
@@ -191,13 +206,13 @@ module tb_stream_compare;
             // 1. abort while waiting for input
             @(negedge clk);offer_start(0,dummy);abort_and_reset();
             // 2. abort with the MAC pipeline active
-            @(negedge clk);offer_start(0,dummy);send_input(1,K);
+            @(negedge clk);offer_start(0,dummy);send_input(1,RK);
             wait(issue);repeat(6) @(negedge clk);abort_and_reset();
             // 3. abort with output blocked (and, for v3, a second window loading)
-            force_block=1;@(negedge clk);offer_start(0,dummy);send_input(1,K);wait(m_valid);
+            force_block=1;@(negedge clk);offer_start(0,dummy);send_input(1,RK);wait(m_valid);
             repeat(24) @(negedge clk);
             if(IMPL>=2) begin
-                @(negedge clk);offer_start(1,dummy);send_input(0,(K>=2) ? K/2 : 1);
+                @(negedge clk);offer_start(1,dummy);send_input(0,(RK>=2) ? RK/2 : 1);
                 repeat(8) @(negedge clk);
             end
             abort_and_reset();
@@ -208,31 +223,31 @@ module tb_stream_compare;
         for(w=0;w<NWIN;w=w+1) begin
             for(b=0;b<T;b=b+1) bank_nz[b]=0;
             nz=0;
-            for(t=0;t<K;t=t+1) if(!win_mode(w) || inputs[win_frame(w)*K+t]!=0) begin
+            for(t=0;t<RK;t=t+1) if(!win_mode(w) || inputs[win_frame(w)*RK+t]!=0) begin
                 nz=nz+1;bank_nz[t%T]=bank_nz[t%T]+1;
             end
             bank_max=0;for(b=0;b<T;b=b+1) if(bank_nz[b]>bank_max) bank_max=bank_nz[b];
-            expect_issues=expect_issues+GROUPS*((IMPL==3) ? bank_max : nz);
+            expect_issues=expect_issues+RGROUPS*((IMPL==3) ? bank_max : nz);
         end
         @(negedge clk);active=1;
         for(w=0;w<NWIN;w=w+1) begin
             offer_start(win_mode(w),start_cycle[w]);
             if(w==0) t0=start_cycle[0];
-            send_input(win_frame(w),K);
+            send_input(win_frame(w),RK);
         end
         wait(win_out==NWIN);@(negedge clk);
-        if(input_beats!=NWIN*K) $fatal(1,"input beat count %0d != %0d",input_beats,NWIN*K);
+        if(input_beats!=NWIN*RK) $fatal(1,"input beat count %0d != %0d",input_beats,NWIN*RK);
         if(issues!=expect_issues) $fatal(1,"issued tap count %0d != %0d",issues,expect_issues);
         repeat(5) @(negedge clk);
         if(m_valid || !start_ready || !cfg_ready) $fatal(1,"not idle after completion");
         for(w=0;w<NWIN;w=w+1) begin
-            nz=0;for(t=0;t<K;t=t+1) if(inputs[win_frame(w)*K+t]!=0) nz=nz+1;
+            nz=0;for(t=0;t<RK;t=t+1) if(inputs[win_frame(w)*RK+t]!=0) nz=nz+1;
             $fwrite(csv,"%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
-                w,win_frame(w),win_mode(w),K,COUT,P,DEPTH,IMPL,T,nz,start_cycle[w],end_cycle[w],STALL_LEN,PATTERN,INPUT_GAPS);
+                w,win_frame(w),win_mode(w),RK,RC,P,DEPTH,IMPL,T,nz,start_cycle[w],end_cycle[w],STALL_LEN,PATTERN,INPUT_GAPS);
         end
         $fclose(csv);
         $display("PASS ALL checked_values=%0d windows=%0d total_cycles=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d STALL=%0d PATTERN=%0d GAPS=%0d RESET=%0d",
-                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],K,COUT,P,DEPTH,IMPL,T,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST);
+                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],RK,RC,P,DEPTH,IMPL,T,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST);
         $finish;
     end
 endmodule

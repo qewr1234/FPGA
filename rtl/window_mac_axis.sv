@@ -30,6 +30,8 @@
 // DMA starved the core and the run measured the DMA, not the core.
 //
 // Register map (AXI4-Lite, 32-bit):
+//   0x28 RUN_K     taps this layer uses  (0 or > K  -> the built K)
+//   0x2C RUN_COUT  channels this layer uses (0 or > COUT -> the built COUT)
 //   0x00 CTRL      [0] hold core in reset   [1] cfg mode   [3:2] mode_seq
 //                  [4] arm run (self clearing)             [5] reset cfg walker
 //                  mode_seq: 0 all dense, 1 all sparse, 2 alternate per window
@@ -90,7 +92,18 @@ module window_mac_axis #(
 
     localparam [5:0] REG_CTRL=6'h00, REG_NWIN=6'h04, REG_STATUS=6'h08, REG_CYCLES=6'h0C,
                      REG_WINDONE=6'h10, REG_INSTALL=6'h14, REG_OUTSTALL=6'h18,
-                     REG_OUTCOUNT=6'h1C, REG_CFGCOUNT=6'h20, REG_ID=6'h24;
+                     REG_OUTCOUNT=6'h1C, REG_CFGCOUNT=6'h20, REG_ID=6'h24,
+                     REG_RUN_K=6'h28, REG_RUN_COUT=6'h2C;
+
+    // K and COUT are the built maxima. run_k and run_cout say how much of that
+    // the layer being run uses, so one bitstream covers every layer whose
+    // weights fit in the built memories instead of one bitstream per layer.
+    // They reset to the built size, so a host that never writes them sees
+    // exactly the behaviour this design had before.
+    localparam integer NWP=$clog2(K+1);
+    localparam integer CWP=(COUT<2 ? 1 : $clog2(COUT));
+    reg [NWP-1:0] run_k;
+    reg [CWP:0]   run_cout;
 
     reg        ctrl_core_rst;
     reg        ctrl_cfg_mode;
@@ -175,7 +188,7 @@ module window_mac_axis #(
             .m_channel(core_m_channel), .m_last(core_m_last));
     end else begin: v3
         overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH)) core (
-            .clk(aclk), .rst_n(core_rst_n),
+            .clk(aclk), .rst_n(core_rst_n), .run_k(run_k), .run_cout(run_cout),
             .cfg_valid(cfg_valid), .cfg_ready(cfg_ready), .cfg_is_bias(cfg_is_bias),
             .cfg_channel(cfg_channel), .cfg_tap(cfg_tap), .cfg_data(cfg_data),
             .start_valid(start_valid), .start_ready(start_ready), .sparse_mode(sparse_mode),
@@ -199,6 +212,7 @@ module window_mac_axis #(
     always @(posedge aclk) begin
         if(!aresetn) begin
             ctrl_core_rst<=1'b1; ctrl_cfg_mode<=1'b0; ctrl_mode_seq<=2'd0;
+            run_k<=K[NWP-1:0]; run_cout<=COUT[CWP:0];
             nwindows<=32'd0; go<=1'b0; run_done<=1'b0;
             s_axi_bvalid<=1'b0; s_axi_rvalid<=1'b0; s_axi_rdata<=32'd0;
             cfg_ch<={CW{1'b0}}; cfg_tp<={KW{1'b0}}; cfg_phase<=1'b0; cfg_count<=32'd0;
@@ -227,6 +241,12 @@ module window_mac_axis #(
                     end
                 end
                 REG_NWIN: nwindows<=s_axi_wdata;
+                // Zero means "the built size", so writing 0 is a way back to the
+                // default without knowing what it is.
+                REG_RUN_K:    run_k   <=(s_axi_wdata==0 || s_axi_wdata>K)
+                                        ? K[NWP-1:0]  : s_axi_wdata[NWP-1:0];
+                REG_RUN_COUT: run_cout<=(s_axi_wdata==0 || s_axi_wdata>COUT)
+                                        ? COUT[CWP:0] : s_axi_wdata[CWP:0];
                 default: ;
                 endcase
             end else if(s_axi_bvalid && s_axi_bready) s_axi_bvalid<=1'b0;
@@ -237,6 +257,8 @@ module window_mac_axis #(
                 case(s_axi_araddr)
                 REG_CTRL:     s_axi_rdata<={28'd0,ctrl_mode_seq,ctrl_cfg_mode,ctrl_core_rst};
                 REG_NWIN:     s_axi_rdata<=nwindows;
+                REG_RUN_K:    s_axi_rdata<=run_k;
+                REG_RUN_COUT: s_axi_rdata<=run_cout;
                 REG_STATUS:   s_axi_rdata<={29'd0,run_done,measuring,go};
                 REG_CYCLES:   s_axi_rdata<=cycles;
                 REG_WINDONE:  s_axi_rdata<=win_done;
