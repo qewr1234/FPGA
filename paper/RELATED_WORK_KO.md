@@ -341,3 +341,45 @@ SparseDNNAccelerator만 직접 확인이 필요하다. 논문에는 다음 한 �
 > 공개된 FPGA 희소 CNN 가속기 구현은 주로 가중치 희소성과 시스톨릭 어레이를
 > 대상으로 하며, 활성값 희소성 하에서 병렬 축별 fabric 비용을 대조한 구현은
 > 확인되지 않았다.
+
+---
+
+## 10. MCBBS(SparseDNNAccelerator) 대조 완료 (2026-09-21)
+
+README 확인 결과 **위협이 아니다. 오히려 인용해서 이득을 보는 쪽이다.**
+
+| | MCBBS (Liu & Brown, FPL 2021) | 본 연구 |
+|---|---|---|
+| 희소성 대상 | **가중치** ("we exploit weight sparsity") | **활성값**(0인 입력) |
+| 희소성 확보 | **가지치기**로 75%/50% 강제 | 없음. 들어오는 대로 |
+| 희소 패턴 | **MCBBS** — 구조를 하드웨어에 맞게 설계 | 비구조적. 입력마다 바뀜 |
+| 뱅크 부하 | **설계상 균형**(bank-balanced) | 불균형을 측정(T=4에서 1.16배) |
+| 구조 | 24x7 2D 시스톨릭 어레이 | 창 단위 MAC |
+| 구현 | Intel FPGA SDK for OpenCL (주로 HLS) | SystemVerilog RTL |
+| 디바이스 | Arria 10, DSP 1352개(89%), ALM 336K | XC7Z020, **DSP 0개** |
+| 자원 보고 | 구성별 ALM/DSP/M20K 총량 | **곱셈기당 LUT/FF** |
+| 축 대조 | 없음 | 있음 |
+
+**핵심 구분 — 그들은 데이터를 하드웨어에 맞춘다. 본 연구는 하드웨어를 데이터에
+맞춘다.** 가중치는 정적이라 컴파일 타임에 뱅크 균형을 맞추도록 가지치기할 수 있다.
+활성값은 입력마다 바뀌므로 그럴 수 없고, 그래서 `t mod T` 같은 **정적 해시**를 쓰고
+불균형을 지불할 수밖에 없다. 6절에서 그 대가를 잰 것이 바로 이 지점이다.
+
+즉 6절의 불균형 수치는 약점이 아니라 **왜 bank-balanced 기법을 쓸 수 없는지에 대한
+답**이다. 서론에서 이렇게 연결할 것:
+
+> 뱅크 균형은 희소 가속기에서 확립된 기법이다 [Cao et al. FPGA 2019;
+> Liu & Brown FPL 2021]. 그러나 이들은 가중치 희소성을 전제하며, 가지치기 단계에서
+> 패턴을 하드웨어에 맞추어 균형을 얻는다. 활성값 희소성에는 그 단계가 없다. 본
+> 연구는 균형을 포기한 정적 할당의 대가를 측정하고(T=4에서 1.16배), 그럼에도 출력
+> 채널 축 대비 곱셈기당 비용이 낮음을 보인다.
+
+**추가 인용 2건 (필수):**
+- Lin Qiao Liu, Stephen D. Brown, "Leveraging Fine-grained Structured Sparsity for
+  CNN Inference on Systolic Array Architectures," FPL 2021.
+- S. Cao, C. Zhang et al., "Efficient and effective sparse LSTM on FPGA with
+  bank-balanced sparsity," FPGA 2019. doi:10.1145/3289602.3293898
+  ← **bank-balanced sparsity의 출처다. 뱅킹을 논하면서 이걸 빼면 안 된다.**
+
+또한 MCBBS는 **Arria 10에서 DSP 89%를 쓴다.** 본 연구가 DSP 0으로 가는 이유
+(소형 디바이스에서 DSP가 소진된 상황)를 대비로 설명하기 좋은 수치다.

@@ -55,3 +55,19 @@ configuration.
 
 Each script's docstring ends with the caption to place under that figure. They
 are written to be read without the body text, which is how a poster is read.
+
+## fig8_visual_check.py (not in make_all.py)
+
+It is left out of the runner on purpose: it needs data that only a board run
+produces, so including it would make `make_all.py` report a failure on every
+ordinary rebuild.
+
+The probe in `data/*.wpr` holds 64 windows per image taken from scattered
+positions, so its outputs do not form a picture. To get a feature map:
+
+    python scripts/export_featuremap.py --image <img> --size 32
+    # set WM_FRAMES 1024 and WM_MODE_SEQ 1 in scripts/run_board_xsdb.tcl, run it
+    python paper/figures/fig8_visual_check.py
+
+The board script already writes `build/board/results.bin`, so nothing else has
+to change to get the hardware panel.
