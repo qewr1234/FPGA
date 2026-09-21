@@ -47,14 +47,38 @@ FAIR_PCT = 5.1                # v4 costs this much more time at the same budget
 
 # ------------------------------------------------- synthesis, 32 multipliers ---
 # Vivado out-of-context, xc7z020clg484-1, 10 ns constraint, I/O delays applied.
+# Read from the hierarchical utilization reports, top row, 2026-09-20:
+#   build/ooc_1789904889_7964/overlapped_window_mac/routed_utilization.rpt
+#   build/ooc_1789905694_7964/banked_window_mac/routed_utilization.rpt
+#
+# Both designs report DSP Blocks = 0, so all 32 multipliers are built from
+# fabric in both. That is what makes the LUT comparison mean something: the two
+# multiplier arrays are the same size and the same arithmetic, so their cost
+# cancels out of the difference, and what is left is the rest of the datapath.
 ISO32 = {
-    "v3": dict(label="v3  P=32, T=1", mult=32, cycles_per_window=1808.1,
+    "v3": dict(label="v3  P=32, T=1", mult=32, parallel=32, cycles_per_window=1808.1,
                wns_ns=0.970, fmax_mhz=110.74, us_per_window=16.33,
-               lut=4532, ff=3674, bram36=33, bram18=0),
-    "v4": dict(label="v4  P=8, T=4", mult=32, cycles_per_window=1910.7,
+               lut=4532, logic_lut=3828, lutram=704, ff=3674,
+               bram36=33, bram18=0, dsp=0),
+    "v4": dict(label="v4  P=8, T=4", mult=32, parallel=8, cycles_per_window=1910.7,
                wns_ns=0.961, fmax_mhz=110.63, us_per_window=17.27,
-               lut=3159, ff=1656, bram36=32, bram18=4),
+               lut=3159, logic_lut=2983, lutram=176, ff=1656,
+               bram36=32, bram18=4, dsp=0),
 }
+
+# Fitting "resource = fixed + per_lane x P" through those two points. The two
+# designs spend the same 32 multipliers but differ 4x in P, so anything that
+# tracks P shows up here and anything that tracks P x T does not.
+#
+#   LUTRAM   704/32 = 22.0 per lane      176/8 = 22.0 per lane   -- exactly equal
+#   FF       983 fixed + 84.1 per lane   (DEPTH x 32 = 64 result bits + pipeline)
+#   LogicLUT 2701 fixed + 35.2 per lane  (output mux and per-lane control)
+#   TotalLUT 2701 fixed + 57.2 per lane  = 35.2 + 22.0, which checks against itself
+def per_lane(field):
+    a, b = ISO32["v3"], ISO32["v4"]
+    slope = (a[field] - b[field]) / (a["parallel"] - b["parallel"])
+    fixed = b[field] - slope * b["parallel"]
+    return fixed, slope
 
 # ------------------------------------------------------ hardware measurement ---
 # v3 P=8, DEPTH=2, 100 MHz on XC7Z020-CLG484. Bitstream WNS +0.919 ns, 0 errors.

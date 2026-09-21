@@ -44,7 +44,9 @@ for ax, (title, unit, a, b, fmt) in zip(axes, panels):
     ax.spines["bottom"].set_color(ps.MUTED)
     ax.tick_params(axis="x", length=0, pad=2, colors=ps.INK2)
 
-fig.text(0.5, -0.11, f"32 multipliers each:  v3 $P\\!=\\!32$   vs   v4 $P\\!=\\!8, T\\!=\\!4$",
+fig.text(0.5, -0.11,
+         "32 multipliers each, 0 DSP blocks each:  "
+         "v3 $P\\!=\\!32$   vs   v4 $P\\!=\\!8, T\\!=\\!4$",
          ha="center", fontsize=6.4, color=ps.INK2)
 fig.subplots_adjust(wspace=0.45)
 ps.save(fig, "fig4_iso_tradeoff")
