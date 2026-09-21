@@ -21,8 +21,13 @@ COL_W = 3.5       # inches, one column of a two-column page
 FULL_W = 7.16     # inches, both columns
 
 # ----------------------------------------------------------------- colour ----
-BLUE = "#0072B2"      # v3, overlapped
-VERM = "#D55E00"      # v4, banked
+BLUE = "#0072B2"      # Channel  (v3 overlapped_window_mac)
+VERM = "#D55E00"      # Bank     (v4 banked_window_mac)
+
+# Display names. The repository calls the cores v3 and v4, which means nothing
+# to a reader or an audience; the paper names them by the axis they spend
+# multipliers on. Defined here so a figure cannot drift from the text.
+NAME = {"v3": "Channel", "v4": "Bank"}
 GREEN = "#009E73"     # third series where one is needed
 INK = "#1a1a1a"       # primary text
 INK2 = "#4d4d4d"      # secondary text
@@ -31,8 +36,8 @@ SURFACE = "#ffffff"
 FILL = "#e8eef2"      # recessive block fill in the schematics
 
 # Series get a marker and a dash pattern as well as a hue.
-V3 = dict(color=BLUE, marker="o", linestyle="-", label="v3  overlapped")
-V4 = dict(color=VERM, marker="s", linestyle="--", label="v4  banked")
+V3 = dict(color=BLUE, marker="o", linestyle="-", label="Channel")
+V4 = dict(color=VERM, marker="s", linestyle="--", label="Bank")
 
 
 def use_paper_style():

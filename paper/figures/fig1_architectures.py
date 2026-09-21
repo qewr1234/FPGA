@@ -20,9 +20,9 @@ import schematic as sc
 ps.use_paper_style()
 
 fig, axes = plt.subplots(1, 3, figsize=(ps.FULL_W, 2.3))
-for ax, t in zip(axes, ["(a)  v1  sparse baseline",
-                        "(b)  v3  overlapped",
-                        "(c)  v4  banked"]):
+for ax, t in zip(axes, ["(a)  Sparse baseline",
+                        "(b)  Channel",
+                        "(c)  Bank"]):
     sc.blank(ax)
     ax.set_title(t, fontsize=7.5, color=ps.INK, pad=5)
 

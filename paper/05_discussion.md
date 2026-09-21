@@ -37,16 +37,16 @@ by pruning the weights into a hardware-friendly pattern; that option is not
 available for activation sparsity, where the nonzero positions are not known
 until inference, which is why a static hash is used and its cost paid.
 
-*The equal-multiplier pair is synthesis-only.* v3 at *P* = 64 and v4 at *P* = 16,
-*T* = 4 were placed and routed but not run on the board; the hardware
-measurement is of v3 at *P* = 8. The cycle figures for those configurations come
+*The equal-multiplier pair is synthesis-only.* Channel at *P* = 64 and Bank at
+*P* = 16, *T* = 4 were placed and routed but not run on the board; the hardware
+measurement is of Channel at *P* = 8. The cycle figures for those configurations come
 from the verified cycle model, which agreed exactly with hardware at the point
 where both exist, but that is an argument by extension.
 
-*v3's slope rests on two points.* Only two DSP-free configurations of v3 were
-built, so 138.5 LUTs per multiplier is a line through two measurements. v4's
-three points are consistent to within 4.0%, but the same check cannot be made on
-v3.
+*Channel's slope rests on two points.* Only two DSP-free configurations of
+Channel were built, so 138.5 LUTs per multiplier is a line through two
+measurements. Bank's three points are consistent to within 4.0%, but the same
+check cannot be made on Channel.
 
 *The methodology is not new.* Comparing at a fixed multiplier count is the
 premise of [1] and [2], stated here so that the contribution is not mistaken for

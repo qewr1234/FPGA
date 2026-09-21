@@ -16,7 +16,8 @@ positions.
 
 A speed-up measured against a baseline with fewer multipliers says little. Every
 comparison in Section IV therefore fixes the number of multipliers and varies
-only how they are assigned: v3 at *P* multipliers against v4 at *P* x *T*, with
+only how they are assigned: Channel at *P* multipliers against Bank at
+*P* x *T*, with
 the pair chosen so the products are equal. This is not a new methodology -- it
 is the premise of [1] and [2] -- but it is the condition under which the
 resource question has an answer.

@@ -73,8 +73,8 @@ ax.legend(loc="lower left", bbox_to_anchor=(-0.01, -0.02))
 axi = inset_axes(ax, width="46%", height="34%", loc="upper right",
                  bbox_to_anchor=(0.0, -0.06, 1.0, 1.0),
                  bbox_transform=ax.transAxes, borderpad=0.1)
-bars = [("v3\nP=64", data.FAIR_V3[1], ps.BLUE),
-        ("v4\nP=16, T=4", data.FAIR_V4[1], ps.VERM)]
+bars = [("Channel\nP=64", data.FAIR_V3[1], ps.BLUE),
+        ("Bank\nP=16, T=4", data.FAIR_V4[1], ps.VERM)]
 for i, (lab, val, col) in enumerate(bars):
     axi.bar(i, val, width=0.55, color=col, zorder=3)
     axi.annotate(f"{val:.0f}", (i, val), textcoords="offset points",

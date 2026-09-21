@@ -38,3 +38,19 @@ A poster has several times the area of four columns, so none of this is wasted.
   A rasterised plot at print size is visibly worse and reviewers notice.
 - Rebuild everything with `python paper/figures/make_all.py`; fig8 is separate
   because it needs the data a board run leaves behind.
+
+## Naming
+
+The repository calls the cores v1..v4, which are version labels and mean nothing
+to a reader or to an audience. The paper names them by the axis they spend
+multipliers on:
+
+| Repository | Paper | Spends multipliers on |
+|---|---|---|
+| `overlapped_window_mac` (v3) | **Channel** | output channels, *P* of them |
+| `banked_window_mac` (v4) | **Bank** | tap banks, *P* x *T* |
+| `sparse_window_mac` (v1) | Sparse baseline | shown in Fig. 1 only |
+
+`paperstyle.NAME` holds the mapping so a figure cannot drift from the text.
+Where a sentence could read the name as an ordinary noun, write "the Channel
+core" or "the Bank core"; in tables and legends the bare name is clearer.

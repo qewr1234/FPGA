@@ -29,10 +29,12 @@ for ax, field, title in ((axes[0], "lut", "LUTs"), (axes[1], "ff", "Flip-flops")
         pts = data.points(core, field)
         ax.plot([m for m, _, _ in pts], [v for _, _, v in pts], **style)
         slope = data.per_multiplier(core, field)
-        # Anchored in axes fractions so the labels sit beside their own line
-        # instead of colliding with the panel title at the top of the frame.
-        ax.annotate(f"{slope:.0f} per mult", (0.42, 0.74) if core == "v3" else (0.56, 0.24),
-                    xycoords="axes fraction", ha="left" if core == "v3" else "left",
+        # Stacked in the empty lower-right corner and right-aligned, rather than
+        # placed beside each line: naming the cores made the labels long enough
+        # to run into the tick labels and into each other.
+        ax.annotate(f"{ps.NAME[core]}  {slope:.0f} / mult",
+                    (0.97, 0.20 if core == "v3" else 0.08),
+                    xycoords="axes fraction", ha="right", va="bottom",
                     fontsize=6.2, color=style["color"])
     ax.set_xscale("log", base=2)
     ax.set_xticks([8, 16, 32])
