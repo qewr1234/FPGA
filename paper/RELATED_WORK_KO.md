@@ -285,3 +285,59 @@ Ma et al.은 **Pof를 싼 축**으로 본다(Pox x Poy 대비). 본 연구는 **
 - Y. Ma, Y. Cao, S. Vrudhula, J.-s. Seo, "Optimizing the Convolution Operation to
   Accelerate Deep Neural Networks on FPGA," IEEE TVLSI, vol. 26, no. 7,
   pp. 1354-1367, Jul. 2018. doi:10.1109/TVLSI.2018.2815603
+
+---
+
+## 9. 오픈소스 구현 조사 (2026-09-21)
+
+Hugging Face 논문 검색과 GitHub 대상 웹 검색으로 훑었다. 세션의 GitHub 접근이
+본 저장소로 제한되어 레포 내부는 열지 못했으므로, 아래는 **검색 결과 수준의 판단**이다.
+1순위 항목은 직접 열어 확인할 것.
+
+### 가장 가까운 것 — mustard-seed/SparseDNNAccelerator
+
+https://github.com/mustard-seed/SparseDNNAccelerator
+Intel FPGA 대상 희소 CNN 가속기. 2D 시스톨릭 어레이에서 **가중치 희소성**을 활용해
+VGG-16에서 2.86배, ResNet-50 v1.5에서 1.75배(MAC 연산 기준) 향상.
+
+위협도: **중간**. 확인해야 할 세 가지 —
+1. **가중치 희소성 대 활성값 희소성.** 본 연구가 생략하는 것은 0인 **입력(활성값)**이다.
+   이 레포가 가중치 희소성만 다룬다면 대상이 다르다. 가중치는 정적이라 컴파일 타임에
+   스케줄할 수 있고, 활성값은 입력마다 바뀌어 런타임 가변 길이가 된다. **이 차이가
+   본 연구의 tap 뱅킹이 정적 해시여야 하는 이유 그 자체다.**
+2. 2D 시스톨릭 어레이는 본 연구의 창 단위 MAC과 구조가 다르다.
+3. 자원 수치를 곱셈기당으로 보고하는가. 안 한다면 본 연구의 지표는 여전히 비어 있다.
+
+→ 무엇이 나오든 **비교 행으로 표에 넣는 것이 유리하다.** 오픈소스 희소 가속기와
+대조하면 논문이 강해진다.
+
+### 뱅킹이라는 단어가 겹치는 것 — haden-01/DR-BSMAC
+
+https://github.com/haden-01/DR-BSMAC
+"upper/lower 8-lane bit-serial MAC banks". 여기서 bank는 **비트 슬라이스 레인**이고
+본 연구의 tap 뱅크가 아니다. 위협도 **낮음**. 용어 충돌만 주의.
+
+### 같은 칩, baseline 후보 (Zynq-7020)
+
+- https://github.com/lee-cheng-han/layer-programmable-cnn-accelerator — Zybo Z7-20,
+  SystemVerilog, INT8, AXI-Lite, Vivado+Vitis 흐름. **본 연구와 플랫폼·정밀도가 같다.**
+  희소성은 없어 보이므로 위협이 아니라 **조밀 baseline 후보**다.
+- https://github.com/Msundara19/fpga_cnn_accelerator — Zynq-7020, 1.45 W
+- https://github.com/dgschwend/zynqnet — XC7Z045, 석사논문 기반, 인용 가치 있음
+
+### Hugging Face 논문 검색 결과
+
+희소성·FPGA 조합으로 세 번 검색했으나 본 연구의 비교(출력 채널 축 대 희소 tap 축의
+곱셈기당 fabric 비용)에 해당하는 것은 없었다. 나온 것은 N:M 구조적 희소성
+(2309.13015), LLM/Transformer FPGA 가속(2401.03868, 2405.17025 등), 알고리즘 측
+희소화가 대부분이다. HF 논문 색인은 ML 편향이라 **하드웨어 아키텍처 논문 부재의
+근거로 쓰기에는 약하다.** 근거로 쓰지 말 것.
+
+### 판단
+
+오픈소스 구현 중 본 연구와 같은 대조를 수행한 것은 확인되지 않았다.
+SparseDNNAccelerator만 직접 확인이 필요하다. 논문에는 다음 한 줄이면 충분하다:
+
+> 공개된 FPGA 희소 CNN 가속기 구현은 주로 가중치 희소성과 시스톨릭 어레이를
+> 대상으로 하며, 활성값 희소성 하에서 병렬 축별 fabric 비용을 대조한 구현은
+> 확인되지 않았다.
