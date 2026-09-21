@@ -66,8 +66,12 @@ The probe in `data/*.wpr` holds 64 windows per image taken from scattered
 positions, so its outputs do not form a picture. To get a feature map:
 
     python scripts/export_featuremap.py --image <img> --size 32
-    # set WM_FRAMES 1024 and WM_MODE_SEQ 1 in scripts/run_board_xsdb.tcl, run it
+    # run scripts/run_board_xsdb.tcl -- it reads the geometry from featuremap.json
     python paper/figures/fig8_visual_check.py
+
+The repository ships no images; `--list` prints the names and hashes of the ones
+the probe was built from. Any photograph works -- the figure shows hardware and
+software agreeing, not a reproduction of that probe.
 
 The board script already writes `build/board/results.bin`, so nothing else has
 to change to get the hardware panel.

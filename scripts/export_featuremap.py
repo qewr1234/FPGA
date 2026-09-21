@@ -14,12 +14,12 @@ would otherwise pass silently.
 
   python scripts/export_featuremap.py --image images/evaluation/전투기.jpg --size 32
 
-Then in scripts/run_board_xsdb.tcl set
+Then run scripts/run_board_xsdb.tcl -- it reads the geometry back out of
+featuremap.json, so there is nothing to edit -- and keep the results.bin it
+writes. fig8 reads that file.
 
-  set WM_FRAMES   1024        ;# = size * size
-  set WM_MODE_SEQ 1           ;# no dense/sparse repeat
-
-run it, and keep build/board/results.bin. fig8 reads that file.
+The repository ships no images; --list prints the names and hashes of the ones
+the probe was built from. Any photograph works here.
 """
 import argparse
 import json
@@ -137,8 +137,9 @@ def main():
     print(f'  input.bin  {n*K} bytes')
     print(f'  gold.bin   {n*COUT*4} bytes')
     print(f'  config.bin left alone -- weights do not depend on the window choice')
-    print(f'\nSet WM_FRAMES {n} and WM_MODE_SEQ 1 in scripts/run_board_xsdb.tcl, '
-          f'run it, keep build/board/results.bin.')
+    print(f'\nRun scripts/run_board_xsdb.tcl -- it picks up frames={n} mode_seq=1'
+          f' from featuremap.json, so nothing needs editing -- then'
+          f'\n  python paper/figures/fig8_visual_check.py')
 
 
 if __name__ == '__main__':
