@@ -21,9 +21,11 @@ Needs `matplotlib` and `numpy`. Nothing else.
 | `fig4_iso_tradeoff` | 1 col | time, LUT and FF at 32 multipliers | **yes** — the trade-off in one look |
 | `fig5_hw_validation` | 1 col | measured cycles equal simulated; stall counters zero | **yes** — the evidence for the hardware claim |
 | `fig6_verification_flow` | full | the check applied at each stage | optional; good on a poster, cuttable in the paper |
+| `fig7_scaling` | 1 col | LUTs and flip-flops against multiplier budget, per architecture | **yes** — it is the mechanism, not just the outcome |
 
 For a four-page two-column paper, three or four figures is usually the limit.
-The smallest set that still tells the whole story is **Fig. 1, 2, 4 and 5**.
+The smallest set that still tells the whole story is **Fig. 1, 2, 5 and 7**. Fig. 7
+subsumes Fig. 4: it shows the same trade-off and why it happens.
 
 ## Numbers
 

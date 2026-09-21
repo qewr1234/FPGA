@@ -48,56 +48,69 @@ FAIR_PCT = 5.1                # v4 costs this much more time at the same budget
 # ------------------------------------------------- synthesis, 32 multipliers ---
 # Vivado out-of-context, xc7z020clg484-1, 10 ns constraint, I/O delays applied.
 # ---------------------------------------- post-route utilisation, every run ----
-# Top row of each hierarchical utilisation report, xc7z020clg484-1, 2026-09-20.
-# (core, P, T) -> dict. "mult" is P*T for the banked core and P for the others.
-UTIL = {
-    ("v1 sparse",      2, 1): dict(lut=744,  logic=440,  lutram=304, ff=224,  rb36=32, rb18=0, dsp=2),
-    ("v2 continuous",  2, 1): dict(lut=874,  logic=482,  lutram=392, ff=390,  rb36=32, rb18=0, dsp=2),
-    ("v3 overlapped",  2, 1): dict(lut=989,  logic=469,  lutram=520, ff=355,  rb36=32, rb18=0, dsp=2),
-    ("v4 banked",      2, 4): dict(lut=1003, logic=915,  lutram=88,  ff=605,  rb36=32, rb18=4, dsp=0),
-    ("v3 overlapped", 32, 1): dict(lut=4532, logic=3828, lutram=704, ff=3674, rb36=33, rb18=0, dsp=0),
-    ("v4 banked",      8, 4): dict(lut=3159, logic=2983, lutram=176, ff=1656, rb36=32, rb18=4, dsp=0),
-}
-
-# Three separate P=32 runs of the overlapped core gave 4535, 4535 and 4532 LUTs,
-# a spread of 3 LUTs (0.07%), so run-to-run variation is not what any of the
-# differences below are made of.
-P32_REPEATS_LUT = (4535, 4535, 4532)
-
-# Two caveats that have to travel with these numbers.
+# Top row of each hierarchical utilisation report, xc7z020clg484-1, 2026-09-20
+# and 2026-09-21. Key: (core, P, T, run) -> resources.
 #
-# 1. DSP inference is not consistent across the set. At P=2 the three
-#    non-banked cores each infer 2 DSP blocks, one per lane, while the banked
-#    core infers none. At the comparison point both report zero, so that one
-#    comparison is clean -- but the set as a whole is not, and a paper would
-#    have to pin this down (USE_DSP attribute, or -max_dsp) before reading
-#    anything into LUT counts across configurations.
-#
-# 2. Each architecture has been synthesised at exactly two values of P. A line
-#    through two points is not a measured law. The per-multiplier figures below
-#    are what those two configurations cost, not a verified scaling rule; a
-#    third value of P for each would be needed to claim one.
-ISO32 = {
-    "v3": dict(label="v3  P=32, T=1", mult=32, parallel=32, cycles_per_window=1808.1,
-               wns_ns=0.970, fmax_mhz=110.74, us_per_window=16.33,
-               lut=4532, logic_lut=3828, lutram=704, ff=3674,
-               bram36=33, bram18=0, dsp=0),
-    "v4": dict(label="v4  P=8, T=4", mult=32, parallel=8, cycles_per_window=1910.7,
-               wns_ns=0.961, fmax_mhz=110.63, us_per_window=17.27,
-               lut=3159, logic_lut=2983, lutram=176, ff=1656,
-               bram36=32, bram18=4, dsp=0),
-}
+# DSP is the gate. Left to the tool, inference varied: at P=2 the three
+# non-banked cores each inferred one DSP block per lane while the banked core
+# inferred none. A configuration that put two multipliers in DSP blocks is not
+# comparable on LUTs with one that put all of them in fabric, so only the
+# DSP = 0 rows form a set. The synthesis script now pins this with -max_dsp.
+UTIL = [
+    # core  P   T  run       LUT  logic  lutram    ff  rb36 rb18 dsp
+    ("v1",  2,  1, "a",      744,   440,    304,   224,  32,  0,  2),
+    ("v1",  2,  1, "b",      742,   438,    304,   224,  32,  0,  2),
+    ("v2",  2,  1, "a",      874,   482,    392,   390,  32,  0,  2),
+    ("v2",  2,  1, "b",      876,   484,    392,   390,  32,  0,  2),
+    ("v3",  2,  1, "a",      989,   469,    520,   355,  32,  0,  2),
+    ("v3",  2,  1, "b",      991,   471,    520,   355,  32,  0,  2),
+    ("v3",  8,  1, "a",     1209,  1033,    176,   995,  33,  0,  0),
+    ("v3", 32,  1, "a",     4535,  3831,    704,  3674,  33,  0,  0),
+    ("v3", 32,  1, "b",     4535,  3831,    704,  3674,  33,  0,  0),
+    ("v3", 32,  1, "c",     4532,  3828,    704,  3674,  33,  0,  0),
+    ("v4",  2,  4, "a",     1003,   915,     88,   605,  32,  4,  0),
+    ("v4",  2,  4, "b",     1004,   916,     88,   605,  32,  4,  0),
+    ("v4",  4,  4, "a",     1795,  1707,     88,   953,  32,  4,  0),
+    ("v4",  8,  4, "a",     3159,  2983,    176,  1656,  32,  4,  0),
+]
+FIELDS = ("lut", "logic", "lutram", "ff", "rb36", "rb18", "dsp")
+
+# Repeating a configuration moves the LUT count by at most 2, and three separate
+# P=32 runs span 3 LUTs. Flip-flop counts repeat exactly. Nothing below is
+# run-to-run noise.
+REPEATABILITY_MAX_LUT_DELTA = 3
 
 
-def per_multiplier(core_small, core_big, field):
-    """Cost per added multiplier between an architecture's own two runs."""
-    (na, pa, ta), (nb, pb, tb) = core_small, core_big
-    a, b = UTIL[core_small], UTIL[core_big]
-    return (b[field] - a[field]) / (pb * tb - pa * ta)
+def rows(core=None, dsp_zero_only=True):
+    out = []
+    for r in UTIL:
+        if core and r[0] != core:
+            continue
+        if dsp_zero_only and r[-1] != 0:
+            continue
+        out.append(dict(zip(("core", "P", "T", "run") + FIELDS, r)))
+    return out
 
 
-V3_SMALL, V3_BIG = ("v3 overlapped", 2, 1), ("v3 overlapped", 32, 1)
-V4_SMALL, V4_BIG = ("v4 banked", 2, 4), ("v4 banked", 8, 4)
+def points(core, field):
+    """(multipliers, value) per configuration, averaged over repeated runs."""
+    acc = {}
+    for r in rows(core):
+        acc.setdefault(r["P"] * r["T"], []).append((r["P"], r[field]))
+    return sorted((m, v[0][0], sum(x for _, x in v) / len(v)) for m, v in acc.items())
+
+
+def per_multiplier(core, field):
+    p = points(core, field)
+    return (p[-1][2] - p[0][2]) / (p[-1][0] - p[0][0])
+
+
+# Distributed RAM comes to 22 LUTRAM per output lane at every DSP = 0 point with
+# P >= 4, in both architectures: v3 at P=8 and P=32, v4 at P=4 and P=8. It
+# tracks P and not P x T, which is the claim this work makes about where the
+# area goes. v4 at P=2 floors at 88 rather than 44, so the relation has a floor
+# rather than holding everywhere.
+LUTRAM_PER_LANE = 22
 
 # ------------------------------------------------------ hardware measurement ---
 # v3 P=8, DEPTH=2, 100 MHz on XC7Z020-CLG484. Bitstream WNS +0.919 ns, 0 errors.
