@@ -30,7 +30,7 @@ that can be compared.
 | v4 | 8 | 4 | 32 | 3,159 | 2,983 | 176 | 1,656 |
 
 Taking the slope between the smallest and largest configuration of each core
-gives the cost of widening by one multiplier:
+gives the cost of widening by one multiplier (Fig. 3):
 
 |  | LUTs per multiplier | FFs per multiplier |
 |---|---|---|
@@ -113,5 +113,5 @@ it is reported rather than assumed.
 
 A second run streamed a complete 112 x 112 feature map from one image -- 12,544
 contiguous windows, 1,605,632 outputs -- all of which matched the reference
-(Fig. 8). The software and hardware feature maps are indistinguishable and their
+(Fig. 4). The software and hardware feature maps are indistinguishable and their
 difference is uniformly zero.

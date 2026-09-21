@@ -35,6 +35,8 @@ window whether or not they are mostly zero -- while the number of issue cycles
 falls to the number of stored tuples. The saving is in multiplications, not in
 bandwidth.
 
+Fig. 1 shows the three structures side by side.
+
 ### C. v3: spending multipliers on output channels
 
 `overlapped_window_mac` issues one tuple per cycle and computes *P* channels
