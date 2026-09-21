@@ -6,6 +6,8 @@
 #   source scripts/synth_vivado.tcl
 # or: vivado -mode batch -source scripts/synth_vivado.tcl
 # CNN_CORES limits the run, e.g. set ::env(CNN_CORES) {overlapped_window_mac banked_window_mac}
+# CNN_MAX_DSP caps DSP blocks; it defaults to 0 so every configuration puts its
+# multipliers in fabric and their LUT counts can be compared with each other.
 set root [file normalize [file join [file dirname [info script]] ..]]
 if {[llength [get_projects -quiet]] != 0} {
     puts "A project is open in this Vivado session: [get_projects -quiet]"
@@ -32,6 +34,20 @@ if {[info exists ::env(CNN_T)]} {set banks $::env(CNN_T)}
 if {![string is integer -strict $banks] || $banks<1} {error "CNN_T must be positive"}
 set cores {sparse_window_mac continuous_window_mac overlapped_window_mac banked_window_mac}
 if {[info exists ::env(CNN_CORES)]} {set cores $::env(CNN_CORES)}
+# How many DSP blocks synthesis may use. Left to the tool, this varies by
+# configuration rather than by architecture: at P=2 the three non-banked cores
+# each infer one DSP per lane while the banked core infers none, which makes a
+# LUT count from one run not comparable with a LUT count from another. Fixing
+# it at 0 puts every multiplier in fabric, so an area comparison across
+# configurations is a comparison of the designs. Raise it to compare with the
+# multipliers in DSP blocks instead; what matters is that it is the same
+# everywhere. Empty means "leave it to the tool", which is what produced the
+# inconsistent set and is kept only for reproducing it.
+set max_dsp 0
+if {[info exists ::env(CNN_MAX_DSP)]} {set max_dsp $::env(CNN_MAX_DSP)}
+if {$max_dsp ne "" && (![string is integer -strict $max_dsp] || $max_dsp < 0)} {
+    error "CNN_MAX_DSP must be a non-negative integer, or empty to leave it to the tool"
+}
 set dest [file join $root build ooc_[clock seconds]_[pid]]
 file mkdir $dest
 set sources [file join $dest sources]
@@ -74,6 +90,7 @@ puts $f {set_false_path -hold -to [all_outputs]}
 close $f
 set f [open [file join $dest settings.txt] w]
 puts $f "tool=[version -short]\npart=$part\nK=576\nCOUT=128\nP=$parallel\nDEPTH=$depth\nT=$banks\nperiod_ns=$period\ncores=$cores"
+puts $f "max_dsp=[expr {$max_dsp eq {} ? {tool default} : $max_dsp}]"
 puts $f "OOC synthesis/place/route only; pin timing, PS, DDR and AXI are not included."
 close $f
 foreach top $cores {
@@ -86,7 +103,9 @@ foreach top $cores {
     set generic_args [list -generic K=576 -generic COUT=128 -generic P=$parallel]
     if {$top ne "sparse_window_mac"} {lappend generic_args -generic DEPTH=$depth}
     if {$top eq "banked_window_mac"} {lappend generic_args -generic T=$banks}
-    puts "Implementing $top: part=$part, P=$parallel, DEPTH=$depth, T=$banks, period_ns=$period"
+    if {$max_dsp ne ""} {lappend generic_args -max_dsp $max_dsp}
+    puts "Implementing $top: part=$part, P=$parallel, DEPTH=$depth, T=$banks,\
+          period_ns=$period, max_dsp=[expr {$max_dsp eq "" ? {tool default} : $max_dsp}]"
     synth_design -top $top -mode out_of_context -part $part {*}$generic_args
     opt_design
     report_utilization -hierarchical -file [file join $reports synth_utilization.rpt]
