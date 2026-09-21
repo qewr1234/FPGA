@@ -105,7 +105,43 @@ def main():
                     help='print the images the probe was built from, and exit')
     ap.add_argument('--selftest', action='store_true',
                     help='check oracle() against the probe, and exit (no torch needed)')
+    ap.add_argument('--verify', action='store_true',
+                    help='check build/board against itself, and exit (no torch needed)')
     args = ap.parse_args()
+
+    if args.verify:
+        # The three files the board is given must agree with each other: whatever
+        # is in input.bin, multiplied by whatever is in config.bin, must be what
+        # is in gold.bin. The board matched this exact relation to the byte on the
+        # original export, so a disagreement here is ours and a disagreement only
+        # on hardware is not.
+        import hashlib
+        cfg = np.fromfile(BOARD/'config.bin', dtype='<i4')
+        w = (((cfg[:COUT*K] & 0xff) ^ 0x80) - 0x80).reshape(COUT, K).astype(np.int32)
+        bias = cfg[COUT*K:].astype(np.int32)
+        inp = np.fromfile(BOARD/'input.bin', dtype=np.uint8)
+        gold = np.fromfile(BOARD/'gold.bin', dtype='<i4')
+        n = inp.size//K
+        print(f'windows in input.bin : {n}')
+        print(f'gold words           : {gold.size} (expected {n*COUT})')
+        for f in ('config.bin', 'input.bin', 'gold.bin'):
+            h = hashlib.sha256((BOARD/f).read_bytes()).hexdigest()
+            print(f'  {f:11s} sha256 {h[:32]}')
+        _, pw, pb, _, _ = read_probe(PROBE)
+        print(f'config.bin == the probe weights: '
+              f'{np.array_equal(w, np.array(pw, dtype=np.int32))}, '
+              f'bias {np.array_equal(bias, np.array(pb, dtype=np.int32))}')
+        if gold.size != n*COUT:
+            raise SystemExit('gold.bin does not match input.bin in size')
+        got = oracle(inp.reshape(n, K), w, bias).reshape(-1)
+        bad = int((got != gold).sum())
+        print(f'\nReLU(input @ config + bias) vs gold.bin: {bad} mismatches '
+              f'in {gold.size}')
+        if bad:
+            i = int(np.argmax(got != gold))
+            print(f'  first at word {i} (window {i//COUT} channel {i%COUT}): '
+                  f'recomputed {got[i]}, file says {gold[i]}')
+        raise SystemExit(0 if bad == 0 else 1)
 
     if args.selftest:
         x, w, b, _, y = read_probe(PROBE)
