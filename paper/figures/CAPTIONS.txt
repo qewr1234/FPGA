@@ -29,3 +29,16 @@ reference.
 Fig. 6. Verification flow. Each stage lists the check applied to it. The cycle
 model is written independently of the RTL, so output correctness and processing
 latency are verified against separate references.
+
+Fig. 7. Post-route cost per added multiplier, for the configurations Vivado
+inferred no DSP blocks for. The slope is the resource each core spends to widen
+its parallelism by one multiplier.
+
+Fig. 8. Visual check on hardware. A contiguous 112 x 112 grid of windows from
+VGG11 features.3 is streamed through v3 with P = 8 on XC7Z020-CLG484 at 100 MHz
+and compared with the integer reference computed on the host. Channel 125 is
+shown; both maps use the same linear scale, clipped at the 99th percentile of
+the reference, because the response is near zero almost everywhere with a thin
+tail of large values. The bright ring at the border is the zero-padding boundary
+of the layer, present identically in both, not a plotting artefact. All
+1,605,632 outputs matched, so the difference map is uniformly zero.
