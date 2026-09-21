@@ -182,3 +182,106 @@ Pkx x Pky x Pif이고, tap을 언롤하는 것은 **Ma et al.의 Loop-1 + Loop-3
 > LUT/FF 비용은 보고된 바 없다.
 
 즉 기여는 "축을 비교했다"가 아니라 **"희소 tap 축의 실제 fabric 비용이 이것이다"**다.
+
+---
+
+## 8. 원문 확인 완료 (2026-09-21) — 7절을 다시 정정
+
+FPGA'17 저자 발표 슬라이드(63p)와 TVLSI 2018 확장판(14p) 전문을 읽었다.
+7절은 초록과 2차 문헌만으로 쓴 것이라 두 군데가 또 틀렸다.
+
+### 8.1 그들의 루프 정의
+
+| 루프 | 축 | 언롤 변수 | 언롤 시 하드웨어 |
+|---|---|---|---|
+| Loop-1 | 커널 창 | Pkx, Pky | **adder tree** (fan-in Pkx x Pky) + 누산기 1개 |
+| Loop-2 | 입력 채널 | Pif | **adder tree** (fan-in Pif) + 누산기 1개 |
+| Loop-3 | 피처맵 | Pox, Poy | 누산기 Pox x Poy개, **adder tree 없음** |
+| Loop-4 | 출력 채널 | Pof | 누산기 Pof개, **adder tree 없음** |
+
+원문: *"Pix x Piy accumulators are used to serially accumulate the multiplier
+outputs and no adder tree is needed"* / *"identical to unrolling Loop-3 using
+Pof multipliers and accumulators without an adder tree."*
+
+본 연구와의 대응: **v3의 P = Pof (Loop-4)**. **v4의 T축(비영 tap 뱅킹)은
+Loop-1 + Loop-2 영역**이다. 즉 본 연구는 사실상 *Loop-1/2 축 대 Loop-4 축*을
+겨루고 있다.
+
+### 8.2 정정 3 — 등가 곱셈기 축 재배분 비교는 **이미 있다**
+
+TVLSI 12쪽에 이 문단이 있다. 결정적이다.
+
+> Compared with [15], the unrolling variables, i.e., Pox x Poy x Pof, of VGG-16
+> are set to be 7x7x64 on Arria 10 instead of 14x14x16, **where the number of
+> MAC units (= 3136) are the same** and both sets of P* variables are the common
+> factors of the feature/kernel map sizes **resulting in the same computation
+> cycles**. ... **To reduce the data bus width and required logic, we choose
+> smaller Pox x Poy in this work as 7x7 with a larger Pof as 64.**
+
+곱셈기 3136개 고정, cycle 동일, **로직 비용이 싼 축으로 재배분**. 본 연구가 하려는
+것과 방법이 같다. 따라서:
+
+- **"등가 곱셈기에서 축을 비교했다"는 절대 기여로 쓸 수 없다.** 2절의 결론이
+  여기서 확정된다.
+- 다만 그들의 비교 쌍은 **Pof 대 Pox x Poy(출력채널 대 피처맵)**이고, 근거는
+  데이터 라우터/버스 폭이며, **수치가 없다**(정성적 한 문단). Fig. 18의 ALM
+  분해는 선택된 설계 하나에 대한 것이다.
+
+### 8.3 그래서 실제로 남는 것 — 이전보다 명확하다
+
+**본 연구의 결과는 Ma et al.의 권고와 반대 방향이다. 이게 이야깃거리다.**
+
+그들은 Loop-1(커널/tap) 축 언롤을 **명시적으로 기각**한다:
+
+> Kernel sizes (Nkx x Nky) are small - Cannot provide sufficient parallelism /
+> Kernel sizes vary considerably across different conv. layers - **Workload
+> imbalance and PE mapping difficulty**
+
+그래서 Type-(D), 즉 Loop-3 + Loop-4를 택한다. 그런데 기각 사유 둘 다 희소 조건의
+본 구성에는 그대로 적용되지 않는다:
+- 커널이 작아 병렬성이 부족하다 → 본 연구의 tap 축은 **K=576**이다. 부족하지 않다.
+- 계층마다 커널 크기가 달라 불균형 → 본 연구의 불균형은 커널 크기가 아니라 **희소
+  패턴**에서 오고, 6절에서 측정했다(T=4에서 1.16배). 종류가 다른 문제다.
+
+그리고 본 연구의 측정은 그 기각을 뒤집는다. 곱셈기당 **T축 89.8 LUT / 43.8 FF 대
+P축 138.5 / 111.6**. adder tree 공유가 누산기 복제보다 싸다.
+
+**그들 자신의 관측이 이 메커니즘을 뒷받침한다** — 경쟁이 아니라 근거로 인용할 것:
+
+> logic elements are mainly used to implement **accumulators in MAC units**
+
+누산기가 로직을 지배한다면, 누산기를 P개 복제하는 Loop-4 축이 adder tree 하나를
+공유하는 Loop-1/2 축보다 비싼 것은 당연한 귀결이다. 본 연구는 그 귀결을 희소
+조건에서 post-route로 수치화한 것이다.
+
+### 8.4 정정 4 — 방향이 반대로 보이는 것을 반드시 밝힐 것
+
+Ma et al.은 **Pof를 싼 축**으로 본다(Pox x Poy 대비). 본 연구는 **Pof를 비싼 축**으로
+본다(tap 뱅킹 대비). 비교 대상이 다르므로 모순이 아니다. 그러나 Ma et al.을 아는
+리뷰어는 모순으로 읽는다. **이 문장을 본문에 반드시 넣을 것:**
+
+> Ma et al.은 피처맵 축 대비 출력 채널 축이 로직 면에서 유리하다고 보고한다. 본
+> 연구의 비교 대상은 피처맵 축이 아니라 희소 tap 뱅킹 축이며, 그 대비에서는 출력
+> 채널 축이 불리하다. 두 결과는 비교 쌍이 다르므로 상충하지 않는다.
+
+### 8.5 희소성 — 두 논문 모두 **0회**
+
+`spars`, `zero-skip`, `prun`, `non-zero` 전문 검색 결과 두 PDF 모두 한 건도 없다.
+16-bit 고정소수점, DSP 기반 곱셈기, Stratix V / Arria 10. 조밀 전용이 확정됐다.
+
+### 8.6 최종 기여 문장
+
+> 조밀 가속기에서는 커널·입력채널 축 언롤이 병렬성 부족과 계층 간 커널 크기 편차로
+> 기각되어 왔다 [Ma et al. 2017, 2018]. 희소 조건에서는 tap 축이 충분히 크고
+> (K=576) 구조가 균일하므로 그 기각 사유가 성립하지 않는다. 본 연구는 등가 곱셈기
+> 조건에서 이 축이 출력 채널 축보다 곱셈기당 LUT 35%, 플립플롭 61% 적게 든다는
+> 것을 post-route로 측정하고, cycle 모델을 실제 보드에서 검증한다.
+
+### 8.7 인용 서지
+
+- Y. Ma, Y. Cao, S. Vrudhula, J.-s. Seo, "Optimizing Loop Operation and Dataflow
+  in FPGA Acceleration of Deep Convolutional Neural Networks," FPGA 2017,
+  pp. 45-54. doi:10.1145/3020078.3021736
+- Y. Ma, Y. Cao, S. Vrudhula, J.-s. Seo, "Optimizing the Convolution Operation to
+  Accelerate Deep Neural Networks on FPGA," IEEE TVLSI, vol. 26, no. 7,
+  pp. 1354-1367, Jul. 2018. doi:10.1109/TVLSI.2018.2815603
