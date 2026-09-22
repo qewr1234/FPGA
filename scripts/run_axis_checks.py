@@ -52,7 +52,10 @@ def compile_and_run(dest, top, sources, params, vector, iverilog, vvp, tag):
 
 
 def run_case(case, out, vectors, iverilog, vvp):
-    name, vec, impl, p, depth, t, mode_seq, in_gap, out_gap = case
+    name, vec, impl, p, depth, t, mode_seq, in_gap, out_gap = case[:9]
+    # Optional tail: build the wrapper larger than the data and tell it the data's
+    # shape at run time. 0 means "build at the data's shape", the fixed design.
+    kmax, coutmax, runtime = (list(case[9:])+[0, 0, 0])[:3]
     dest = out/name
     meta = vectors[vec]
     k, cout, n = meta['K'], meta['COUT'], meta['N']
@@ -72,7 +75,11 @@ def run_case(case, out, vectors, iverilog, vvp):
     # 2. The same core behind the wrapper. EXPECT_CYCLES makes the bench itself
     #    fail if the wrapper costs a cycle, so the check is inside the simulation.
     expect = 0 if (in_gap or out_gap) else core_cycles
+    # K/COUT stay the DATA's shape; KMAX/COUTMAX are what the wrapper is built at.
+    # EXPECT_CYCLES still points at the bare core built at the data's shape, so a
+    # runtime-geometry build that costs even one cycle more fails here.
     wrap_params = dict(K=k, COUT=cout, P=p, DEPTH=depth, N=n, IMPL=impl, T=t,
+                       KMAX=kmax, COUTMAX=coutmax, RUNTIME_GEOM=runtime,
                        MODE_SEQ=mode_seq, IN_GAP=in_gap, OUT_GAP=out_gap, EXPECT_CYCLES=expect)
     wrap_log = compile_and_run(dest, 'tb_axis_wrapper',
                                [src(s) for s in CORE_SOURCES]+[src('rtl/window_mac_axis.sv'),
@@ -101,8 +108,9 @@ def run_case(case, out, vectors, iverilog, vvp):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--suite', choices=['smoke', 'real'], default='smoke',
-                    help='smoke: small synthetic geometry. real: VGG11 K=576 COUT=128.')
+    ap.add_argument('--suite', choices=['smoke', 'real', 'geom'], default='smoke',
+                    help='smoke: small synthetic geometry. real: VGG11 K=576 COUT=128. '
+                         'geom: one large RUNTIME_GEOM build running small layers.')
     ap.add_argument('--windows', type=int, default=32,
                     help='real suite only: frames taken from the split (2x that many windows).')
     ap.add_argument('--jobs', type=int, default=4)
@@ -150,6 +158,37 @@ def main():
             cases.append((f'{v}_k12_ingap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 5, 0))
             cases.append((f'{v}_k12_outgap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 0, 7))
             cases.append((f'{v}_k12_bothgap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 3, 4))
+    elif args.suite == 'geom':
+        # One build, many layers. KMAX/COUTMAX are the CIFAR bitstream's built-in
+        # maxima; each case feeds it a layer that is smaller in K, in COUT, or in
+        # both, and requires the same values and the same cycle count as a core
+        # built at exactly that layer's shape.
+        #
+        # K=27 is deliberate. The stream packs four activations per beat with no
+        # per-window alignment, so a layer whose K is not a multiple of four ends
+        # its windows mid-beat. Either that works or the driver has to pad every
+        # such layer, and guessing which is how the board run goes wrong.
+        KMAX, COUTMAX = 1152, 128
+        layers = [(36, 32), (288, 32), (288, 64), (576, 64), (1152, 128), (27, 32)]
+        for k, c in layers:
+            name = f'layer_k{k}_c{c}'
+            x, w, b = fixture(k, c)
+            x = x[:8]
+            vectors[name] = export_vectors(out/'vectors'/name, x, w, b,
+                                           source={'synthetic_seed': 20260916+k*100+c})
+        for impl, t in [(2, 1), (3, 4)]:
+            v = 'v3' if impl == 2 else f'v4t{t}'
+            for k, c in layers:
+                # mode_seq 2 alternates dense and sparse windows, which is the
+                # only mode that exercises both tap counts in one run.
+                cases.append((f'{v}_k{k}_c{c}_runtime', f'layer_k{k}_c{c}', impl,
+                              8, 2, t, 2, 0, 0, KMAX, COUTMAX, 1))
+        # Control: the same large build told to run its full built-in shape, and
+        # the same shape built fixed. Both must agree, or RUNTIME_GEOM=1 changed
+        # behaviour rather than only adding the ability to shrink.
+        cases.append(('v3_full_runtime', 'layer_k1152_c128', 2, 8, 2, 1, 2, 0, 0,
+                      KMAX, COUTMAX, 1))
+        cases.append(('v3_full_fixed', 'layer_k1152_c128', 2, 8, 2, 1, 2, 0, 0))
     else:
         path = ROOT/'data'/'evaluation.wpr'
         x, w, b, ids, y = read_probe(path)

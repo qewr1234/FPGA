@@ -48,8 +48,12 @@ foreach {n v} [list CNN_IMPL $impl CNN_P $parallel CNN_DEPTH $depth CNN_T $banks
 }
 if {$impl != 2 && $impl != 3} { error "CNN_IMPL must be 2 (v3) or 3 (v4)" }
 
-set K 576
-set COUT 128
+# Built-in maxima. With RUNTIME_GEOM on, one bitstream then covers every layer
+# whose weights fit in these memories -- which is the point of building it that
+# way. For the CIFAR network K_MAX=1152 COUT_MAX=128 covers all six convolutions.
+set K       [env_or CNN_K 576]
+set COUT    [env_or CNN_COUT 128]
+set runtime [env_or CNN_RUNTIME_GEOM 0]
 set tag "v[expr {$impl+1}]_p${parallel}_t${banks}"
 set dest [file join $root build "zed_${tag}_[clock seconds]"]
 file mkdir $dest
@@ -140,7 +144,8 @@ puts $f "    output wire        m_axis_tvalid,"
 puts $f "    input  wire        m_axis_tready,"
 puts $f "    output wire        m_axis_tlast"
 puts $f ");"
-puts $f "    window_mac_axis #(.K($K),.COUT($COUT),.P($parallel),.DEPTH($depth),.T($banks),.IMPL($impl)) u ("
+puts $f "    window_mac_axis #(.K($K),.COUT($COUT),.P($parallel),.DEPTH($depth),.T($banks),.IMPL($impl),\
+                      .RUNTIME_GEOM($runtime)) u ("
 puts $f "        .aclk(aclk), .aresetn(aresetn),"
 puts $f "        .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),"
 puts $f "        .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wvalid(s_axi_wvalid), .s_axi_wready(s_axi_wready),"

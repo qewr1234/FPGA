@@ -65,7 +65,8 @@ module tb_stream_compare;
             if(dut.take_cfg && !dut.core_idle) $fatal(1,"configuration accepted while not idle");
         end
     end else begin: v4
-        banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T)) dut(.*);
+        banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T),
+                            .RUNTIME_GEOM(RUNTIME_GEOM)) dut(.*);
         assign issue=dut.issue;assign tap_issue=dut.tap_issue;assign issue_pos=dut.issue_pos;
         always @(posedge clk) if(rst_n) begin
             if(dut.d_valid && dut.d_last && dut.slot_ready[dut.d_slot]) $fatal(1,"overwriting an unconsumed result");
