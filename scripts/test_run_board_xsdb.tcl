@@ -53,6 +53,47 @@ foreach {name spec} $cases {
     }
 }
 
+# A CIFAR layer through the same script: a different K, COUT, window count and
+# mode from the VGG data every case above uses, and the shape that broke first
+# when this was written -- K=27 is not a multiple of four, so windows end mid
+# beat, and mode_seq=1 means windows and frames are the same number rather than
+# twice it. The contents do not matter here (the stand-in copies gold into the
+# result buffer); the sizes and the layout do.
+proc wm_blob {path bytes} {
+    set fh [open $path wb]
+    fconfigure $fh -translation binary
+    puts -nonewline $fh [string repeat "\x00" $bytes]
+    close $fh
+}
+
+# Written somewhere else entirely and pointed at with WM_BOARD_DIR, so the real
+# export stays where it is and an interrupted run leaves nothing to restore.
+set boarddir [file join $repo build board_cifar_case]
+file delete -force $boarddir
+file mkdir $boarddir
+set ::env(WM_BOARD_DIR) $boarddir
+foreach {cname ck ccout cn} {conv1 27 32 8192 conv4 576 64 2048 conv6 1152 128 512} {
+    wm_blob [file join $boarddir config.bin] [expr {($ccout * $ck + $ccout) * 4}]
+    wm_blob [file join $boarddir input.bin]  [expr {$cn * $ck}]
+    wm_blob [file join $boarddir gold.bin]   [expr {$cn * $ccout * 4}]
+    set fh [open [file join $boarddir layout.json] w]
+    puts $fh "{\"split\": \"cifar\", \"K\": $ck, \"COUT\": $ccout,"
+    puts $fh " \"frames\": $cn, \"windows\": $cn, \"mode_seq\": 1}"
+    close $fh
+    file delete -force [file join $repo build fake_xsdb_build]
+    set rc [catch {exec [info nameofexecutable] $inner $repo 0 none 2>@1} out]
+    if {[string first "RESULT: PASS" $out] >= 0 &&
+        [string first "Shape set: RUN_K=$ck RUN_COUT=$ccout" $out] >= 0} {
+        puts [format "  ok    %-26s %s" "CIFAR $cname" "K=$ck COUT=$ccout $cn windows"]
+    } else {
+        puts [format "  FAIL  %-26s K=$ck COUT=$ccout" "CIFAR $cname"]
+        puts "        got: [string range $out end-600 end]"
+        incr failures
+    }
+}
+unset ::env(WM_BOARD_DIR)
+file delete -force $boarddir
+
 # The blob-size guard needs a short file, so it gets its own case.
 set gold [file join $repo build board gold.bin]
 if {[file exists $gold]} {

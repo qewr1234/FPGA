@@ -31,7 +31,15 @@ set WM_MODE_SEQ 2
 # here: the one time they drifted, the run read the wrong window count against
 # the right data. mode_seq 1 is all-sparse, 0 all-dense, 2 alternating, per the
 # wrapper's register map.
-set _lay [file join [file dirname [info script]] .. build board layout.json]
+# Where the data for this run lives. Overridable so one run can be set up while
+# another set of blobs sits in the default place -- a network run writes a fresh
+# set per layer, and clobbering the VGG export to do it would be a poor trade.
+if {[info exists ::env(WM_BOARD_DIR)] && $::env(WM_BOARD_DIR) ne ""} {
+    set WM_BOARDDIR [file normalize $::env(WM_BOARD_DIR)]
+} else {
+    set WM_BOARDDIR [file normalize [file join [file dirname [info script]] .. build board]]
+}
+set _lay [file join $WM_BOARDDIR layout.json]
 if {[file exists $_lay]} {
     set _fh [open $_lay r]
     set _txt [read $_fh]
@@ -64,6 +72,14 @@ if {[file exists $_lay]} {
 set WM_NWIN     [expr {$WM_MODE_SEQ == 2 ? 2 * $WM_FRAMES : $WM_FRAMES}]
 
 set WM_CFG_WORDS    [expr {$WM_COUT * $WM_K + $WM_COUT}]
+# Four activations to a 32-bit beat, packed straight through with no per-window
+# alignment -- so a layer whose K is odd is fine, but the run as a whole has to
+# fill whole beats. Left to the integer divide below, a run that does not would
+# quietly send a short transfer and hang waiting for results.
+if {($WM_NWIN * $WM_K) % 4 != 0} {
+    error "$WM_NWIN windows of K=$WM_K is [expr {$WM_NWIN * $WM_K}] activations,\
+           which does not pack into whole 32-bit beats."
+}
 set WM_INPUT_WORDS  [expr {$WM_NWIN * $WM_K / 4}]
 set WM_RESULT_WORDS [expr {$WM_NWIN * $WM_COUT}]
 
@@ -541,7 +557,7 @@ if {[info exists ::env(WM_BUILD)] && $::env(WM_BUILD) ne ""} {
 set bit [wm_need [file join $build system_wrapper.bit] "bitstream"]
 set xsa [wm_need [file join $build system_wrapper.xsa] "hardware platform"]
 
-set boarddir [file join $here build board]
+set boarddir $WM_BOARDDIR
 set f_cfg  [wm_need [file join $boarddir config.bin] "config.bin"]
 set f_in   [wm_need [file join $boarddir input.bin]  "input.bin"]
 set f_gold [wm_need [file join $boarddir gold.bin]   "gold.bin"]
