@@ -166,9 +166,15 @@ def run_board(xsdb, build, log_path):
     log_path.write_text(proc.stdout, encoding='utf-8')
     run_json = BOARD/'run.json'
     if proc.returncode or not run_json.exists():
-        raise SystemExit(f'the board run failed (exit {proc.returncode}). '
+        # xsdb.bat does not pass its exit code back on Windows, so a failed run
+        # often arrives as exit 0 with no run.json. Lead with the reason the run
+        # script gave rather than with a status that means nothing here.
+        why = [l for l in proc.stdout.splitlines()
+               if l.startswith('ERROR:') or ' failed' in l or 'no targets' in l]
+        head = why[-1].strip() if why else f'exit {proc.returncode}, no run.json'
+        raise SystemExit(f'the board run failed: {head}\n'
                          f'Full output: {log_path}\n'
-                         + '\n'.join(proc.stdout.splitlines()[-25:]))
+                         + '\n'.join(proc.stdout.splitlines()[-20:]))
     info = json.loads(run_json.read_text())
     info['wall_seconds'] = round(time.time()-started, 1)
     if info['mismatches']:
