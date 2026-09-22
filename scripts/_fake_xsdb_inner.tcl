@@ -92,6 +92,21 @@ set DMA_BASE  0x40400000
 
 # core registers, by offset
 array set CORE {0 0 4 0 8 0 12 0 16 0 20 0 24 0 28 0 32 0 36 0x4D410002}
+
+# What this fake bitstream was built for, and whether it honours RUN_K/RUN_COUT.
+# The clean cases are built for exactly the data export_board_data.py writes.
+# "smallbuild" is a bitstream whose memories cannot hold the layer; "fixedgeom"
+# is one built without RUNTIME_GEOM, which accepts the register writes at the
+# AXI level and then computes its own shape anyway -- the failure that produces
+# plausible wrong numbers rather than an error.
+set BUILT_K     576
+set BUILT_COUT  128
+set HAS_RUNTIME 1
+if {$FAULT eq "smallbuild"} { set BUILT_K 288 }
+if {$FAULT eq "fixedgeom"}  { set BUILT_K 1152 ; set HAS_RUNTIME 0 }
+set CORE(36) [expr {0x4D410000 | ($HAS_RUNTIME << 8) | 2}]
+set CORE(40) $BUILT_K
+set CORE(44) $BUILT_COUT
 if {$FAULT eq "badid"} { set CORE(36) 0x4D420002 }
 
 # DMA state
@@ -150,6 +165,7 @@ proc mwr {args} {
     while {[string match "-*" [lindex $args 0]]} { set args [lrange $args 1 end] }
     lassign $args addr val
     global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
+    global BUILT_K BUILT_COUT
     set addr [expr {$addr & 0xffffffff}]
     if {[mmu_blocking]} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
     set val  [expr {$val & 0xffffffff}]
@@ -160,6 +176,16 @@ proc mwr {args} {
             set CFG_MODE [expr {($val >> 1) & 1}]
             set ARMED [expr {($val >> 4) & 1}]
             if {($val >> 5) & 1} { set CORE(32) 0 }
+        }
+        # RUN_K / RUN_COUT clamp to the built maximum, and 0 means "the built
+        # size". That clamp is what the run script probes the maximum with.
+        if {$off == 40} {
+            set CORE(40) [expr {($val == 0 || $val > $BUILT_K) ? $BUILT_K : $val}]
+            return
+        }
+        if {$off == 44} {
+            set CORE(44) [expr {($val == 0 || $val > $BUILT_COUT) ? $BUILT_COUT : $val}]
+            return
         }
         set CORE($off) $val
         return

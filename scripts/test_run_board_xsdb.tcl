@@ -35,6 +35,8 @@ set cases {
     {MMU on, second core reaches memory} {0 likeboard "RESULT: PASS"}
     {loadhw defines no ps7_init} {0 nops7        "RESULT: PASS"}
     {ps7_init not needed}       {0 nops7missing "RESULT: PASS"}
+    {build too small for layer} {0 smallbuild  "the memories are not there"}
+    {build ignores RUN_K}       {0 fixedgeom   "ignores RUN_K/RUN_COUT"}
 }
 
 set failures 0

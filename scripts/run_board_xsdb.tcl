@@ -44,6 +44,19 @@ if {[file exists $_lay]} {
     } else {
         puts "WARNING: $_lay has no frames/mode_seq; using $WM_FRAMES/$WM_MODE_SEQ"
     }
+    # K and COUT belong to the data as much as the window count does. A CNN run
+    # sends a different shape per layer through one bitstream, so taking them
+    # from the file rather than from the two constants above is what makes a
+    # per-layer run possible at all -- and, for the single-layer runs, it is one
+    # fewer number to keep in step by hand.
+    if {[regexp {"K"\s*:\s*(\d+)} $_txt -> _k] &&
+        [regexp {"COUT"\s*:\s*(\d+)} $_txt -> _c]} {
+        set WM_K    $_k
+        set WM_COUT $_c
+        puts "Shape     : layout.json -> K=$WM_K COUT=$WM_COUT"
+    } else {
+        puts "WARNING: $_lay has no K/COUT; using $WM_K/$WM_COUT"
+    }
 } else {
     puts "WARNING: no layout.json; using the built-in $WM_FRAMES/$WM_MODE_SEQ"
 }
@@ -82,6 +95,8 @@ set REG_OUTSTALL [expr {$WM_BASE + 0x18}]
 set REG_OUTCOUNT [expr {$WM_BASE + 0x1C}]
 set REG_CFGCOUNT [expr {$WM_BASE + 0x20}]
 set REG_ID       [expr {$WM_BASE + 0x24}]
+set REG_RUN_K    [expr {$WM_BASE + 0x28}]
+set REG_RUN_COUT [expr {$WM_BASE + 0x2C}]
 
 set CTRL_CORE_RST 0x01
 set CTRL_CFG_MODE 0x02
@@ -771,7 +786,46 @@ puts "Readback : the sampled words in DDR match the files."
 
 wm_dma_reset
 
+# ---------------- shape ----------------
+# The bitstream is built at a maximum K and COUT; this run uses as much of it as
+# layout.json says. RUN_K/RUN_COUT clamp anything larger than the built maximum,
+# so writing an impossible value and reading it back is how the built maximum is
+# discovered -- the wrapper exposes no other way to ask.
+#
+# Both failures below are silent otherwise: a build too small computes a
+# truncated window, and a build without RUNTIME_GEOM ignores these registers
+# entirely and computes its built shape on this layer's data. Both come back as
+# numbers that are merely wrong.
+wm_wr $REG_RUN_K    0xFFFFFFFF
+wm_wr $REG_RUN_COUT 0xFFFFFFFF
+set built_k    [wm_rd $REG_RUN_K]
+set built_cout [wm_rd $REG_RUN_COUT]
+set has_runtime [expr {($wm_core_id >> 8) & 1}]
+puts "Built    : K<=$built_k COUT<=$built_cout, runtime geometry\
+      [expr {$has_runtime ? {on} : {off}}]"
+if {$WM_K > $built_k || $WM_COUT > $built_cout} {
+    error "this data is K=$WM_K COUT=$WM_COUT but the bitstream is built for\
+           K<=$built_k COUT<=$built_cout. Rebuild with CNN_K and CNN_COUT at\
+           least that large; the memories are not there to hold this layer."
+}
+if {!$has_runtime && ($WM_K != $built_k || $WM_COUT != $built_cout)} {
+    error "this data is K=$WM_K COUT=$WM_COUT, the bitstream is fixed at\
+           K=$built_k COUT=$built_cout and ignores RUN_K/RUN_COUT. Rebuild with\
+           CNN_RUNTIME_GEOM=1, or run data of the shape it was built for."
+}
+wm_wr $REG_RUN_K    $WM_K
+wm_wr $REG_RUN_COUT $WM_COUT
+set got_k    [wm_rd $REG_RUN_K]
+set got_cout [wm_rd $REG_RUN_COUT]
+if {$got_k != $WM_K || $got_cout != $WM_COUT} {
+    error "RUN_K/RUN_COUT read back $got_k/$got_cout after writing\
+           $WM_K/$WM_COUT. The AXI4-Lite write did not land."
+}
+puts "Shape set: RUN_K=$got_k RUN_COUT=$got_cout"
+
 # ---------------- configuration phase ----------------
+# The walker counts in RUN_K/RUN_COUT too, so the stream is this layer's weights
+# and nothing else: COUT*K weights then COUT biases, at the shape set above.
 puts "Streaming configuration..."
 wm_wr $REG_CTRL [expr {$CTRL_CFG_MODE | $CTRL_CFG_RST}]
 wm_dma_kick $MM2S_CR $MM2S_SR $MM2S_SA $MM2S_LEN \
@@ -861,15 +915,22 @@ if {$fast} {
 } else {
     puts "  (bulk read unavailable, reading in blocks -- this takes a minute)"
     binary scan $golddata iu* gold
+    # Written here as well as on the fast path. A caller chaining layers reads
+    # results.bin to get what the hardware actually produced; if only the fast
+    # path wrote it, the chain would silently pick up the previous layer's file.
+    set dfh [open $dumpfile wb]
+    fconfigure $dfh -translation binary
     set chunk 4096
     for {set off 0} {$off < $WM_RESULT_WORDS} {incr off $chunk} {
         set n [expr {min($chunk, $WM_RESULT_WORDS - $off)}]
         set vals [wm_mrd_words [expr {$ADDR_RESULT + $off * 4}] $n]
         if {[llength $vals] != $n} {
+            close $dfh
             error "mrd returned [llength $vals] values where $n were asked for.\
                    This build of xsdb does not take a word count, so the results\
                    cannot be read back in blocks."
         }
+        puts -nonewline $dfh [binary format i* $vals]
         for {set j 0} {$j < $n} {incr j} {
             set got [lindex $vals $j]
             set want [lindex $gold [expr {$off + $j}]]
@@ -883,6 +944,7 @@ if {$fast} {
             }
         }
     }
+    close $dfh
 }
 
 # ---------------- report ----------------
@@ -911,6 +973,22 @@ if {$bad != 0} {
     puts "RESULT: PASS -- core bound. CYCLES is comparable with total_cycles in"
     puts "        verification/included_run/summary.json for this configuration."
 }
+
+# A run that feeds another run needs these numbers as data. Scraping them back
+# out of the console is the kind of thing that works until the console changes.
+set rfh [open [file join $boarddir run.json] w]
+puts $rfh "{"
+puts $rfh "  \"script_version\": \"$WM_SCRIPT_VERSION\","
+puts $rfh "  \"core_id\": \"[wm_hex $wm_core_id]\","
+puts $rfh "  \"K\": $WM_K, \"COUT\": $WM_COUT, \"mode_seq\": $WM_MODE_SEQ,"
+puts $rfh "  \"built_k\": $built_k, \"built_cout\": $built_cout,"
+puts $rfh "  \"runtime_geometry\": [expr {$has_runtime ? {true} : {false}}],"
+puts $rfh "  \"windows_expected\": $WM_NWIN, \"windows_done\": $windone,"
+puts $rfh "  \"results_expected\": $WM_RESULT_WORDS, \"results\": $outcount,"
+puts $rfh "  \"mismatches\": $bad, \"first_bad_word\": $first_bad,"
+puts $rfh "  \"cycles\": $cycles, \"in_stall\": $install, \"out_stall\": $outstall"
+puts $rfh "}"
+close $rfh
 
 } wm_err wm_opts]} {
     catch {wm_dump_state}
