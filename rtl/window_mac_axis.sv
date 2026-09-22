@@ -43,7 +43,10 @@
 //   0x18 OUTSTALL  cycles the core was blocked on output
 //   0x1C OUTCOUNT  results emitted
 //   0x20 CFGCOUNT  configuration items accepted
-//   0x24 ID        0x4D41_0000 | IMPL
+//   0x24 ID        0x4D41_0000 | (RUNTIME_GEOM << 8) | IMPL
+//                  Bit 8 lets the host tell a bitstream that honours RUN_K /
+//                  RUN_COUT from one that silently ignores them -- otherwise a
+//                  fixed build fed a smaller layer just returns wrong numbers.
 //
 // Host ordering: arming a run (CTRL[4]) clears the input holding register, so arm
 // BEFORE starting the MM2S transfer. Arming while data is already in flight drops
@@ -107,6 +110,14 @@ module window_mac_axis #(
     localparam integer CWP=(COUT<2 ? 1 : $clog2(COUT));
     reg [NWP-1:0] run_k;
     reg [CWP:0]   run_cout;
+
+    // What the wrapper itself must honour. The core takes run_k / run_cout and
+    // applies the same gate internally; the wrapper walks the configuration and
+    // counts activations, so it has to agree or the two disagree about where a
+    // window ends. With RUNTIME_GEOM = 0 both fold to the built constants and
+    // this file synthesises to exactly what it did before the feature existed.
+    wire [NWP-1:0] k_run    = RUNTIME_GEOM ? run_k    : K[NWP-1:0];
+    wire [CWP:0]   cout_run = RUNTIME_GEOM ? run_cout : COUT[CWP:0];
 
     reg        ctrl_core_rst;
     reg        ctrl_cfg_mode;
@@ -181,8 +192,9 @@ module window_mac_axis #(
     wire               core_m_last;
 
     generate if(IMPL==3) begin: v4
-        banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T)) core (
-            .clk(aclk), .rst_n(core_rst_n),
+        banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T),
+                            .RUNTIME_GEOM(RUNTIME_GEOM)) core (
+            .clk(aclk), .rst_n(core_rst_n), .run_k(run_k), .run_cout(run_cout),
             .cfg_valid(cfg_valid), .cfg_ready(cfg_ready), .cfg_is_bias(cfg_is_bias),
             .cfg_channel(cfg_channel), .cfg_tap(cfg_tap), .cfg_data(cfg_data),
             .start_valid(start_valid), .start_ready(start_ready), .sparse_mode(sparse_mode),
@@ -270,7 +282,7 @@ module window_mac_axis #(
                 REG_OUTSTALL: s_axi_rdata<=out_stall;
                 REG_OUTCOUNT: s_axi_rdata<=out_count;
                 REG_CFGCOUNT: s_axi_rdata<=cfg_count;
-                REG_ID:       s_axi_rdata<=32'h4D41_0000 | IMPL;
+                REG_ID:       s_axi_rdata<=32'h4D41_0000 | (RUNTIME_GEOM<<8) | IMPL;
                 default:      s_axi_rdata<=32'd0;
                 endcase
             end else if(s_axi_rvalid && s_axi_rready) s_axi_rvalid<=1'b0;
@@ -279,13 +291,13 @@ module window_mac_axis #(
             if(take_cfg) begin
                 cfg_count<=cfg_count+32'd1;
                 if(!cfg_phase) begin
-                    if(cfg_tp==K-1) begin
+                    if(cfg_tp==k_run-1) begin
                         cfg_tp<={KW{1'b0}};
-                        if(cfg_ch==COUT-1) begin cfg_ch<={CW{1'b0}}; cfg_phase<=1'b1; end
+                        if(cfg_ch==cout_run-1) begin cfg_ch<={CW{1'b0}}; cfg_phase<=1'b1; end
                         else cfg_ch<=cfg_ch+1'b1;
                     end else cfg_tp<=cfg_tp+1'b1;
                 end else begin
-                    if(cfg_ch==COUT-1) cfg_ch<={CW{1'b0}};
+                    if(cfg_ch==cout_run-1) cfg_ch<={CW{1'b0}};
                     else cfg_ch<=cfg_ch+1'b1;
                 end
             end
@@ -305,7 +317,7 @@ module window_mac_axis #(
             else if(act_take) sub<=sub+2'd1;
 
             if(act_take) begin
-                if(feed==K-1) begin feeding<=1'b0; feed<={FW{1'b0}}; end
+                if(feed==k_run-1) begin feeding<=1'b0; feed<={FW{1'b0}}; end
                 else feed<=feed+1'b1;
             end
 

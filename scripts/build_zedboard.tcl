@@ -48,8 +48,12 @@ foreach {n v} [list CNN_IMPL $impl CNN_P $parallel CNN_DEPTH $depth CNN_T $banks
 }
 if {$impl != 2 && $impl != 3} { error "CNN_IMPL must be 2 (v3) or 3 (v4)" }
 
-set K 576
-set COUT 128
+# Built-in maxima. With RUNTIME_GEOM on, one bitstream then covers every layer
+# whose weights fit in these memories -- which is the point of building it that
+# way. For the CIFAR network K_MAX=1152 COUT_MAX=128 covers all six convolutions.
+set K       [env_or CNN_K 576]
+set COUT    [env_or CNN_COUT 128]
+set runtime [env_or CNN_RUNTIME_GEOM 0]
 set tag "v[expr {$impl+1}]_p${parallel}_t${banks}"
 set dest [file join $root build "zed_${tag}_[clock seconds]"]
 file mkdir $dest
@@ -60,16 +64,53 @@ create_project system $dest -part $part -force
 # FPGA device before giving up: the first board build here failed on a missing
 # ZedBoard part while ZC702 -- the same xc7z020clg484 -- was installed all along,
 # and that cost an hour of chasing vendor files that were never needed.
-if {[llength [get_board_parts -quiet $board]] == 0} {
+
+# Which installed board parts sit on the same FPGA device as `part`. Split out so
+# it can be run without Vivado: this is the branch that fires on a machine where
+# the configured board is not installed, which is exactly the machine where a
+# mistake here is expensive, and the rest of this file needs Vivado to test.
+#
+# `regsub --` matters. The pattern starts with a dash, and without the -- Tcl
+# reads it as a switch and the script dies at the first line of the recovery
+# path, reporting a bad regsub option instead of a missing board part.
+proc wm_same_device {part installed} {
     set device $part
-    regsub {-[0-9A-Za-z]+$} $part "" device
+    regsub -- {-[0-9A-Za-z]+$} $part "" device
     set matches {}
+    foreach {bp bppart} $installed {
+        if {[string equal $bppart $part] || [string match "${device}*" $bppart]} {
+            lappend matches $bp
+        }
+    }
+    return [lsort $matches]
+}
+
+# Which of those to use. The configured board is missing, but it may be missing
+# only by version -- the ZedBoard part installed as 1.3 when 1.4 was asked for --
+# and then it is still the right PS preset, because it is the right board. Taking
+# the alphabetically last match would pick xilinx.com:zc702 over em.avnet.com:zed
+# and quietly configure another board's DDR. Prefer the same vendor and board
+# name first, highest version within whichever group wins.
+proc wm_pick_board {board matches} {
+    if {[llength $matches] == 0} { return "" }
+    set pref [join [lrange [split $board :] 0 1] :]
+    set same {}
+    foreach m $matches {
+        if {[string match "${pref}:*" $m]} { lappend same $m }
+    }
+    if {[llength $same]} { return [lindex [lsort $same] end] }
+    return [lindex [lsort $matches] end]
+}
+
+if {[llength [get_board_parts -quiet $board]] == 0} {
+    set installed {}
     foreach bp [get_board_parts -quiet] {
         if {[catch {set bppart [get_property PART_NAME [get_board_parts -quiet $bp]]}]} { continue }
-        if {[string equal $bppart $part] || [string match "${device}*" $bppart]} { lappend matches $bp }
+        lappend installed $bp $bppart
     }
+    set matches [wm_same_device $part $installed]
     if {[llength $matches] != 0} {
-        set board [lindex [lsort $matches] end]
+        set board [wm_pick_board $board $matches]
         puts ""
         puts "Configured board part is not installed; using '$board', which is on the same"
         puts "device ($part). Installed board parts on this device: $matches"
@@ -140,7 +181,8 @@ puts $f "    output wire        m_axis_tvalid,"
 puts $f "    input  wire        m_axis_tready,"
 puts $f "    output wire        m_axis_tlast"
 puts $f ");"
-puts $f "    window_mac_axis #(.K($K),.COUT($COUT),.P($parallel),.DEPTH($depth),.T($banks),.IMPL($impl)) u ("
+puts $f "    window_mac_axis #(.K($K),.COUT($COUT),.P($parallel),.DEPTH($depth),.T($banks),.IMPL($impl),\
+                      .RUNTIME_GEOM($runtime)) u ("
 puts $f "        .aclk(aclk), .aresetn(aresetn),"
 puts $f "        .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),"
 puts $f "        .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wvalid(s_axi_wvalid), .s_axi_wready(s_axi_wready),"

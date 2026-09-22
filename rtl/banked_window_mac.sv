@@ -19,13 +19,26 @@
 // Tuple RAM bits: 2 * T * ceil(K/T) * (rowbits+7), about the same as v3.
 module banked_window_mac #(
     parameter integer K=576, COUT=128, P=2, DEPTH=2, T=4,
+    // 0 pins the geometry to K and COUT, and run_k / run_cout are ignored, so
+    // the comparators below fold to constants and this is the core the paper
+    // measures. Carrying the cost in only one of the two compared cores would
+    // make the resource comparison meaningless, so both carry the switch and
+    // both are measured with it off.
+    parameter integer RUNTIME_GEOM=0,
     parameter integer KW=(K<2 ? 1 : $clog2(K)),
-    parameter integer CW=(COUT<2 ? 1 : $clog2(COUT))
+    parameter integer CW=(COUT<2 ? 1 : $clog2(COUT)),
+    parameter integer NW=$clog2(K+1)
 )(
     input wire clk, input wire rst_n,
     input wire cfg_valid, output wire cfg_ready, input wire cfg_is_bias,
     input wire [CW-1:0] cfg_channel, input wire [KW-1:0] cfg_tap,
     input wire signed [31:0] cfg_data,
+    // Runtime geometry, exactly as in overlapped_window_mac: K and COUT are the
+    // BUILT-IN MAXIMA that size the memories, run_k and run_cout say how much of
+    // that this layer uses. The weight RAMs keep their compile-time strides (a
+    // group starts at group*ROWS, not group*ceil(run_k/T)); addressing by run_k
+    // would turn a constant shift into a real multiplier.
+    input wire [NW-1:0] run_k, input wire [CW:0] run_cout,
     input wire start_valid, output wire start_ready, input wire sparse_mode,
     input wire s_valid, output wire s_ready, input wire [6:0] s_data,
     output wire m_valid, input wire m_ready, output wire signed [31:0] m_data,
@@ -33,6 +46,10 @@ module banked_window_mac #(
 );
     localparam integer GROUPS=(COUT+P-1)/P;
     localparam integer GW=(GROUPS<2 ? 1 : $clog2(GROUPS));
+    // Effective geometry. With RUNTIME_GEOM = 0 these are constants.
+    wire [NW-1:0] k_eff    = RUNTIME_GEOM ? run_k    : K[NW-1:0];
+    wire [CW:0]   cout_eff = RUNTIME_GEOM ? run_cout : COUT[CW:0];
+    wire [GW:0] run_groups=(cout_eff+P-1)/P;
     localparam integer LW=(P<2 ? 1 : $clog2(P));
     localparam integer SW=(DEPTH<2 ? 1 : $clog2(DEPTH));
     localparam integer RW=$clog2(DEPTH+1);
@@ -103,7 +120,7 @@ module banked_window_mac #(
     assign m_valid=rst_n && slot_ready[head];
     assign m_data=results[head][emit_lane];
     assign m_channel=output_channel;
-    assign m_last=(output_channel==COUT-1);
+    assign m_last=(output_channel==cout_eff-1);
     wire take_output=m_valid && m_ready;
     wire end_group=(emit_lane==P-1 || m_last);
     wire release_slot=take_output && end_group;
@@ -130,9 +147,9 @@ module banked_window_mac #(
     generate for(lane=0;lane<P;lane=lane+1) begin: bank
         reg signed [31:0] biases [0:GROUPS-1];
         always @(posedge clk)
-            if(rst_n && take_cfg && cfg_is_bias && cfg_channel<COUT && cfg_channel%P==lane)
+            if(rst_n && take_cfg && cfg_is_bias && cfg_channel<cout_eff && cfg_channel%P==lane)
                 biases[cfg_channel/P]<=cfg_data;
-        assign bias_q[lane]=(d_group*P+lane<COUT) ? biases[d_group] : 32'sd0;
+        assign bias_q[lane]=(d_group*P+lane<cout_eff) ? biases[d_group] : 32'sd0;
         assign sum_next[lane]=(d_first ? bias_q[lane] : accum[lane])+psum[lane];
         for(bk=0;bk<T;bk=bk+1) begin: wb
             // Weights of lane `lane` for taps with tap%T==bk, indexed by (group, tap/T).
@@ -140,12 +157,12 @@ module banked_window_mac #(
             reg signed [7:0] wq;
             // Memories are deliberately not reset. Configure every valid weight/bias.
             always @(posedge clk) begin
-                if(rst_n && take_cfg && !cfg_is_bias && cfg_channel<COUT && cfg_channel%P==lane &&
-                   cfg_tap<K && cfg_tap%T==bk)
+                if(rst_n && take_cfg && !cfg_is_bias && cfg_channel<cout_eff && cfg_channel%P==lane &&
+                   cfg_tap<k_eff && cfg_tap%T==bk)
                     weights[(cfg_channel/P)*ROWS+cfg_tap/T]<=cfg_data[7:0];
                 if(rst_n && a_valid) wq<=weights[a_group*ROWS+tuple_q[bk][ROWW+6:7]];
             end
-            assign weight_q[lane][bk]=(b_group*P+lane<COUT) ? wq : 8'sd0;
+            assign weight_q[lane][bk]=(b_group*P+lane<cout_eff) ? wq : 8'sd0;
         end
     end endgenerate
 
@@ -181,7 +198,7 @@ module banked_window_mac #(
                 load_max<=max_next;
                 if(in_bank==T-1) begin in_bank<=0;in_row<=in_row+1'b1;end
                 else in_bank<=in_bank+1'b1;
-                if(input_tap==K-1) begin
+                if(input_tap==k_eff-1) begin
                     loaded[load_bank]<=1;win_max[load_bank]<=max_next;
                     for(b=0;b<T;b=b+1)
                         win_nb[load_bank][b]<=(store_input && in_bank==b) ? nb_next : nb_load[b];
@@ -236,7 +253,7 @@ module banked_window_mac #(
             if(issue) begin
                 if(last_pos) begin
                     issue_pos<=0;
-                    if(issue_group==GROUPS-1) begin
+                    if(issue_group==run_groups-1) begin
                         issue_group<=0;
                         loaded[run_bank]<=0;busy[run_bank]<=0;
                         run_bank<=~run_bank;

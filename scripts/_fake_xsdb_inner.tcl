@@ -90,8 +90,57 @@ proc mmu_blocking {} {
 set WM_BASE   0x43C00000
 set DMA_BASE  0x40400000
 
+# The shape the run is about comes from the same file the run script reads, so
+# a CIFAR layer -- a different K, COUT and window count through the same build --
+# is exercised here rather than assumed to behave like the VGG one.
+#
+# Read on first use, not here. A caller that drives this from outside sets
+# WM_BOARD_DIR in the script it hands over, which is sourced after this file is
+# loaded; reading eagerly would take the shape from whatever sat in the default
+# directory and then complain that the bitstream is too small for it.
+set NWIN 1024
+set COUT 128
+set LAYOUT_K 576
+set EXPECT_CYCLES 7404123
+set GEOM_READ 0
+
+proc layout_geom {} {
+    global REPO NWIN COUT LAYOUT_K EXPECT_CYCLES GEOM_READ BUILT_K BUILT_COUT FAULT
+    if {$GEOM_READ} return
+    set GEOM_READ 1
+    set lay [expr {[info exists ::env(WM_BOARD_DIR)] && $::env(WM_BOARD_DIR) ne ""
+                   ? [file join $::env(WM_BOARD_DIR) layout.json]
+                   : [file join $REPO build board layout.json]}]
+    if {![file exists $lay]} return
+    set fh [open $lay r] ; set txt [read $fh] ; close $fh
+    if {[regexp {"COUT"\s*:\s*(\d+)} $txt -> v]} { set COUT $v }
+    if {[regexp {"K"\s*:\s*(\d+)} $txt -> v]}    { set LAYOUT_K $v }
+    if {[regexp {"frames"\s*:\s*(\d+)} $txt -> f] &&
+        [regexp {"mode_seq"\s*:\s*(\d+)} $txt -> m]} {
+        set NWIN [expr {$m == 2 ? 2 * $f : $f}]
+    }
+    set EXPECT_CYCLES [expr {$NWIN * 7233}]
+    set BUILT_K    $LAYOUT_K
+    set BUILT_COUT $COUT
+    if {$FAULT eq "smallbuild"} { set BUILT_K [expr {$LAYOUT_K - 4}] }
+    if {$FAULT eq "fixedgeom"}  { set BUILT_K [expr {$LAYOUT_K + 576}] }
+}
+
 # core registers, by offset
 array set CORE {0 0 4 0 8 0 12 0 16 0 20 0 24 0 28 0 32 0 36 0x4D410002}
+
+# What this fake bitstream was built for, and whether it honours RUN_K/RUN_COUT.
+# The clean cases are built for exactly the data export_board_data.py writes.
+# "smallbuild" is a bitstream whose memories cannot hold the layer; "fixedgeom"
+# is one built without RUNTIME_GEOM, which accepts the register writes at the
+# AXI level and then computes its own shape anyway -- the failure that produces
+# plausible wrong numbers rather than an error.
+set BUILT_K     $LAYOUT_K
+set BUILT_COUT  $COUT
+set HAS_RUNTIME [expr {$FAULT eq "fixedgeom" ? 0 : 1}]
+set CORE(36) [expr {0x4D410000 | ($HAS_RUNTIME << 8) | 2}]
+set CORE(40) $BUILT_K
+set CORE(44) $BUILT_COUT
 if {$FAULT eq "badid"} { set CORE(36) 0x4D420002 }
 
 # DMA state
@@ -100,9 +149,6 @@ set CFG_MODE 0
 set ARMED 0
 set PENDING_RX 0
 
-set NWIN 1024
-set COUT 128
-set EXPECT_CYCLES 7404123
 
 proc fmt {v} {
     global PREFIX
@@ -118,6 +164,7 @@ proc memrd {addr} {
 
 proc dma_run_mm2s {bytes} {
     global D CORE CFG_MODE ARMED PENDING_RX MEM FAULT NWIN COUT EXPECT_CYCLES
+    layout_geom
     set words [expr {$bytes / 4}]
     if {$CFG_MODE} {
         set n $words
@@ -150,6 +197,8 @@ proc mwr {args} {
     while {[string match "-*" [lindex $args 0]]} { set args [lrange $args 1 end] }
     lassign $args addr val
     global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
+    global BUILT_K BUILT_COUT
+    layout_geom
     set addr [expr {$addr & 0xffffffff}]
     if {[mmu_blocking]} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
     set val  [expr {$val & 0xffffffff}]
@@ -160,6 +209,16 @@ proc mwr {args} {
             set CFG_MODE [expr {($val >> 1) & 1}]
             set ARMED [expr {($val >> 4) & 1}]
             if {($val >> 5) & 1} { set CORE(32) 0 }
+        }
+        # RUN_K / RUN_COUT clamp to the built maximum, and 0 means "the built
+        # size". That clamp is what the run script probes the maximum with.
+        if {$off == 40} {
+            set CORE(40) [expr {($val == 0 || $val > $BUILT_K) ? $BUILT_K : $val}]
+            return
+        }
+        if {$off == 44} {
+            set CORE(44) [expr {($val == 0 || $val > $BUILT_COUT) ? $BUILT_COUT : $val}]
+            return
         }
         set CORE($off) $val
         return
@@ -311,4 +370,12 @@ if {$FAULT eq "nops7"} {
 }
 
 set ::env(WM_BUILD) $fake
-source [file join $REPO scripts run_board_xsdb.tcl]
+# A fourth argument is a script to source instead -- how a caller that drives
+# xsdb from outside (scripts/run_cifar.py) gets its own entry point exercised
+# rather than only the run script it wraps.
+set _entry [lindex $argv 3]
+if {$_entry ne ""} {
+    source $_entry
+} else {
+    source [file join $REPO scripts run_board_xsdb.tcl]
+}

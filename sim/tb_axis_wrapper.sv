@@ -13,10 +13,23 @@
 //
 // IN_GAP/OUT_GAP model a DMA that cannot keep up; the default 0 is the clean case.
 module tb_axis_wrapper;
+    // K and COUT are the geometry of the DATA: the vectors, the oracle and the
+    // streams are all this shape. KMAX/COUTMAX are the geometry the wrapper is
+    // BUILT at. Leaving them 0 builds at the data's shape, which is the fixed
+    // design this bench has always checked. Setting them larger, with
+    // RUNTIME_GEOM=1, checks the case the CIFAR driver depends on: one large
+    // build running a small layer, told its shape over AXI4-Lite at run time.
     parameter integer K=12, COUT=9, P=2, DEPTH=2, N=8, IMPL=2, T=1;
+    parameter integer KMAX=0, COUTMAX=0, RUNTIME_GEOM=0;
     parameter integer MODE_SEQ=2, IN_GAP=0, OUT_GAP=0;
     parameter integer EXPECT_CYCLES=0;   // 0 = do not check against the core bench
     localparam integer NWIN=(MODE_SEQ==2) ? 2*N : N;
+    localparam integer KB=(KMAX==0) ? K : KMAX;
+    localparam integer CB=(COUTMAX==0) ? COUT : COUTMAX;
+    // Activations are packed four to a beat with no per-window alignment, so the
+    // run only needs the TOTAL to divide by four -- a window may end mid beat.
+    localparam integer ACTS=NWIN*K;
+    localparam integer BEATS=(ACTS+3)/4;
 
     reg aclk=0; always #5 aclk=~aclk;
     reg aresetn=0;
@@ -30,7 +43,8 @@ module tb_axis_wrapper;
     reg  [31:0] tdata=0;   reg tvalid=0;   wire tready;  reg tlast=0;
     wire [31:0] m_tdata;   wire m_tvalid;  reg m_tready=1; wire m_tlast;
 
-    window_mac_axis #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T),.IMPL(IMPL)) dut (
+    window_mac_axis #(.K(KB),.COUT(CB),.P(P),.DEPTH(DEPTH),.T(T),.IMPL(IMPL),
+                      .RUNTIME_GEOM(RUNTIME_GEOM)) dut (
         .aclk(aclk), .aresetn(aresetn),
         .s_axi_awaddr(awaddr), .s_axi_awvalid(awvalid), .s_axi_awready(awready),
         .s_axi_wdata(wdata), .s_axi_wstrb(4'hF), .s_axi_wvalid(wvalid), .s_axi_wready(wready),
@@ -58,11 +72,22 @@ module tb_axis_wrapper;
     end
 
     integer win_out=0, ch_out=0, checked=0, age=0;
-    integer ci, t, w, fr, in_fr, beats;   // fr belongs to the output checker only
+    integer ci, t, w, fr, in_fr, beats, ai;  // fr belongs to the output checker only
     reg [31:0] r_cycles, r_instl, r_outstl, r_windone, r_outcount, r_cfgcount, r_id;
+    reg [31:0] r_run_k, r_run_cout;
 
     function automatic integer win_frame(input integer wi);
         win_frame=(MODE_SEQ==2) ? wi/2 : wi;
+    endfunction
+
+    // Activation ai of the run, as a flat sequence over all windows. Past the end
+    // of the last window the beat is padded with zeros; the core has already
+    // finished its last window by then and never looks at them.
+    function automatic [6:0] act(input integer a);
+        begin
+            if(a>=ACTS) act=7'd0;
+            else act=inputs[win_frame(a/K)*K + (a%K)][6:0];
+        end
     endfunction
 
     // Output side: values, order and TLAST placement.
@@ -127,7 +152,25 @@ module tb_axis_wrapper;
         repeat(4) @(negedge aclk);
 
         axil_read(6'h24, r_id);
-        if(r_id !== (32'h4D41_0000 | IMPL)) $fatal(1,"ID register reads %h",r_id);
+        if(r_id !== (32'h4D41_0000 | (RUNTIME_GEOM<<8) | IMPL))
+            $fatal(1,"ID register reads %h",r_id);
+
+        // ---- runtime geometry ----
+        // Written before the configuration, because the configuration walker
+        // counts in this geometry too. The register clamps anything larger than
+        // the built maximum, so reading it back proves the build is big enough --
+        // the exact check the board script has to make before it trusts a run.
+        if(RUNTIME_GEOM) begin
+            axil_write(6'h28, K);
+            axil_write(6'h2C, COUT);
+            axil_read(6'h28, r_run_k);
+            axil_read(6'h2C, r_run_cout);
+            if(r_run_k !== K)
+                $fatal(1,"RUN_K reads %0d after writing %0d: build is K=%0d",r_run_k,K,KB);
+            if(r_run_cout !== COUT)
+                $fatal(1,"RUN_COUT reads %0d after writing %0d: build is COUT=%0d",
+                       r_run_cout,COUT,CB);
+        end
 
         // ---- configuration ----
         // core out of reset, cfg_mode=1, reset the configuration walker
@@ -147,15 +190,10 @@ module tb_axis_wrapper;
         axil_write(6'h00, 32'h10 | (MODE_SEQ<<2));
 
         beats=0;
-        for(w=0;w<NWIN;w=w+1) begin
-            in_fr=win_frame(w);
-            for(t=0;t<K;t=t+4) begin
-                push({1'b0, inputs[in_fr*K+t+3][6:0],
-                      1'b0, inputs[in_fr*K+t+2][6:0],
-                      1'b0, inputs[in_fr*K+t+1][6:0],
-                      1'b0, inputs[in_fr*K+t][6:0]}, 1);
-                beats=beats+1;
-            end
+        for(ai=0;ai<ACTS;ai=ai+4) begin
+            push({1'b0, act(ai+3), 1'b0, act(ai+2),
+                  1'b0, act(ai+1), 1'b0, act(ai)}, 1);
+            beats=beats+1;
         end
         tvalid=0;
 
@@ -172,7 +210,7 @@ module tb_axis_wrapper;
         if(checked !== NWIN*COUT) $fatal(1,"checked %0d values, expected %0d",checked,NWIN*COUT);
         if(r_windone !== NWIN) $fatal(1,"WINDONE=%0d expected %0d",r_windone,NWIN);
         if(r_outcount !== NWIN*COUT) $fatal(1,"OUTCOUNT=%0d expected %0d",r_outcount,NWIN*COUT);
-        if(beats !== NWIN*K/4) $fatal(1,"sent %0d beats, expected %0d",beats,NWIN*K/4);
+        if(beats !== BEATS) $fatal(1,"sent %0d beats, expected %0d",beats,BEATS);
         if(IN_GAP==0 && r_instl !== 0) $fatal(1,"IN_STALL=%0d with an unthrottled stream",r_instl);
         if(OUT_GAP==0 && r_outstl !== 0) $fatal(1,"OUT_STALL=%0d with an always-ready sink",r_outstl);
         if(IN_GAP!=0 && r_instl == 0) $fatal(1,"IN_STALL stayed 0 while the stream was throttled");
@@ -181,8 +219,8 @@ module tb_axis_wrapper;
             $fatal(1,"CYCLES=%0d but the core bench measured %0d for this configuration",
                    r_cycles,EXPECT_CYCLES);
 
-        $display("PASS ALL checked_values=%0d windows=%0d cycles=%0d in_stall=%0d out_stall=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d MODE_SEQ=%0d IN_GAP=%0d OUT_GAP=%0d",
-                 checked, win_out, r_cycles, r_instl, r_outstl, K, COUT, P, DEPTH, IMPL, T, MODE_SEQ, IN_GAP, OUT_GAP);
+        $display("PASS ALL checked_values=%0d windows=%0d cycles=%0d in_stall=%0d out_stall=%0d K=%0d COUT=%0d KB=%0d CB=%0d RUNTIME_GEOM=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d MODE_SEQ=%0d IN_GAP=%0d OUT_GAP=%0d",
+                 checked, win_out, r_cycles, r_instl, r_outstl, K, COUT, KB, CB, RUNTIME_GEOM, P, DEPTH, IMPL, T, MODE_SEQ, IN_GAP, OUT_GAP);
         $finish;
     end
 
