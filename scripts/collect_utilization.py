@@ -70,7 +70,9 @@ def main():
     rows = []
     for d in sorted((ROOT/'build').glob('ooc_*')):
         st = read_settings(d)
-        for core in sorted(p for p in d.iterdir() if p.is_dir()):
+        # synth_vivado.tcl keeps a copy of its inputs in sources/; it is not a core.
+        for core in sorted(p for p in d.iterdir()
+                           if p.is_dir() and p.name != 'sources'):
             u = top_row(core/'routed_utilization.rpt')
             if u is None:
                 print(f'# {d.name}/{core.name}: no (top) row in routed_utilization.rpt')

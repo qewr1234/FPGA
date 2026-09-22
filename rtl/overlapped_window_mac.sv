@@ -20,6 +20,12 @@
 // results in flight (core_idle). Configuration wins over start in that state.
 module overlapped_window_mac #(
     parameter integer K=576, COUT=128, P=2, DEPTH=2,
+    // 0 pins the geometry to K and COUT, and run_k / run_cout are ignored.
+    // The comparators below then fold to constants and the core is the one
+    // the paper measures -- runtime geometry is a separate feature, and
+    // carrying its cost in only one of the two compared cores would make
+    // the resource comparison meaningless.
+    parameter integer RUNTIME_GEOM=0,
     parameter integer KW=(K<2 ? 1 : $clog2(K)),
     parameter integer CW=(COUT<2 ? 1 : $clog2(COUT)),
     parameter integer NW=$clog2(K+1)
@@ -46,7 +52,10 @@ module overlapped_window_mac #(
     localparam integer GW=(GROUPS<2 ? 1 : $clog2(GROUPS));
     // Groups actually run. P is a parameter, and a power of two in every built
     // configuration, so this divide is a shift.
-    wire [GW:0] run_groups=(run_cout+P-1)/P;
+    // Effective geometry. With RUNTIME_GEOM = 0 these are constants.
+    wire [NW-1:0] k_eff    = RUNTIME_GEOM ? run_k    : K[NW-1:0];
+    wire [CW:0]   cout_eff = RUNTIME_GEOM ? run_cout : COUT[CW:0];
+    wire [GW:0] run_groups=(cout_eff+P-1)/P;
     localparam integer LW=(P<2 ? 1 : $clog2(P));
     localparam integer SW=(DEPTH<2 ? 1 : $clog2(DEPTH));
     localparam integer RW=$clog2(DEPTH+1);
@@ -105,7 +114,7 @@ module overlapped_window_mac #(
     assign m_valid=rst_n && slot_ready[head];
     assign m_data=results[head][emit_lane];
     assign m_channel=output_channel;
-    assign m_last=(output_channel==run_cout-1);
+    assign m_last=(output_channel==cout_eff-1);
     wire take_output=m_valid && m_ready;
     wire end_group=(emit_lane==P-1 || m_last);
     wire release_slot=take_output && end_group;
@@ -125,14 +134,14 @@ module overlapped_window_mac #(
         reg signed [31:0] biases [0:GROUPS-1];
         // Memories are deliberately not reset. Configure every valid weight/bias.
         always @(posedge clk) begin
-            if(rst_n && take_cfg && cfg_channel<run_cout && cfg_channel%P==lane) begin
+            if(rst_n && take_cfg && cfg_channel<cout_eff && cfg_channel%P==lane) begin
                 if(cfg_is_bias) biases[cfg_channel/P]<=cfg_data;
-                else if(cfg_tap<run_k) weights[(cfg_channel/P)*K+cfg_tap]<=cfg_data[7:0];
+                else if(cfg_tap<k_eff) weights[(cfg_channel/P)*K+cfg_tap]<=cfg_data[7:0];
             end
             if(rst_n && a_valid) wq<=weights[a_group*K+tuple_q[KW+6:7]];
         end
-        assign weight_q[lane]=(b_group*P+lane<run_cout) ? wq : 8'sd0;
-        assign bias_q[lane]=(c_group*P+lane<run_cout) ? biases[c_group] : 32'sd0;
+        assign weight_q[lane]=(b_group*P+lane<cout_eff) ? wq : 8'sd0;
+        assign bias_q[lane]=(c_group*P+lane<cout_eff) ? biases[c_group] : 32'sd0;
         assign sum_next[lane]=(c_first ? bias_q[lane] : accum[lane]) +
                              {{16{product[lane][15]}},product[lane]};
     end endgenerate
@@ -165,7 +174,7 @@ module overlapped_window_mac #(
                 mode<=sparse_mode;input_tap<=0;count<=0;
             end else if(take_input) begin
                 count<=count_next;
-                if(input_tap==run_k-1) begin
+                if(input_tap==k_eff-1) begin
                     loaded[load_bank]<=1;win_count[load_bank]<=count_next;
                     load_active<=0;load_bank<=~load_bank;
                 end else input_tap<=input_tap+1'b1;

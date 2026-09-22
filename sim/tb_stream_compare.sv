@@ -19,7 +19,7 @@ module tb_stream_compare;
     // built size, so every existing case is bit-identical to before. These are
     // picked up by the dut's .* connection and ignored by the cores that have no
     // such ports.
-    parameter integer RUN_K=0, RUN_COUT=0;
+    parameter integer RUN_K=0, RUN_COUT=0, RUNTIME_GEOM=0;
     localparam integer NW=$clog2(K+1);
     // Effective sizes for this run. Array declarations keep the built maximum so
     // they are always big enough; loops and vector indexing use these, because
@@ -50,7 +50,8 @@ module tb_stream_compare;
             if(dut.c_valid && dut.c_last && dut.slot_ready[dut.c_slot]) $fatal(1,"overwriting an unconsumed result");
         end
     end else if(IMPL==2) begin: v3
-        overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH)) dut(.*);
+        overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),
+                                .RUNTIME_GEOM(RUNTIME_GEOM)) dut(.*);
         assign issue=dut.issue;assign tap_issue=dut.tap_issue;assign issue_pos=dut.issue_pos;
         always @(posedge clk) if(rst_n) begin
             if(dut.reserved>DEPTH) $fatal(1,"result reservations overflow");

@@ -52,6 +52,9 @@
 // Not verified on hardware. sim/tb_axis_wrapper.sv checks it against the same gold
 // values and the same cycle count as the core-level bench.
 module window_mac_axis #(
+    // Passed to the core. 0 keeps the geometry fixed at K and COUT, which
+    // is what the resource comparison is measured on.
+    parameter integer RUNTIME_GEOM=0,
     parameter integer K=576, COUT=128, P=8, DEPTH=2, T=4, IMPL=2,
     parameter integer KW=(K<2 ? 1 : $clog2(K)),
     parameter integer CW=(COUT<2 ? 1 : $clog2(COUT))
@@ -187,7 +190,8 @@ module window_mac_axis #(
             .m_valid(core_m_valid), .m_ready(m_axis_tready), .m_data(core_m_data),
             .m_channel(core_m_channel), .m_last(core_m_last));
     end else begin: v3
-        overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH)) core (
+        overlapped_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),
+                                .RUNTIME_GEOM(RUNTIME_GEOM)) core (
             .clk(aclk), .rst_n(core_rst_n), .run_k(run_k), .run_cout(run_cout),
             .cfg_valid(cfg_valid), .cfg_ready(cfg_ready), .cfg_is_bias(cfg_is_bias),
             .cfg_channel(cfg_channel), .cfg_tap(cfg_tap), .cfg_data(cfg_data),
