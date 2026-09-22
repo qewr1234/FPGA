@@ -58,23 +58,31 @@ validated on hardware rather than in simulation alone.
 
 Our contributions are:
 
-1. **A post-route cost per multiplier for each axis.** Widening the
-   output-channel axis costs 138.5 LUTs and 111.6 flip-flops per multiplier
-   added; widening the tap-banking axis costs 89.8 and 43.8, or 35% and 61%
-   less. The mechanism is visible in the structure: the output-channel axis
-   replicates a 32-bit accumulator per channel, while the banking axis sums its
-   products in an adder tree and shares one accumulator.
+1. **A post-route comparison at an equal budget.** At 64 multipliers the
+   tap-banking core uses 29% fewer LUTs and 57% fewer flip-flops than the
+   output-channel core. The mechanism is visible in the structure: the
+   output-channel axis replicates a 32-bit accumulator per channel, while the
+   banking axis sums its products in an adder tree and shares one accumulator.
 
-2. **The throughput those multipliers buy.** At 64 multipliers the two
-   architectures are within 5.1% of each other in cycles per window, so the
-   resource difference is not paid for in speed.
+2. **It is also faster in time, not only smaller.** The banking core issues 5.1%
+   more cycles per window, but closes timing with 1.040 ns of slack against
+   0.157 ns, so at 111.6 MHz against 101.6 it finishes a window in 8.57 us
+   against 8.96 -- 4.4% sooner. The output-channel core at this budget is
+   limited by a 64-way output multiplexer and 64 weight-memory ports.
 
-3. **A measurement of what static assignment costs.** Assigning tap *t* to bank
+3. **The cost per multiplier is not a constant, and diverges with scale.**
+   Flip-flops scale linearly, at 111 per multiplier against 45. LUTs do not:
+   at a small budget the two axes cost about the same per multiplier (98
+   against 99), and by the largest budget measured the output-channel axis has
+   risen to 134 while banking stays near 93. The gap is a property of scale, not
+   a fixed rate.
+
+4. **A measurement of what static assignment costs.** Assigning tap *t* to bank
    *t* mod *T* performs no load balancing. On this layer the penalty is 1.16x at
    *T*=4 and 1.35x at *T*=8, and it is already contained in the cycle counts
    reported above rather than being an unmodelled overhead.
 
-4. **Hardware validation of the cycle model.** On an XC7Z020 at 100 MHz the
+5. **Hardware validation of the cycle model.** On an XC7Z020 at 100 MHz the
    measured cycle count equals the simulated one exactly, with the design's own
    stall counters reading zero, so the figure describes the core and not the
    memory path feeding it. All 1,605,632 outputs of a complete feature map match

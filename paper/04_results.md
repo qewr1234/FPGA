@@ -13,44 +13,63 @@ Read at a fixed budget instead. At 64 multipliers, Channel with *P* = 64 takes
 5.1% (Fig. 2). Spending the same multipliers on tap banks rather than on output
 channels costs essentially nothing in throughput.
 
-### B. Cost per multiplier
+### B. Cost at an equal budget
 
-The resource figures are the point of the paper. Table I gives every
-configuration that Vivado built without inferring DSP blocks, which is the set
-that can be compared.
+Table I gives every configuration Vivado built without inferring DSP blocks,
+which is the set that can be compared.
 
 **TABLE I. Post-route utilisation, xc7z020clg484-1, 10 ns, DSP inference off.**
 
-| Core | *P* | *T* | Multipliers | Total LUTs | Logic LUTs | LUTRAM | FFs |
+| Core | *P* | *T* | Multipliers | Total LUTs | LUTRAM | FFs | WNS (ns) |
 |---|---|---|---|---|---|---|---|
-| Channel | 8 | 1 | 8 | 1,209 | 1,033 | 176 | 995 |
-| Channel | 32 | 1 | 32 | 4,534 | 3,830 | 704 | 3,674 |
-| Bank | 2 | 4 | 8 | 1,004 | 916 | 88 | 605 |
-| Bank | 4 | 4 | 16 | 1,795 | 1,707 | 88 | 953 |
-| Bank | 8 | 4 | 32 | 3,159 | 2,983 | 176 | 1,656 |
+| Channel | 2 | 1 | 2 | 992 | 520 | 363 | +0.888 |
+| Channel | 16 | 1 | 16 | 2,360 | 352 | 1,895 | +0.942 |
+| Channel | 64 | 1 | 64 | 8,812 | 1,408 | 7,248 | +0.157 |
+| Bank | 2 | 4 | 8 | 1,004 | 88 | 605 | +0.892 |
+| Bank | 4 | 4 | 16 | 1,795 | 88 | 953 | +0.862 |
+| Bank | 8 | 4 | 32 | 3,159 | 176 | 1,656 | +0.961 |
+| Bank | 16 | 4 | 64 | 6,218 | 352 | 3,107 | +1.040 |
 
-Taking the slope between the smallest and largest configuration of each core
-gives the cost of widening by one multiplier (Fig. 3):
+At the 64-multiplier budget both bitstreams were built for:
 
-|  | LUTs per multiplier | FFs per multiplier |
+|  | Channel, *P* = 64 | Bank, *P* = 16, *T* = 4 |  |
+|---|---|---|---|
+| Total LUTs | 8,812 | **6,218** | **-29%** |
+| Flip-flops | 7,248 | **3,107** | **-57%** |
+| Cycles per window | **910.7** | 956.8 | +5.1% |
+| WNS | +0.157 ns | **+1.040 ns** |  |
+| Fmax | 101.6 MHz | **111.6 MHz** |  |
+| Time per window | 8.96 us | **8.57 us** | **-4.4%** |
+
+The last two rows are what makes the comparison decide rather than trade. Bank
+issues more cycles, but Channel at *P* = 64 barely closes: a 64-way output
+multiplexer and 64 weight-memory ports leave 0.157 ns of slack against Bank's
+1.040 ns. Converted to time, the core that costs 29% fewer LUTs and 57% fewer
+flip-flops also finishes the window 4.4% sooner.
+
+### C. Cost per multiplier, and why it is not one number
+
+Flip-flops scale linearly in both cores. Channel costs 109.4 per multiplier from
+2 to 16 and 111.5 from 16 to 64; Bank costs 43.5, 43.9 and 45.3 across its three
+segments. Reporting 111 against 45, a 60% difference, is sound.
+
+LUTs are not linear for Channel:
+
+| Segment | Channel | Bank |
 |---|---|---|
-| Channel | 138.5 | 111.6 |
-| Bank | **89.8** | **43.8** |
-| Difference | **-35%** | **-61%** |
+| small budget | 97.7 / mult (2 to 16) | 98.9 / mult (8 to 16) |
+| mid | -- | 85.2 / mult (16 to 32) |
+| large budget | **134.4 / mult** (16 to 64) | 95.6 / mult (32 to 64) |
 
-The flip-flop gap is the larger of the two and is the one the architecture
-predicts. Every multiplier added on the *P* axis brings a 32-bit accumulator
-that must hold its value for the whole window; every multiplier added on the *T*
-axis brings a branch of an adder tree, and the accumulator behind it is shared.
-Ma et al. observe of their own design that logic is used mainly for the
-accumulators in the MAC units [2]; the measurement here is what that observation
-costs when the two axes are priced against each other.
+At a small budget the two axes cost about the same per multiplier. Bank stays
+near 93 throughout, while Channel rises by more than a third as the budget
+grows. The gap this paper reports is therefore not a fixed rate but something
+that opens with scale -- which is the regime a fixed multiplier budget puts a
+designer in. A single slope for Channel would misstate it in both directions,
+so none is quoted.
 
-Bank's linearity supports reading the slope as a rate rather than as two endpoints:
-fitted through the outer two points, the middle point is predicted to within
-0.2% on flip-flops and 4.0% on LUTs. Channel has only two DSP-free points, so
-its figure is a line through two measurements rather than a fit -- a limitation
-noted in Section V.
+Channel is measured at three points and Bank at four; the segment figures above
+are what those support.
 
 ### C. Where the output datapath cost sits
 

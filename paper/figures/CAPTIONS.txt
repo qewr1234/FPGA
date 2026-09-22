@@ -30,9 +30,13 @@ Fig. 6. Verification flow. Each stage lists the check applied to it. The cycle
 model is written independently of the RTL, so output correctness and processing
 latency are verified against separate references.
 
-Fig. 7. Post-route cost per added multiplier, for the configurations Vivado
-inferred no DSP blocks for. The slope is the resource each core spends to widen
-its parallelism by one multiplier.
+Fig. 3. Post-route cost against multipliers spent, for the configurations
+Vivado inferred no DSP blocks for. Flip-flops scale linearly in both cores, at
+111 per multiplier for Channel against 45 for Bank. LUTs do not: the two axes
+cost about the same per multiplier at a small budget, and Channel rises to 134
+per multiplier over its largest segment while Bank stays near 93. The quoted
+figures are end-to-end slopes over each core's measured range and are given for
+scale, not as constants.
 
 Fig. 8. Visual check on hardware. A contiguous 112 x 112 grid of windows from
 VGG11 features.3 is streamed through v3 with P = 8 on XC7Z020-CLG484 at 100 MHz

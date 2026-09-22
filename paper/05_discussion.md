@@ -3,12 +3,14 @@
 ### A. What the result says
 
 For a design whose multiplier budget is fixed and whose DSP blocks are spoken
-for, the two axes are not interchangeable. They buy the same throughput -- 5.1%
-apart at 64 multipliers -- and one of them costs 35% fewer LUTs and 61% fewer
-flip-flops per multiplier. The reason is structural rather than incidental, and
-it is visible in the utilisation: the output datapath is sized by the number of
-output channels in flight, so spreading multipliers across taps adds arithmetic
-without widening it.
+for, the two axes are not interchangeable, and the choice is not a trade. At 64
+multipliers the banking axis uses 29% fewer LUTs and 57% fewer flip-flops, and
+because it closes timing with almost seven times the slack it also finishes a
+window 4.4% sooner despite issuing 5.1% more cycles. The reason is structural
+rather than incidental, and it is visible in the utilisation: the output
+datapath is sized by the number of output channels in flight, so spreading
+multipliers across taps adds arithmetic without widening it -- and without
+lengthening the path that decides the clock.
 
 This runs against the conventional choice. Ma et al. reject the kernel and
 input-channel axes because kernels are small and their size varies between
@@ -43,10 +45,11 @@ measurement is of Channel at *P* = 8. The cycle figures for those configurations
 from the verified cycle model, which agreed exactly with hardware at the point
 where both exist, but that is an argument by extension.
 
-*Channel's slope rests on two points.* Only two DSP-free configurations of
-Channel were built, so 138.5 LUTs per multiplier is a line through two
-measurements. Bank's three points are consistent to within 4.0%, but the same
-check cannot be made on Channel.
+*The LUT curve is sampled coarsely.* Channel is measured at 2, 16 and 64
+multipliers and Bank at 8, 16, 32 and 64. That is enough to show that Channel's
+cost per multiplier rises with scale while Bank's does not, but not enough to
+say where the rise begins or what shape it takes. Flip-flops, which are linear
+in both cores across every measured segment, are on firmer ground.
 
 *The methodology is not new.* Comparing at a fixed multiplier count is the
 premise of [1] and [2], stated here so that the contribution is not mistaken for
@@ -63,13 +66,14 @@ network, and the numbers should be read as such.
 
 Given a fixed number of multipliers on a device with no DSP blocks to spare, a
 sparse convolution accelerator can spend them on output channels or on banks of
-nonzero taps. Measured after place and route on an XC7Z020, the second costs
-89.8 LUTs and 43.8 flip-flops per multiplier against 138.5 and 111.6 for the
-first, while the two are within 5.1% of each other in cycles per window at 64
-multipliers. The saving comes from sharing one accumulator behind an adder tree
-instead of replicating an accumulator per channel, and the utilisation data
-confirms the mechanism independently: distributed RAM tracks the number of
-output channels in flight, not the number of multipliers.
+nonzero taps. Measured after place and route on an XC7Z020 at a budget of 64,
+the second uses 29% fewer LUTs and 57% fewer flip-flops, and finishes a window
+4.4% sooner in wall-clock time even though it issues 5.1% more cycles, because
+it closes timing with 1.040 ns of slack against 0.157. The saving comes from
+sharing one accumulator behind an adder tree instead of replicating an
+accumulator per channel, and the utilisation data confirms the mechanism
+independently: distributed RAM tracks the number of output channels in flight,
+not the number of multipliers.
 
 The axis this favours is the one dense-accelerator analyses set aside, for
 reasons that do not carry over to a sparse tap stream. The cycle model behind
