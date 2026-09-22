@@ -10,6 +10,13 @@ rem Part 2 builds the two bitstreams for that pair: v3 at P=64 against v4 at
 rem P=16 T=4, both spending 64 multipliers. Until these run on the board, the
 rem comparison at 64 multipliers is synthesis only.
 rem
+rem RUN THIS FROM cmd.exe, or by double-clicking it. It is a Windows batch file:
+rem typed into the Vivado Tcl console it is handed to the OS shell with none of
+rem this script's environment, and Vivado ends up nested inside Vivado.
+rem
+rem Progress is appended to logs\progress.txt, so whether a run is still going
+rem does not have to be guessed from whether a console is sitting on `pause`.
+rem
 rem A job that fails does not stop the rest -- P=64 may not fit or close timing
 rem on this part, and that outcome is itself a result worth having.
 pushd "%~dp0"
@@ -27,22 +34,23 @@ set CNN_CLOCK_NS=10.0
 
 set CNN_CORES=overlapped_window_mac
 set CNN_T=1
-for %%P in (2 4 16 64) do call :job "ooc v3 P=%%P" scripts\synth_vivado.tcl CNN_P=%%P
+for %%P in (2 4 16 64) do call :job "ooc v3 P=%%P" scripts\synth_vivado.tcl CNN_P %%P
 
 set CNN_CORES=banked_window_mac
 set CNN_T=4
-call :job "ooc v4 P=16 T=4" scripts\synth_vivado.tcl CNN_P=16
+call :job "ooc v4 P=16 T=4" scripts\synth_vivado.tcl CNN_P 16
 
 echo.
 echo ================ Part 2: bitstreams for the 64-multiplier pair ================
 set CNN_CLOCK_MHZ=100
 set CNN_IMPL=2
 set CNN_T=1
-call :job "bitstream v3 P=64" scripts\build_zedboard.tcl CNN_P=64
+call :job "bitstream v3 P=64" scripts\build_zedboard.tcl CNN_P 64
 set CNN_IMPL=3
 set CNN_T=4
-call :job "bitstream v4 P=16 T=4" scripts\build_zedboard.tcl CNN_P=16
+call :job "bitstream v4 P=16 T=4" scripts\build_zedboard.tcl CNN_P 16
 
+echo %date% %time%  ALL JOBS FINISHED>> logs\progress.txt
 echo.
 echo ================ done ================
 if defined WM_FAILED (
@@ -65,19 +73,32 @@ popd
 exit /b 0
 
 :job
-rem %1 label, %2 tcl script, %3 NAME=VALUE for this job
-set "%~3"
+rem %1 label, %2 tcl script, %3 variable name, %4 value.
+rem Name and value are SEPARATE arguments on purpose. cmd.exe treats '=' as an
+rem argument delimiter, so passing "CNN_P=64" arrives as %3=CNN_P and %4=64 and
+rem a naive `set "%~3"` sets nothing at all -- which is how a whole overnight
+rem run came out at the default P.
+set "%~3=%~4"
+call set "WM_CHECK=%%%~3%%"
+if not "%WM_CHECK%"=="%~4" (
+  echo     ABORT: %~3 reads "%WM_CHECK%" but should be "%~4"
+  set "WM_FAILED=%WM_FAILED% [%~1: env not set]"
+  exit /b 0
+)
 if not exist logs mkdir logs
 set "WM_LOG=logs\%~1.log"
 set "WM_LOG=%WM_LOG: =_%"
 echo.
-echo ---- %~1  (log: %WM_LOG%)
+echo ---- %~1   %~3=%WM_CHECK%   (log: %WM_LOG%)
+echo %date% %time%  START %~1  %~3=%WM_CHECK%>> logs\progress.txt
 call vivado -mode batch -source %2 -log "%WM_LOG%" -nojournal
 if errorlevel 1 (
   echo     FAILED: %~1
+  echo %date% %time%  FAILED %~1>> logs\progress.txt
   set "WM_FAILED=%WM_FAILED% [%~1]"
 ) else (
   echo     ok: %~1
+  echo %date% %time%  ok %~1>> logs\progress.txt
 )
 exit /b 0
 
