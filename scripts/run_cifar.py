@@ -350,6 +350,11 @@ def main():
                          f'(default {BOARD.relative_to(ROOT)})')
     ap.add_argument('--selftest', action='store_true',
                     help='check the host arithmetic and exit')
+    ap.add_argument('--start-layer', type=int, default=1,
+                    help='resume at this layer, reading the activations the '
+                         'previous run saved. A layer takes minutes over JTAG; '
+                         'paying for five of them again to retry the sixth is '
+                         'how a flake and a bug stay indistinguishable.')
     args = ap.parse_args()
 
     if args.selftest:
@@ -370,11 +375,27 @@ def main():
     print(f'{"emulating the board" if args.emulate else "running on the board"}\n')
 
     args.out.mkdir(parents=True, exist_ok=True)
-    a0 = layers[0]['a_scale_in']
-    q = np.clip(np.rint(images/a0), 0, QMAX_A).astype(np.uint8)
+    if args.start_layer > 1:
+        src = args.out/f'act{args.start_layer}.npy'
+        if not src.exists():
+            raise SystemExit(f'{src} is not there, so layer {args.start_layer} '
+                             f'has no input to resume from. Run from layer 1.')
+        q = np.load(src)
+        if q.shape[0] != len(images):
+            raise SystemExit(f'{src} holds {q.shape[0]} images but this run asks '
+                             f'for {len(images)}. Resume with the same --images.')
+        print(f'resuming at {layers[args.start_layer-1]["name"]} from {src} '
+              f'{q.shape}\n')
+        layers = layers[args.start_layer-1:]
+    else:
+        a0 = layers[0]['a_scale_in']
+        q = np.clip(np.rint(images/a0), 0, QMAX_A).astype(np.uint8)
 
     runs, total_cycles = [], 0
-    for L in layers:
+    for li, L in enumerate(layers, args.start_layer):
+        # Saved before the layer runs, not after, so a failure leaves exactly
+        # what is needed to retry that layer and nothing else.
+        np.save(args.out/f'act{li}.npy', q)
         b, c, h, w = q.shape
         x = im2col(q)
         if x.shape[1] != L['K']:
@@ -396,7 +417,14 @@ def main():
             acc = gold
             info = dict(emulated=True, windows_done=x.shape[0], mismatches=0)
         else:
-            info = run_board(args.xsdb, args.build, args.out/f'{L["name"]}_xsdb.log')
+            try:
+                info = run_board(args.xsdb, args.build,
+                                 args.out/f'{L["name"]}_xsdb.log')
+            except SystemExit as e:
+                raise SystemExit(f'{e}\n\nRetry this layer alone with\n'
+                                 f'  --start-layer {li} --images {len(images)}\n'
+                                 f'which reads {args.out/f"act{li}.npy"} and skips '
+                                 f'the {li-1} layer(s) that already passed.')
             acc = board_results(x.shape[0], L['COUT'])
             total_cycles += info['cycles']
             print(f'          {info["cycles"]:>12,} cycles '
@@ -415,12 +443,17 @@ def main():
 
     pred = classify(q, manifest)
     acc_pct = float((pred == labels).mean())
+    if args.start_layer > 1:
+        print(f'\nNOTE: started at layer {args.start_layer}, so layers 1 to '
+              f'{args.start_layer-1} came from a saved file rather than from '
+              f'this run.')
     print(f'\nfinal feature map {q.shape}')
     print(f'accuracy on these {len(labels)} images: {acc_pct*100:.2f}%  '
           f'({int((pred == labels).sum())}/{len(labels)})')
     print(f'float model, full test set: {manifest["float_accuracy"]*100:.2f}%')
 
     report = dict(emulated=bool(args.emulate), images=len(labels), mode_seq=args.mode,
+                  start_layer=args.start_layer,
                   correct=int((pred == labels).sum()), accuracy=acc_pct,
                   float_accuracy=manifest['float_accuracy'],
                   predictions=pred.tolist(), labels=labels.tolist(), layers=runs)
