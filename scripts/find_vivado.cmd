@@ -20,12 +20,21 @@ if defined XILINX_VIVADO (
 )
 
 rem Layout the unified installer has used since 2024.x: <root>\<version>\Vivado.
+rem C:\Vivado is in this list because that is where an install actually was: the
+rem installer's default root can be changed, and only C:\Xilinx was searched, so
+rem the script reported Vivado missing on a machine that had it.
 for %%R in (
     "C:\Xilinx"
     "D:\Xilinx"
     "E:\Xilinx"
+    "C:\Vivado"
+    "D:\Vivado"
+    "E:\Vivado"
     "C:\tools\Xilinx"
+    "C:\AMD"
+    "D:\AMD"
     "%ProgramFiles%\Xilinx"
+    "%ProgramFiles%\AMD"
 ) do (
     if exist "%%~R\" (
         for /f "delims=" %%V in ('dir /b /ad /o-n "%%~R" 2^>nul') do (
@@ -62,5 +71,13 @@ for %%R in (
 
 :recheck
 where vivado >nul 2>nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    echo.
+    echo Searched PATH, XILINX_VIVADO and the usual roots without finding
+    echo settings64.bat. If Vivado is installed somewhere else, point at the
+    echo directory that CONTAINS settings64.bat and re-run:
+    echo     set XILINX_VIVADO=C:\Vivado\2026.1\Vivado
+    echo To find it:  where /r C:\ settings64.bat
+    exit /b 1
+)
 exit /b 0
