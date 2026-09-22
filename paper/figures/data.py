@@ -58,20 +58,20 @@ FAIR_PCT = 5.1                # v4 costs this much more time at the same budget
 # DSP = 0 rows form a set. The synthesis script now pins this with -max_dsp.
 UTIL = [
     # core  P   T  run       LUT  logic  lutram    ff  rb36 rb18 dsp
-    ("v1",  2,  1, "a",      744,   440,    304,   224,  32,  0,  2),
-    ("v1",  2,  1, "b",      742,   438,    304,   224,  32,  0,  2),
-    ("v2",  2,  1, "a",      874,   482,    392,   390,  32,  0,  2),
-    ("v2",  2,  1, "b",      876,   484,    392,   390,  32,  0,  2),
-    ("v3",  2,  1, "a",      989,   469,    520,   355,  32,  0,  2),
-    ("v3",  2,  1, "b",      991,   471,    520,   355,  32,  0,  2),
-    ("v3",  8,  1, "a",     1209,  1033,    176,   995,  33,  0,  0),
-    ("v3", 32,  1, "a",     4535,  3831,    704,  3674,  33,  0,  0),
-    ("v3", 32,  1, "b",     4535,  3831,    704,  3674,  33,  0,  0),
-    ("v3", 32,  1, "c",     4532,  3828,    704,  3674,  33,  0,  0),
+    #
+    # Only RUNTIME_GEOM = 0 runs. The feature was added to Channel and not to
+    # Bank, and it costs 140 LUTs at P = 2, so measuring the comparison on it
+    # would have priced a feature only one of the two cores carries. Re-measured
+    # 2026-09-22 after making it a compile-time switch, default off.
+    ("v3",  2,  1, "a",      992,   472,    520,   363,  32,  0,  0),
+    ("v3", 16,  1, "a",     2360,  2008,    352,  1895,  32,  0,  0),
+    ("v3", 64,  1, "a",     8812,  7404,   1408,  7248,  32, 64,  0),
+    # Bank was never changed, so these stand as measured.
     ("v4",  2,  4, "a",     1003,   915,     88,   605,  32,  4,  0),
     ("v4",  2,  4, "b",     1004,   916,     88,   605,  32,  4,  0),
     ("v4",  4,  4, "a",     1795,  1707,     88,   953,  32,  4,  0),
     ("v4",  8,  4, "a",     3159,  2983,    176,  1656,  32,  4,  0),
+    ("v4", 16,  4, "a",     6218,  5866,    352,  3107,  32, 68,  0),
 ]
 FIELDS = ("lut", "logic", "lutram", "ff", "rb36", "rb18", "dsp")
 
@@ -113,8 +113,10 @@ def per_multiplier(core, field):
 LUTRAM_PER_LANE = 22
 
 
-# The 32-multiplier comparison point, assembled from the rows above so there is
-# one copy of each number. Timing comes from the routed timing reports.
+# The equal-budget comparison point, assembled from the rows above so there is
+# one copy of each number. It reads at 64 multipliers, which is the pair the
+# paper discusses and the one both bitstreams were built for. Timing comes from
+# the routed timing reports.
 def _at(core, mult, field):
     for m, _P, v in points(core, field):
         if m == mult:
@@ -122,17 +124,24 @@ def _at(core, mult, field):
     raise KeyError(f"{core} has no {mult}-multiplier run")
 
 
-ISO32 = {
-    "v3": dict(label="v3  P=32, T=1", mult=32, parallel=32, cycles_per_window=1808.1,
-               wns_ns=0.970, fmax_mhz=110.74, us_per_window=16.33,
-               lut=_at("v3", 32, "lut"), logic_lut=_at("v3", 32, "logic"),
-               lutram=_at("v3", 32, "lutram"), ff=_at("v3", 32, "ff"),
-               bram36=33, bram18=0, dsp=0),
-    "v4": dict(label="v4  P=8, T=4", mult=32, parallel=8, cycles_per_window=1910.7,
-               wns_ns=0.961, fmax_mhz=110.63, us_per_window=17.27,
-               lut=_at("v4", 32, "lut"), logic_lut=_at("v4", 32, "logic"),
-               lutram=_at("v4", 32, "lutram"), ff=_at("v4", 32, "ff"),
-               bram36=32, bram18=4, dsp=0),
+def _fmax(wns_ns, period_ns=10.0):
+    """Fmax from worst negative slack on the constrained period."""
+    return 1000.0 / (period_ns - wns_ns)
+
+
+ISO64 = {
+    "v3": dict(label="Channel  P=64", mult=64, parallel=64, cycles_per_window=910.7,
+               wns_ns=0.157, fmax_mhz=_fmax(0.157),
+               us_per_window=910.7 / _fmax(0.157),
+               lut=_at("v3", 64, "lut"), logic_lut=_at("v3", 64, "logic"),
+               lutram=_at("v3", 64, "lutram"), ff=_at("v3", 64, "ff"),
+               bram36=32, bram18=64, dsp=0),
+    "v4": dict(label="Bank  P=16, T=4", mult=64, parallel=16, cycles_per_window=956.8,
+               wns_ns=1.040, fmax_mhz=_fmax(1.040),
+               us_per_window=956.8 / _fmax(1.040),
+               lut=_at("v4", 64, "lut"), logic_lut=_at("v4", 64, "logic"),
+               lutram=_at("v4", 64, "lutram"), ff=_at("v4", 64, "ff"),
+               bram36=32, bram18=68, dsp=0),
 }
 
 # ------------------------------------------------------ hardware measurement ---

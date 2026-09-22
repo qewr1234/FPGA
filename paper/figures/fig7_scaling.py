@@ -32,14 +32,16 @@ for ax, field, title in ((axes[0], "lut", "LUTs"), (axes[1], "ff", "Flip-flops")
         # Stacked in the empty lower-right corner and right-aligned, rather than
         # placed beside each line: naming the cores made the labels long enough
         # to run into the tick labels and into each other.
+        # Upper left, under the legend in the first panel: with points from 2 to
+        # 64 multipliers the curves sweep through the lower right.
         ax.annotate(f"{ps.NAME[core]}  {slope:.0f} / mult",
-                    (0.97, 0.20 if core == "v3" else 0.08),
-                    xycoords="axes fraction", ha="right", va="bottom",
+                    (0.04, 0.62 if core == "v3" else 0.53),
+                    xycoords="axes fraction", ha="left", va="bottom",
                     fontsize=6.2, color=style["color"])
     ax.set_xscale("log", base=2)
-    ax.set_xticks([8, 16, 32])
-    ax.set_xticklabels(["8", "16", "32"])
-    ax.set_xlim(6.5, 44)
+    ax.set_xticks([2, 4, 8, 16, 32, 64])
+    ax.set_xticklabels(["2", "4", "8", "16", "32", "64"])
+    ax.set_xlim(1.6, 80)
     ax.set_ylim(0, None)
     ax.set_title(title, fontsize=7, color=ps.INK, pad=3)
     ax.set_xlabel("Multipliers spent", fontsize=7)

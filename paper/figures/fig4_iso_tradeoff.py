@@ -16,7 +16,7 @@ import paperstyle as ps
 
 ps.use_paper_style()
 
-v3, v4 = data.ISO32["v3"], data.ISO32["v4"]
+v3, v4 = data.ISO64["v3"], data.ISO64["v4"]
 panels = [
     ("Time per window", "$\\mu$s", v3["us_per_window"], v4["us_per_window"], "{:.2f}"),
     ("LUT", "", v3["lut"], v4["lut"], "{:,.0f}"),
