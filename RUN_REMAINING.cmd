@@ -50,7 +50,7 @@ set CNN_IMPL=3
 set CNN_T=4
 call :job "bitstream v4 P=16 T=4" scripts\build_zedboard.tcl CNN_P 16
 
-echo %date% %time%  ALL JOBS FINISHED>> logs\progress.txt
+>> logs\progress.txt echo %date% %time%  ALL JOBS FINISHED
 echo.
 echo ================ done ================
 if defined WM_FAILED (
@@ -90,15 +90,15 @@ set "WM_LOG=logs\%~1.log"
 set "WM_LOG=%WM_LOG: =_%"
 echo.
 echo ---- %~1   %~3=%WM_CHECK%   (log: %WM_LOG%)
-echo %date% %time%  START %~1  %~3=%WM_CHECK%>> logs\progress.txt
+>> logs\progress.txt echo %date% %time%  START %~1  %~3=%WM_CHECK%
 call vivado -mode batch -source %2 -log "%WM_LOG%" -nojournal
 if errorlevel 1 (
   echo     FAILED: %~1
-  echo %date% %time%  FAILED %~1>> logs\progress.txt
+  >> logs\progress.txt echo %date% %time%  FAILED %~1
   set "WM_FAILED=%WM_FAILED% [%~1]"
 ) else (
   echo     ok: %~1
-  echo %date% %time%  ok %~1>> logs\progress.txt
+  >> logs\progress.txt echo %date% %time%  ok %~1
 )
 exit /b 0
 
