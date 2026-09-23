@@ -462,6 +462,23 @@ def main():
         report['cycles_per_image'] = total_cycles/len(labels)
         print(f'total {total_cycles:,} cycles for {len(labels)} images '
               f'= {total_cycles/len(labels):,.0f} cycles/image')
+        # Timed on the clock the PL was measured to be running at, not the one
+        # the design was constrained for. A board preset can hand the fabric a
+        # different frequency without anything else looking wrong: the cycle
+        # counts stay right and every time derived from them is off by the ratio.
+        clocks = {round(r['fclk_mhz'], 2) for r in runs if r.get('fclk_mhz')}
+        if len(clocks) == 1:
+            f = clocks.pop()
+            per = total_cycles/len(labels)/f/1000.0
+            report.update(fclk_mhz=f, ms_per_image=per, fps=1000.0/per)
+            print(f'PL clock {f:.2f} MHz -> {per:.2f} ms per image, '
+                  f'{1000.0/per:.1f} frames per second')
+        elif clocks:
+            print(f'layers ran at different PL clocks ({sorted(clocks)} MHz), '
+                  f'so there is no single time per image')
+        else:
+            print('the PL clock was not reported, so cycles cannot be turned '
+                  'into a time')
     (args.out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(f'\nwritten to {args.out/"report.json"}')
     if args.emulate:
