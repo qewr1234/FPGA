@@ -119,6 +119,10 @@ def main():
     ap.add_argument('--sparsity', type=float,
                     help='fraction of activations that are nonzero. Omit for '
                          'dense, which is a bound rather than an assumption.')
+    ap.add_argument('--report', type=Path,
+                    help='a run_cifar.py report.json. Uses the density it '
+                         'measured PER LAYER, which is the real thing rather '
+                         'than one number borrowed from another network.')
     ap.add_argument('--imbalance', type=float, default=1.157,
                     help='bank load imbalance at T=4, measured on the VGG probe')
     args = ap.parse_args()
@@ -136,7 +140,23 @@ def main():
                ('Channel', 64, 1),
                ('Bank', 8, 4), ('Bank', 16, 4), ('Bank', 16, 8), ('Bank', 32, 4)]
 
-    if args.sparsity:
+    # Per-layer density: measured if a report is given, one flat number if
+    # --sparsity is, and None for dense.
+    density = None
+    if args.report:
+        rep = json.loads(args.report.read_text())
+        by_name = {r['name']: r['nonzero_fraction'] for r in rep['layers']}
+        density = [by_name.get(n) for n, *_ in layers]
+        if any(d is None for d in density):
+            raise SystemExit(f'{args.report} does not cover every layer')
+        print(f'SPARSE, from {args.report} ({rep["images"]} images): per-layer '
+              f'density measured on this network,')
+        print(f'with a {args.imbalance:.3f}x bank imbalance carried over from the '
+              f'VGG probe.\n')
+        print('  ' + '  '.join(f'{n} {d:.1%}' for (n, *_), d in zip(layers, density)))
+        print()
+    elif args.sparsity:
+        density = [args.sparsity]*len(layers)
         print(f'SPARSE, assuming {args.sparsity:.1%} of activations nonzero and '
               f'a {args.imbalance:.3f}x bank imbalance.')
         print('That density is the VGG probe\'s, not CIFAR\'s: an assumption, '
@@ -152,10 +172,11 @@ def main():
     rows = []
     for name, p, t in configs:
         per_layer, total = [], 0
-        for _, n, k, c in layers:
-            if args.sparsity:
-                nnz = max(1, round(k*args.sparsity))
+        for i, (_, n, k, c) in enumerate(layers):
+            if density:
+                nnz = max(1, round(k*density[i]))
                 per = max(1, round(nnz/t*args.imbalance)) if t > 1 else nnz
+                per = min(per, dense_per_group(k, t))   # never worse than dense
             else:
                 per = dense_per_group(k, t)
             cyc = n*per_window(k, c, p, t, per)

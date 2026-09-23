@@ -127,6 +127,15 @@ set SLCR_UNLOCK   0xF8000008
 set SLCR_LOCKSTA  0xF800000C
 set PLL_STATUS    0xF800010C
 set FPGA0_CLK_CTRL 0xF8000170
+set ARM_PLL_CTRL  0xF8000100
+set DDR_PLL_CTRL  0xF8000104
+set IO_PLL_CTRL   0xF8000108
+# The crystal every Zynq-7000 board in this family uses. Overridable because the
+# whole fabric frequency is computed from it.
+set WM_PS_CLK_MHZ 33.333333
+if {[info exists ::env(WM_PS_CLK_MHZ)] && $::env(WM_PS_CLK_MHZ) ne ""} {
+    set WM_PS_CLK_MHZ $::env(WM_PS_CLK_MHZ)
+}
 set FPGA_RST_CTRL 0xF8000240
 set LVL_SHFTR_EN  0xF8000900
 set DDRC_CTRL     0xF8006000
@@ -601,6 +610,37 @@ puts ""
 # and the previous version refused on exactly that. Only two things actually
 # settle whether the board is usable, and both are measured directly: the core's
 # ID register reading what this bitstream puts there, and DDR holding a pattern.
+# What the PL is ACTUALLY clocked at, from the dividers rather than from what the
+# build asked for. CYCLES does not depend on the clock, but every microsecond and
+# every frame per second derived from CYCLES does, and a preset that hands the PL
+# a different frequency than the design was constrained for is invisible in the
+# results: the numbers are right and the times are wrong by that ratio.
+#
+#   FCLK0 = PS_CLK * PLL_FDIV / (DIVISOR0 * DIVISOR1)      UG585 ch. 25
+#
+# Returns 0 when it cannot be worked out, rather than a number that looks real.
+proc wm_fclk_mhz {} {
+    global FPGA0_CLK_CTRL ARM_PLL_CTRL DDR_PLL_CTRL IO_PLL_CTRL WM_PS_CLK_MHZ
+    if {[catch {wm_rd $FPGA0_CLK_CTRL} v]} { return 0 }
+    set d0  [expr {($v >> 8) & 0x3f}]
+    set d1  [expr {($v >> 20) & 0x3f}]
+    set src [expr {($v >> 4) & 0x3}]
+    if {$d0 == 0 || $d1 == 0} { return 0 }
+    # SRCSEL: 0x IO PLL, 10 ARM PLL, 11 DDR PLL.
+    set pll [expr {$src == 2 ? $ARM_PLL_CTRL : ($src == 3 ? $DDR_PLL_CTRL : $IO_PLL_CTRL)}]
+    if {[catch {wm_rd $pll} pv]} { return 0 }
+    set fdiv [expr {($pv >> 12) & 0x7f}]
+    if {$fdiv == 0} { return 0 }
+    return [expr {$WM_PS_CLK_MHZ * $fdiv / (double($d0) * $d1)}]
+}
+
+proc wm_pll_name {} {
+    global FPGA0_CLK_CTRL
+    if {[catch {wm_rd $FPGA0_CLK_CTRL} v]} { return "?" }
+    set src [expr {($v >> 4) & 0x3}]
+    return [expr {$src == 2 ? {ARM PLL} : ($src == 3 ? {DDR PLL} : {IO PLL})}]
+}
+
 proc wm_ps_notes {} {
     global PLL_STATUS FPGA0_CLK_CTRL FPGA_RST_CTRL LVL_SHFTR_EN DDRC_CTRL DEVCFG_INT_STS
     set notes {}
@@ -770,6 +810,13 @@ foreach n [wm_ps_notes] { puts "Note     : $n" }
 set impl [expr {$wm_core_id & 0xf}]
 puts "Core     : [expr {$impl == 3 ? {v4 banked_window_mac} : {v3 overlapped_window_mac}}]\
       K=$WM_K COUT=$WM_COUT windows=$WM_NWIN"
+set wm_fclk [wm_fclk_mhz]
+if {$wm_fclk > 0} {
+    puts [format "Clock    : PL runs at %.2f MHz (%s, FPGA0_CLK_CTRL [wm_hex [wm_rd $FPGA0_CLK_CTRL]])" \
+          $wm_fclk [wm_pll_name]]
+} else {
+    puts "Clock    : could not work out the PL frequency from the dividers"
+}
 puts ""
 
 # From here on the board is doing the work. Any failure prints every register
@@ -997,6 +1044,7 @@ puts $rfh "{"
 puts $rfh "  \"script_version\": \"$WM_SCRIPT_VERSION\","
 puts $rfh "  \"core_id\": \"[wm_hex $wm_core_id]\","
 puts $rfh "  \"K\": $WM_K, \"COUT\": $WM_COUT, \"mode_seq\": $WM_MODE_SEQ,"
+puts $rfh "  \"fclk_mhz\": [format %.4f $wm_fclk],"
 puts $rfh "  \"built_k\": $built_k, \"built_cout\": $built_cout,"
 puts $rfh "  \"runtime_geometry\": [expr {$has_runtime ? {true} : {false}}],"
 puts $rfh "  \"windows_expected\": $WM_NWIN, \"windows_done\": $windone,"

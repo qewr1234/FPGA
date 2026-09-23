@@ -68,8 +68,15 @@ proc ps_read {addr} {
     if {$k eq "0xF800000C"} { return $SLCR_LOCKED }
     if {$k eq "0xF8000900"} { return $LVLSHFT }
     if {[ps_healthy]} {
-        array set v {0xF800000C 0 0xF800010C 7 0xF8000170 0x00100A00 0xF8000240 0
-                     0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF800700C 0x4 0xF8007014 0x4000}
+        # FPGA0_CLK_CTRL 0x00100A00 is divisors 10 and 1; IO_PLL_CTRL FDIV 30 on a
+        # 33.333 MHz crystal is 1000 MHz, so FCLK0 is 100 MHz. FAULT=slowclock is
+        # the board this was written for, which came up with divisors 8 and 4 and
+        # therefore ran the PL at a third of what the design was constrained for.
+        set clkctrl [expr {$::FAULT eq "slowclock" ? 0x00400800 : 0x00100A00}]
+        array set v [list 0xF800000C 0 0xF800010C 7 0xF8000170 $clkctrl 0xF8000240 0 \
+                     0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF800700C 0x4 \
+                     0xF8007014 0x4000 0xF8000100 0x0001A000 0xF8000104 0x00020000 \
+                     0xF8000108 0x0001E000]
     } else {
         array set v {0xF800000C 1 0xF800010C 0 0xF8000170 0 0xF8000240 0xF
                      0xF8000900 0 0xF8006000 0 0xF8006054 0 0xF800700C 0 0xF8007014 0}
