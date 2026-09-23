@@ -186,7 +186,13 @@ proc dma_run_mm2s {bytes} {
     } elseif {$ARMED} {
         # produce the results the receive channel is waiting for
         if {$PENDING_RX == 0} { error "HARNESS: send started with no receive armed" }
-        set src [expr {$D(s2mm_da) + 0x100000}]   ;# gold sits 1 MB above results
+        # The four buffers are evenly spaced, and the run script picks that
+        # spacing from the largest one, so it is 1 MB only for the smallest
+        # runs. Derive it: config, input, result, gold, in that order, so the
+        # gap is half the distance from the config address to the result one.
+        global CFG_ADDR
+        set span [expr {($D(s2mm_da) - $CFG_ADDR) / 2}]
+        set src [expr {$D(s2mm_da) + $span}]
         set dst $D(s2mm_da)
         for {set i 0} {$i < $PENDING_RX} {incr i} {
             set MEM([expr {$dst + $i * 4}]) [memrd [expr {$src + $i * 4}]]
@@ -243,7 +249,11 @@ proc mwr {args} {
                  elseif {$val & 1} { set D(mm2s_cr) $val; set D(mm2s_sr) 2 } }
             48 { if {$val & 4} { set D(s2mm_cr) 0; set D(s2mm_sr) 1 } \
                  elseif {$val & 1} { set D(s2mm_cr) $val; set D(s2mm_sr) 2 } }
-            24 { set D(mm2s_sa) $val }
+            24 { set D(mm2s_sa) $val
+                 # The configuration is the first thing sent, and it is sent
+                 # from the base of the four buffers.
+                 global CFG_ADDR CFG_MODE
+                 if {$CFG_MODE || ![info exists CFG_ADDR]} { set CFG_ADDR $val } }
             40 { set D(mm2s_sr) [expr {$D(mm2s_sr) & ~2}]; dma_run_mm2s $val }
             72 { set D(s2mm_da) $val }
             88 { set D(s2mm_sr) [expr {$D(s2mm_sr) & ~2}]

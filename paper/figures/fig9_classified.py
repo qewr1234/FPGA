@@ -104,14 +104,22 @@ def main():
                 s.set_linewidth(0.9)
 
     correct, n = int(ok.sum()), len(ok)
-    outputs = rep.get('outputs') or sum(r['windows']*r['COUT'] for r in rep['layers'])
+    # Both totals come from the per-layer records, which is where the run script
+    # puts them. Reading a top-level "mismatches" that a report does not carry
+    # is how the first version of this figure failed.
+    try:
+        outputs = sum(r['windows']*r['COUT'] for r in rep['layers'])
+        mismatches = sum(r['mismatches'] for r in rep['layers'])
+    except (KeyError, TypeError) as e:
+        raise SystemExit(f'{args.report} does not have the per-layer fields this '
+                         f'figure counts from ({e}). It should be a report.json '
+                         f'written by scripts/run_cifar.py.')
     # Two lines on purpose: one of these at 7.5 pt overruns a 7.16 in page, and
     # a title that runs off the column is worse than one that takes two lines.
     fig.suptitle(
         f'Every label produced by the accelerator\n'
         f'{correct} of {n} test images correct ({correct/n:.1%});  '
-        f'{rep["mismatches"]} of {outputs:,} outputs differed from the '
-        f'integer model',
+        f'{mismatches} of {outputs:,} outputs differed from the integer model',
         fontsize=7.5, color=INK2, linespacing=1.5)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     # tight_layout leaves a row gap sized for axes that have titles; these have
