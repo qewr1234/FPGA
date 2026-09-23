@@ -474,6 +474,10 @@ def main():
 
     report = dict(emulated=bool(args.emulate), images=len(labels), mode_seq=args.mode,
                   start_layer=args.start_layer, fclk_requested=args.fclk,
+                  # Totals as well as the per-layer records they come from, so a
+                  # reader of this file does not have to know to sum them.
+                  outputs=sum(r['windows']*r['COUT'] for r in runs),
+                  mismatches=sum(r['mismatches'] for r in runs),
                   correct=int((pred == labels).sum()), accuracy=acc_pct,
                   float_accuracy=manifest['float_accuracy'],
                   predictions=pred.tolist(), labels=labels.tolist(), layers=runs)
