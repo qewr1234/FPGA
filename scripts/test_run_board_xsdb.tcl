@@ -41,7 +41,37 @@ set cases {
     {PL clock, preset gave 31}  {0 slowclock   "PL runs at 31.25 MHz"}
 }
 
+# Setting the PL clock is its own group: the cases above must keep running with
+# WM_FCLK_MHZ unset, which is what every board run did before this existed.
+set clock_cases {
+    {clock left alone}          {none      0    "PL runs at 100.00 MHz"}
+    {clock raised from 31}      {slowclock 100  "set to 100.00 MHz, was 31.25"}
+    {clock lowered to 50}       {none      50   "set to 50.00 MHz, was 100.00"}
+    {clock already right}       {none      100  "already 100.00 MHz"}
+    {clock the PLL cannot make} {none      133  "cannot clock the PL at 133 MHz"}
+    {clock write does not take} {clkstuck  100  "The SLCR write did not take"}
+}
+
 set failures 0
+
+proc clock_group {} {
+    global clock_cases inner repo failures
+    foreach {name spec} $clock_cases {
+        lassign $spec fault mhz want
+        set ::env(WM_FCLK_MHZ) $mhz
+        file delete -force [file join $repo build fake_xsdb_build]
+        set rc [catch {exec [info nameofexecutable] $inner $repo 0 $fault 2>@1} out]
+        if {[string first $want $out] >= 0} {
+            puts [format "  ok    %-26s %s" $name "-> $want"]
+        } else {
+            puts [format "  FAIL  %-26s expected '%s'" $name $want]
+            puts "        got: [string range $out end-500 end]"
+            incr failures
+        }
+    }
+    unset ::env(WM_FCLK_MHZ)
+}
+
 foreach {name spec} $cases {
     lassign $spec prefix fault want
     file delete -force [file join $repo build fake_xsdb_build]
@@ -95,6 +125,8 @@ foreach {cname ck ccout cn} {conv1 27 32 8192 conv4 576 64 2048 conv6 1152 128 5
 }
 unset ::env(WM_BOARD_DIR)
 file delete -force $boarddir
+
+clock_group
 
 # The blob-size guard needs a short file, so it gets its own case.
 set gold [file join $repo build board gold.bin]

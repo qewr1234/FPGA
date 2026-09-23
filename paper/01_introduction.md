@@ -1,98 +1,114 @@
-# Where to Spend the Multipliers in a Sparse CNN Accelerator
+# Running a Whole CNN on a Small FPGA Without DSP Blocks
 
 *(working title; alternatives at the end of this file)*
 
 ## I. Introduction
 
-On a small FPGA the multiplier is the resource that runs out first. A Zynq-7020
-offers 220 DSP slices, and a design that has already spent them on other work
-must build its multipliers out of logic, where each one costs lookup tables and
-flip-flops that the rest of the system also wants. The question such a design
-faces is therefore not how many multiply-accumulate units it can afford, but
-what to do with the ones it can: a convolution has several independent axes
-along which work can be issued in parallel, and a fixed budget of multipliers
-can be spread along any of them.
+A Zynq-7020 has 220 DSP slices, and a design that has already spent them has to
+build its multipliers out of lookup tables and flip-flops. That is the situation
+this work starts from, and it is not unusual: on a small part the multiplier is
+the resource that runs out first, and the convolution is not the only thing
+competing for it. The question is then what a convolutional network costs when
+every multiplier is made of fabric, and whether a useful one can be run at all.
 
-For dense convolution this question has been studied carefully. Ma et al. [1],
-[2] enumerate the four loops of a convolution -- the kernel window, the input
-channels, the output feature map and the output channels -- and analyse what
-unrolling each one costs in data reuse, partial-sum storage and memory traffic.
-Their analysis is explicit that the choice is a trade-off at a fixed number of
+Running *a layer* is a smaller problem than running *a network*. A network is a
+sequence of convolutions whose shapes differ -- in this work from 27 taps and 32
+output channels to 1152 and 128 -- and an accelerator whose geometry is fixed at
+synthesis serves exactly one of them. The usual answers are to rebuild per
+layer, which is not an answer on hardware, or to size everything for the largest
+layer and waste the rest. We take a third: the memories are built for the widest
+layer, and two registers say how much of them the layer being run actually uses,
+so one bitstream covers the whole network.
+
+Within a layer, the design question is where to put a fixed number of
+multipliers. A convolution has several independent axes along which work can be
+issued in parallel, and for dense convolution the trade-off has been studied
+carefully. Ma et al. [1], [2] enumerate the four loops -- the kernel window, the
+input channels, the output feature map and the output channels -- and analyse
+what unrolling each costs in data reuse, partial-sum storage and memory traffic.
+Their analysis is explicit that the choice is made at a fixed number of
 multipliers: in one configuration they hold 3136 MAC units constant, note that
-two assignments of those units give the same cycle count, and choose the one
-that needs less bus width and logic. They also reject unrolling the kernel loop,
-for two reasons that are specific to dense convolution. Kernel windows are small
--- rarely larger than 11x11 -- so that axis cannot supply much parallelism, and
-the kernel size varies from layer to layer, which leaves processing elements
-idle on the layers that do not match. Their accelerator therefore unrolls the
-feature-map and output-channel loops, and this choice has been widely followed.
+two assignments give the same cycle count, and take the one that needs less bus
+width and logic. They reject unrolling the kernel loop for two reasons specific
+to dense convolution: kernel windows are small, rarely larger than 11x11, so
+that axis cannot supply much parallelism, and the kernel size varies from layer
+to layer, leaving processing elements idle on the layers that do not match.
 
 Neither reason survives the move to a sparse accelerator. When zero activations
-are skipped, the unit of work is no longer a fixed kernel window but a
-variable-length stream of nonzero taps, and the tap index spans the whole
-receptive field: 576 positions for the layer studied here, not nine. An
-accelerator can spread its multipliers across that stream by assigning tap *t*
-statically to bank *t* mod *T*, reading one tap from each bank every cycle. This
-is a different structure from a dense unroll of the same loops. The banks run in
-lockstep, so a window costs as long as its fullest bank rather than the total
-number of nonzero taps, and the cost of that imbalance depends on the data
-rather than on the architecture. Existing work that banks a sparse accelerator
-removes the imbalance instead of paying it: bank-balanced sparsity [3] and its
-fine-grained successors [4] prune the weights into a pattern the hardware
-prefers, which is available for weight sparsity and not for activation sparsity,
-where the nonzero pattern is not known until the image arrives.
+are skipped, the unit of work is not a fixed kernel window but a variable-length
+stream of nonzero taps, and the tap index spans the whole receptive field --
+1152 positions in the last layer here, not nine. Multipliers can be spread
+across that stream by assigning tap *t* statically to bank *t* mod *T* and
+reading one tap from each bank every cycle. The banks run in lockstep, so a
+window costs as long as its fullest bank rather than the total number of nonzero
+taps, and that imbalance is a property of the data. Existing work that banks a
+sparse accelerator removes the imbalance rather than paying it: bank-balanced
+sparsity [3] and its fine-grained successors [4] prune the weights into a
+pattern the hardware prefers. That is available for weight sparsity and not for
+activation sparsity, where the nonzero pattern is not known until the image
+arrives.
 
-What has not been reported, as far as we can determine, is what this axis
-actually costs in fabric. The dense analyses measure memory accesses and DSP
-utilisation; the sparse accelerators that use banking report whole-design
-resource totals for one configuration. Neither answers the question a designer
-with a fixed multiplier budget has to answer: per multiplier added, how much
-logic does each axis consume, and what does each buy in throughput?
+This paper builds the accelerator, quantizes a six-layer CIFAR-10 network to
+7-bit unsigned activations and INT8 weights, and runs every convolution of it on
+one bitstream on an XC7Z020. The accelerator computes one thing -- bias plus a
+sum of products over a window, then ReLU -- so a layer is an im2col on the host
+and one pass of the array; requantization, pooling and the classifier are host
+arithmetic. Across 128 test images the hardware reproduced the integer model's
+14,680,064 outputs without a single differing value.
 
-This paper measures that. We implement four window-level MAC cores in
-SystemVerilog for one convolution layer of a quantized VGG11, compare the
-output-channel axis against the sparse tap-banking axis at an equal number of
-multipliers, and report post-route resources on an XC7Z020 with DSP inference
-disabled so that every point is built from the same fabric. The comparison is
-validated on hardware rather than in simulation alone.
+The measurement that reframes the design question is what the network then costs
+in cycles. The accelerator accepts one activation per cycle, so a window cannot
+cost less than its tap count however wide the issue engine is. On this network
+every layer sits on that floor: 289 cycles per window where the floor is 288,
+1153 where it is 1152. The whole network costs 662,051 cycles per image against
+a floor of 654,336, which is 1.18% above a bound written down before the run
+from a cycle model that reproduces seven measured configurations to within 1.3
+cycles per window. At 64 multipliers the array is doing 91% of the arithmetic it
+could; the eight-fold larger budget that would be needed to move the floor buys
+5%. For a network of this size on a part of this size, the limit is the input
+port, not the multipliers -- and knowing that is worth more than another
+doubling of the array.
 
 Our contributions are:
 
-1. **A post-route comparison at an equal budget.** At 64 multipliers the
-   tap-banking core uses 29% fewer LUTs and 57% fewer flip-flops than the
-   output-channel core. The mechanism is visible in the structure: the
+1. **A whole quantized CNN on one bitstream, bit-exact.** Six convolutions of
+   differing shape run through memories built for the widest, with the layer's
+   geometry set at run time over two registers. 14,680,064 outputs across 128
+   images, 0 mismatches against an integer reference, with the design's own
+   stall counters reading zero so the cycle counts describe the array and not
+   the memory path feeding it.
+
+2. **The network is bound by its input port, not by its multipliers.** Every
+   layer's measured cost per window sits on the one-activation-per-cycle floor,
+   and the whole network lands 1.18% above a floor predicted before the run.
+   The array reaches 91% of the arithmetic 64 multipliers can do at the clock
+   measured, and the next doubling of multipliers is worth 5%.
+
+3. **A post-route comparison of two axes at an equal budget.** At 64
+   multipliers the tap-banking core uses 29% fewer LUTs and 57% fewer flip-flops
+   than the output-channel core. The mechanism is visible in the structure: the
    output-channel axis replicates a 32-bit accumulator per channel, while the
    banking axis sums its products in an adder tree and shares one accumulator.
+   It is also faster in time, not only smaller -- 5.1% more cycles per window,
+   but 1.040 ns of slack against 0.157, so 4.4% less time per window.
 
-2. **It is also faster in time, not only smaller.** The banking core issues 5.1%
-   more cycles per window, but closes timing with 1.040 ns of slack against
-   0.157 ns, so at 111.6 MHz against 101.6 it finishes a window in 8.57 us
-   against 8.96 -- 4.4% sooner. The output-channel core at this budget is
-   limited by a 64-way output multiplexer and 64 weight-memory ports.
+4. **The cost per multiplier is not constant, and the axes diverge with
+   scale.** Flip-flops scale linearly, at 111 per multiplier against 45. LUTs do
+   not: at a small budget the two axes cost about the same (98 against 99), and
+   by the largest budget measured the output-channel axis has risen to 134 while
+   banking stays near 93.
 
-3. **The cost per multiplier is not a constant, and diverges with scale.**
-   Flip-flops scale linearly, at 111 per multiplier against 45. LUTs do not:
-   at a small budget the two axes cost about the same per multiplier (98
-   against 99), and by the largest budget measured the output-channel axis has
-   risen to 134 while banking stays near 93. The gap is a property of scale, not
-   a fixed rate.
+5. **A measurement of what static bank assignment costs.** Assigning tap *t* to
+   bank *t* mod *T* performs no load balancing. On the evaluation layer the
+   penalty is 1.16x at *T*=4 and 1.35x at *T*=8, and it is contained in the
+   cycle counts reported rather than left as an unmodelled overhead.
 
-4. **A measurement of what static assignment costs.** Assigning tap *t* to bank
-   *t* mod *T* performs no load balancing. On this layer the penalty is 1.16x at
-   *T*=4 and 1.35x at *T*=8, and it is already contained in the cycle counts
-   reported above rather than being an unmodelled overhead.
-
-5. **Hardware validation of the cycle model.** On an XC7Z020 at 100 MHz the
-   measured cycle count equals the simulated one exactly, with the design's own
-   stall counters reading zero, so the figure describes the core and not the
-   memory path feeding it. All 1,605,632 outputs of a complete feature map match
-   an integer reference.
-
-We do not claim the equal-multiplier comparison itself as a contribution; as
-noted above, working at a fixed multiplier count is the premise of [1] and [2].
-What is new here is that the axis those works reject, for reasons that do not
-hold under sparsity, is cheaper per multiplier than the axis they adopt -- and
-by how much.
+We do not claim the equal-multiplier comparison itself as a contribution;
+working at a fixed multiplier count is the premise of [1] and [2]. What is new
+is that the axis those works reject, for reasons that do not hold under
+sparsity, is cheaper per multiplier than the axis they adopt -- by how much --
+and that on a network of this size the choice stops mattering before the
+multipliers do.
 
 ---
 
@@ -117,7 +133,7 @@ by how much.
 
 ## Title alternatives
 
-- Where to Spend the Multipliers in a Sparse CNN Accelerator
-- Tap Banking versus Output-Channel Parallelism at an Equal Multiplier Budget
-- The Cheaper Axis: Sparse Tap Banking on a Small FPGA
-- Revisiting the Rejected Axis in Sparse CNN Acceleration
+- Running a Whole CNN on a Small FPGA Without DSP Blocks
+- One Bitstream, Six Layers: a Sparse CNN Accelerator Bound by Its Input Port
+- Where the Multipliers Stop Mattering: a Sparse CNN Accelerator on a Zynq-7020
+- Bit-Exact CIFAR-10 Inference on Fabric Multipliers

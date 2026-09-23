@@ -46,3 +46,15 @@ the reference, because the response is near zero almost everywhere with a thin
 tail of large values. The bright ring at the border is the zero-padding boundary
 of the layer, present identically in both, not a plotting artefact. All
 1,605,632 outputs matched, so the difference map is uniformly zero.
+
+Fig. 9. What the accelerator decided. Forty CIFAR-10 test images under the
+labels the FPGA produced, with misses outlined and carrying both names -- what
+it said and what it was. All 38.6 million multiply-accumulates per image are
+done in fabric by the banked core with P = 16 and T = 4 on XC7Z020-CLG484,
+running the six convolutions of the network through one bitstream whose
+geometry is set per layer at run time; the host does the im2col, the
+requantization between layers, the pooling and the final linear classifier.
+Across the 128 images of the run, all 14,680,064 accumulator outputs matched
+the integer model exactly, so these labels are the quantized network's own and
+not an approximation of them: 110 correct, against 86.26% for the trained
+network in floating point on the full test set.

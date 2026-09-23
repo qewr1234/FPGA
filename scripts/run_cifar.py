@@ -144,7 +144,7 @@ def write_board_files(cfg_src, x, gold, mode_seq):
     return layout
 
 
-def run_board(xsdb, build, log_path):
+def run_board(xsdb, build, log_path, fclk=None):
     """One xsdb session: load the bitstream, run this layer, read the results.
 
     The run script is sourced rather than rewritten. It is the only part of this
@@ -153,6 +153,8 @@ def run_board(xsdb, build, log_path):
     """
     wrapper = BOARD/'_run_layer.tcl'
     lines = [f'set ::env(WM_BOARD_DIR) {{{BOARD.resolve().as_posix()}}}']
+    if fclk:
+        lines.append(f'set ::env(WM_FCLK_MHZ) {fclk}')
     if build:
         lines.append(f'set ::env(WM_BUILD) {{{Path(build).resolve().as_posix()}}}')
     lines += [f'set _rc [catch {{source {(ROOT/"scripts"/"run_board_xsdb.tcl").as_posix()}}} _err]',
@@ -172,8 +174,20 @@ def run_board(xsdb, build, log_path):
         why = [l for l in proc.stdout.splitlines()
                if l.startswith('ERROR:') or ' failed' in l or 'no targets' in l]
         head = why[-1].strip() if why else f'exit {proc.returncode}, no run.json'
+        hint = ''
+        if 'no targets' in head:
+            # Not a fault in anything this repository controls. A session that
+            # died mid-run leaves hw_server holding the cable, and the next xsdb
+            # attaches to that wedged server instead of starting its own.
+            hint = ('\nThe debugger sees no JTAG target at all. Usually one of:\n'
+                    '  taskkill /F /IM hw_server.exe   (a previous run left one '
+                    'holding the cable)\n'
+                    '  power-cycle the board, and check the USB is in the PROG '
+                    'port\n'
+                    '  close any Vivado Hardware Manager, which takes the cable '
+                    'exclusively\n')
         raise SystemExit(f'the board run failed: {head}\n'
-                         f'Full output: {log_path}\n'
+                         f'Full output: {log_path}{hint}\n'
                          + '\n'.join(proc.stdout.splitlines()[-20:]))
     info = json.loads(run_json.read_text())
     info['wall_seconds'] = round(time.time()-started, 1)
@@ -344,6 +358,11 @@ def main():
                     help='no board: compute what it would compute and carry that on')
     ap.add_argument('--mode', type=int, default=1, choices=[0, 1],
                     help='0 dense, 1 sparse (skip zero activations). Same results.')
+    ap.add_argument('--fclk', type=float,
+                    help='clock the PL at this many MHz before each layer, '
+                         'instead of taking whatever the board preset left. Only '
+                         'ask for a frequency the design was routed to meet: '
+                         'above that it produces wrong numbers, not slow ones.')
     ap.add_argument('--out', type=Path, default=ROOT/'build'/'cifar_run')
     ap.add_argument('--board-dir', type=Path,
                     help='where this run stages config/input/gold for the board '
@@ -419,12 +438,13 @@ def main():
         else:
             try:
                 info = run_board(args.xsdb, args.build,
-                                 args.out/f'{L["name"]}_xsdb.log')
+                                 args.out/f'{L["name"]}_xsdb.log', args.fclk)
             except SystemExit as e:
-                raise SystemExit(f'{e}\n\nRetry this layer alone with\n'
-                                 f'  --start-layer {li} --images {len(images)}\n'
-                                 f'which reads {args.out/f"act{li}.npy"} and skips '
-                                 f'the {li-1} layer(s) that already passed.')
+                again = (f'  --start-layer {li} --images {len(images)}\n'
+                         f'which reads {args.out}/act{li}.npy'
+                         + (f' and skips the {li-1} layer(s) that already '
+                            f'passed.' if li > 1 else '.'))
+                raise SystemExit(f'{e}\n\nRetry this layer with\n{again}')
             acc = board_results(x.shape[0], L['COUT'])
             total_cycles += info['cycles']
             print(f'          {info["cycles"]:>12,} cycles '
@@ -453,7 +473,7 @@ def main():
     print(f'float model, full test set: {manifest["float_accuracy"]*100:.2f}%')
 
     report = dict(emulated=bool(args.emulate), images=len(labels), mode_seq=args.mode,
-                  start_layer=args.start_layer,
+                  start_layer=args.start_layer, fclk_requested=args.fclk,
                   correct=int((pred == labels).sum()), accuracy=acc_pct,
                   float_accuracy=manifest['float_accuracy'],
                   predictions=pred.tolist(), labels=labels.tolist(), layers=runs)

@@ -136,6 +136,15 @@ set WM_PS_CLK_MHZ 33.333333
 if {[info exists ::env(WM_PS_CLK_MHZ)] && $::env(WM_PS_CLK_MHZ) ne ""} {
     set WM_PS_CLK_MHZ $::env(WM_PS_CLK_MHZ)
 }
+# What to clock the PL at. 0 leaves whatever the boot left, which is what every
+# run did before this existed. A board preset can hand the fabric a frequency
+# the design was not constrained for -- this one gave 50 MHz to a design routed
+# and signed off at 100 -- and then the results are right and every time derived
+# from them is wrong by the ratio.
+set WM_FCLK_MHZ 0
+if {[info exists ::env(WM_FCLK_MHZ)] && $::env(WM_FCLK_MHZ) ne ""} {
+    set WM_FCLK_MHZ $::env(WM_FCLK_MHZ)
+}
 set FPGA_RST_CTRL 0xF8000240
 set LVL_SHFTR_EN  0xF8000900
 set DDRC_CTRL     0xF8006000
@@ -641,6 +650,66 @@ proc wm_pll_name {} {
     return [expr {$src == 2 ? {ARM PLL} : ($src == 3 ? {DDR PLL} : {IO PLL})}]
 }
 
+# The divider pair that gets closest to `target` off a `pll` MHz PLL. Both
+# fields are six bits. Where two pairs are equally close the smaller DIVISOR1
+# wins, which is what Xilinx's own tooling picks.
+proc wm_pick_div {pll target} {
+    set best {} ; set besterr 1e9
+    for {set d1 1} {$d1 <= 63} {incr d1} {
+        for {set d0 1} {$d0 <= 63} {incr d0} {
+            set e [expr {abs($pll / (double($d0) * $d1) - $target)}]
+            if {$e < $besterr - 1e-9} { set besterr $e ; set best [list $d0 $d1] }
+        }
+    }
+    return [list $best $besterr]
+}
+
+# Clock the PL at WM_FCLK_MHZ. Returns a description, or "" when asked to leave
+# the clock alone. Errors rather than continuing on a frequency it did not get:
+# a run at the wrong clock is not wrong, it is just mistimed, which is worse.
+proc wm_set_fclk {} {
+    global FPGA0_CLK_CTRL FPGA_RST_CTRL WM_FCLK_MHZ WM_PS_CLK_MHZ
+    global ARM_PLL_CTRL DDR_PLL_CTRL IO_PLL_CTRL
+    if {$WM_FCLK_MHZ <= 0} { return "" }
+    set now [wm_fclk_mhz]
+    if {$now > 0 && abs($now - $WM_FCLK_MHZ) < 0.01} {
+        return [format "already %.2f MHz" $now]
+    }
+    set v [wm_rd $FPGA0_CLK_CTRL]
+    set src [expr {($v >> 4) & 0x3}]
+    set pllreg [expr {$src == 2 ? $ARM_PLL_CTRL : ($src == 3 ? $DDR_PLL_CTRL : $IO_PLL_CTRL)}]
+    set fdiv [expr {([wm_rd $pllreg] >> 12) & 0x7f}]
+    if {$fdiv == 0} {
+        error "the PLL feeding FCLK0 has a zero feedback divider, so its frequency\
+               cannot be worked out and neither can the dividers to set."
+    }
+    set pll [expr {$WM_PS_CLK_MHZ * $fdiv}]
+    lassign [wm_pick_div $pll $WM_FCLK_MHZ] pair err
+    lassign $pair d0 d1
+    if {$err > 0.01} {
+        error "cannot clock the PL at $WM_FCLK_MHZ MHz from a [format %.2f $pll] MHz\
+               PLL: the closest two dividers give\
+               [format %.3f [expr {$pll / (double($d0) * $d1)}]] MHz."
+    }
+    # Keep SRCSEL and every other field; replace only the two divider fields.
+    set new [expr {($v & ~((0x3f << 8) | (0x3f << 20))) | ($d0 << 8) | ($d1 << 20)}]
+    wm_wr $FPGA0_CLK_CTRL $new
+    # Logic whose clock changed underneath it is in whatever state the glitch
+    # left, so reset the PL on the new clock before anything reads it.
+    set r [wm_rd $FPGA_RST_CTRL]
+    wm_wr $FPGA_RST_CTRL [expr {$r | 1}]
+    after 10
+    wm_wr $FPGA_RST_CTRL [expr {$r & ~1}]
+    after 10
+    set got [wm_fclk_mhz]
+    if {$got <= 0 || abs($got - $WM_FCLK_MHZ) > 0.01} {
+        error "asked for $WM_FCLK_MHZ MHz with dividers $d0 x $d1 and the PL reads\
+               [format %.2f $got] MHz. The SLCR write did not take."
+    }
+    return [format "set to %.2f MHz, was %.2f (dividers %d x %d off a %.1f MHz PLL)" \
+            $got $now $d0 $d1 $pll]
+}
+
 proc wm_ps_notes {} {
     global PLL_STATUS FPGA0_CLK_CTRL FPGA_RST_CTRL LVL_SHFTR_EN DDRC_CTRL DEVCFG_INT_STS
     set notes {}
@@ -784,6 +853,11 @@ catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
 
 set why [wm_connect_pl]
 if {$why ne ""} { error $why }
+
+# Before anything reads the core: the PL is configured and clocked, so this is
+# the moment to put it on the frequency the run is meant to be timed at.
+set wm_clk_change [wm_set_fclk]
+if {$wm_clk_change ne ""} { puts "Clock    : $wm_clk_change" }
 
 set wm_access_via [wm_access_for_id]
 if {$wm_access_via eq ""} {
