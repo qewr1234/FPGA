@@ -241,3 +241,35 @@ def cifar_layers():
 def cifar_feed_floor():
     """Cycles per image if every window cost exactly K -- the input port's limit."""
     return sum(w * k for _n, w, k, _c, _d, _cy, _cw in CIFAR_LAYERS)
+
+# ------------------------------------------- the whole system, on the board ---
+# (top) row of the hierarchical utilisation report for the bitstream the CIFAR
+# network ran on: build/zed_v4_p16_t4_1790095039/reports/routed_utilization.rpt.
+#
+# This is the WHOLE design -- PS7, AXI DMA, the smartconnect to the HP port, the
+# interconnect and the core -- not the core alone, which is what Table I's
+# out-of-context numbers are. The two are not comparable and are not compared.
+#
+# DSP = 0 was not constrained here. build_zedboard.tcl sets no DSP limit; Vivado
+# inferred none anyway, presumably judging an 8-bit multiply cheaper in fabric.
+# The out-of-context comparison pins it with -max_dsp 0 for comparability; this
+# board build did not, so the zero is an observation about this build rather
+# than a property guaranteed by the flow.
+XC7Z020 = dict(lut=53200, ff=106400, ramb36=140, ramb18=280, dsp=220)
+
+SYSTEM = dict(
+    build="zed_v4_p16_t4_1790095039",
+    core="Bank  P=16, T=4, DEPTH=2, K<=1152, COUT<=128, runtime geometry",
+    lut=11182, logic_lut=10217, lutram=774, srl=191, ff=9372,
+    ramb36=68, ramb18=6, dsp=0,
+    dsp_constrained=False,
+    clock_mhz=50.0, routed_wns_ns=0.221, constraint_ns=10.0,
+)
+# Block RAM in RAMB18 equivalents: a RAMB36 is two of them.
+SYSTEM["ramb18_equiv"] = SYSTEM["ramb36"]*2 + SYSTEM["ramb18"]
+SYSTEM["pct"] = dict(
+    lut=SYSTEM["lut"]/XC7Z020["lut"],
+    ff=SYSTEM["ff"]/XC7Z020["ff"],
+    bram=SYSTEM["ramb18_equiv"]/XC7Z020["ramb18"],
+    dsp=SYSTEM["dsp"]/XC7Z020["dsp"],
+)
