@@ -144,7 +144,7 @@ def write_board_files(cfg_src, x, gold, mode_seq):
     return layout
 
 
-def run_board(xsdb, build, log_path):
+def run_board(xsdb, build, log_path, fclk=None):
     """One xsdb session: load the bitstream, run this layer, read the results.
 
     The run script is sourced rather than rewritten. It is the only part of this
@@ -153,6 +153,8 @@ def run_board(xsdb, build, log_path):
     """
     wrapper = BOARD/'_run_layer.tcl'
     lines = [f'set ::env(WM_BOARD_DIR) {{{BOARD.resolve().as_posix()}}}']
+    if fclk:
+        lines.append(f'set ::env(WM_FCLK_MHZ) {fclk}')
     if build:
         lines.append(f'set ::env(WM_BUILD) {{{Path(build).resolve().as_posix()}}}')
     lines += [f'set _rc [catch {{source {(ROOT/"scripts"/"run_board_xsdb.tcl").as_posix()}}} _err]',
@@ -356,6 +358,11 @@ def main():
                     help='no board: compute what it would compute and carry that on')
     ap.add_argument('--mode', type=int, default=1, choices=[0, 1],
                     help='0 dense, 1 sparse (skip zero activations). Same results.')
+    ap.add_argument('--fclk', type=float,
+                    help='clock the PL at this many MHz before each layer, '
+                         'instead of taking whatever the board preset left. Only '
+                         'ask for a frequency the design was routed to meet: '
+                         'above that it produces wrong numbers, not slow ones.')
     ap.add_argument('--out', type=Path, default=ROOT/'build'/'cifar_run')
     ap.add_argument('--board-dir', type=Path,
                     help='where this run stages config/input/gold for the board '
@@ -431,7 +438,7 @@ def main():
         else:
             try:
                 info = run_board(args.xsdb, args.build,
-                                 args.out/f'{L["name"]}_xsdb.log')
+                                 args.out/f'{L["name"]}_xsdb.log', args.fclk)
             except SystemExit as e:
                 again = (f'  --start-layer {li} --images {len(images)}\n'
                          f'which reads {args.out}/act{li}.npy'
@@ -466,7 +473,7 @@ def main():
     print(f'float model, full test set: {manifest["float_accuracy"]*100:.2f}%')
 
     report = dict(emulated=bool(args.emulate), images=len(labels), mode_seq=args.mode,
-                  start_layer=args.start_layer,
+                  start_layer=args.start_layer, fclk_requested=args.fclk,
                   correct=int((pred == labels).sum()), accuracy=acc_pct,
                   float_accuracy=manifest['float_accuracy'],
                   predictions=pred.tolist(), labels=labels.tolist(), layers=runs)

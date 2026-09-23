@@ -72,7 +72,13 @@ proc ps_read {addr} {
         # 33.333 MHz crystal is 1000 MHz, so FCLK0 is 100 MHz. FAULT=slowclock is
         # the board this was written for, which came up with divisors 8 and 4 and
         # therefore ran the PL at a third of what the design was constrained for.
-        set clkctrl [expr {$::FAULT eq "slowclock" ? 0x00400800 : 0x00100A00}]
+        global CLKCTRL
+        if {![info exists CLKCTRL]} {
+            # "clkstuck" is the same slow board, plus an SLCR that keeps
+            # dropping the write -- the case the read-back exists for.
+            set CLKCTRL [expr {$::FAULT in {slowclock clkstuck} ? 0x00400800 : 0x00100A00}]
+        }
+        set clkctrl $CLKCTRL
         array set v [list 0xF800000C 0 0xF800010C 7 0xF8000170 $clkctrl 0xF8000240 0 \
                      0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF800700C 0x4 \
                      0xF8007014 0x4000 0xF8000100 0x0001A000 0xF8000104 0x00020000 \
@@ -253,6 +259,13 @@ proc mwr {args} {
     if {$addr == 0xF8000900} {
         global SLCR_LOCKED LVLSHFT
         if {!$SLCR_LOCKED} { set LVLSHFT $val }
+        return
+    }
+    if {$addr == 0xF8000170} {
+        # A locked SLCR drops the write silently, which is the whole reason the
+        # run script reads the frequency back instead of trusting the write.
+        global SLCR_LOCKED CLKCTRL FAULT
+        if {!$SLCR_LOCKED && $FAULT ne "clkstuck"} { set CLKCTRL $val }
         return
     }
     if {$addr >= 0xF8000000 && $addr < 0xF9000000} { return }
