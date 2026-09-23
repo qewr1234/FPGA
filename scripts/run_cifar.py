@@ -172,8 +172,20 @@ def run_board(xsdb, build, log_path):
         why = [l for l in proc.stdout.splitlines()
                if l.startswith('ERROR:') or ' failed' in l or 'no targets' in l]
         head = why[-1].strip() if why else f'exit {proc.returncode}, no run.json'
+        hint = ''
+        if 'no targets' in head:
+            # Not a fault in anything this repository controls. A session that
+            # died mid-run leaves hw_server holding the cable, and the next xsdb
+            # attaches to that wedged server instead of starting its own.
+            hint = ('\nThe debugger sees no JTAG target at all. Usually one of:\n'
+                    '  taskkill /F /IM hw_server.exe   (a previous run left one '
+                    'holding the cable)\n'
+                    '  power-cycle the board, and check the USB is in the PROG '
+                    'port\n'
+                    '  close any Vivado Hardware Manager, which takes the cable '
+                    'exclusively\n')
         raise SystemExit(f'the board run failed: {head}\n'
-                         f'Full output: {log_path}\n'
+                         f'Full output: {log_path}{hint}\n'
                          + '\n'.join(proc.stdout.splitlines()[-20:]))
     info = json.loads(run_json.read_text())
     info['wall_seconds'] = round(time.time()-started, 1)
@@ -421,10 +433,11 @@ def main():
                 info = run_board(args.xsdb, args.build,
                                  args.out/f'{L["name"]}_xsdb.log')
             except SystemExit as e:
-                raise SystemExit(f'{e}\n\nRetry this layer alone with\n'
-                                 f'  --start-layer {li} --images {len(images)}\n'
-                                 f'which reads {args.out/f"act{li}.npy"} and skips '
-                                 f'the {li-1} layer(s) that already passed.')
+                again = (f'  --start-layer {li} --images {len(images)}\n'
+                         f'which reads {args.out}/act{li}.npy'
+                         + (f' and skips the {li-1} layer(s) that already '
+                            f'passed.' if li > 1 else '.'))
+                raise SystemExit(f'{e}\n\nRetry this layer with\n{again}')
             acc = board_results(x.shape[0], L['COUT'])
             total_cycles += info['cycles']
             print(f'          {info["cycles"]:>12,} cycles '
