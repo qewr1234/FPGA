@@ -171,3 +171,73 @@ VERIF = dict(
     wrapper_cases=28,
     wrapper_cycle_overhead=0,
 )
+
+# ----------------------------------------------- CIFAR-10 network, on board ---
+# The whole quantized network run layer by layer on XC7Z020-CLG484, banked
+# (Bank) core, P=16 T=4 DEPTH=2, one bitstream built at K<=1152 COUT<=128 with
+# runtime geometry, 128 CIFAR-10 test images.
+#
+# The clock is 50 MHz and that is not a choice: the PS preset available on this
+# machine hands the fabric 50 MHz, while the design is routed and meets timing
+# at 100 (whole-board WNS +0.221 ns). Every time below is therefore at half the
+# frequency the design closed at. Cycle counts do not depend on the clock, so
+# they stand on their own; the times do not, and are reported as measured.
+#
+# Source: build/cifar_run/report.json, run of 2026-09-23.
+CIFAR = dict(
+    core="Bank  P=16, T=4, DEPTH=2",
+    built_k=1152, built_cout=128, runtime_geometry=True,
+    clock_mhz=50.0,
+    routed_wns_ns=0.221,          # at the 100 MHz constraint, whole board design
+    images=128,
+    mode="sparse",                # zero activations skipped
+    float_accuracy=0.8626,        # the trained network, full 10,000-image test set
+    integer_accuracy_512=0.8574,  # the quantized model on 512 images, host
+    board_accuracy=0.8594,        # 110 / 128, on hardware
+    board_correct=110,
+    outputs_compared=14680064,
+    mismatches=0,
+    in_stall=0, out_stall=0,
+    total_cycles=84742543,
+    macs_per_image=38633472,
+)
+CIFAR["cycles_per_image"] = CIFAR["total_cycles"] / CIFAR["images"]
+CIFAR["ms_per_image"] = CIFAR["cycles_per_image"] / CIFAR["clock_mhz"] / 1000.0
+CIFAR["fps"] = 1000.0 / CIFAR["ms_per_image"]
+CIFAR["gmac_per_s"] = CIFAR["macs_per_image"] / (CIFAR["ms_per_image"] / 1000.0) / 1e9
+# 64 multipliers, one result each per cycle.
+CIFAR["peak_gmac_per_s"] = 64 * CIFAR["clock_mhz"] * 1e6 / 1e9
+CIFAR["utilisation"] = CIFAR["gmac_per_s"] / CIFAR["peak_gmac_per_s"]
+
+# Per layer, in order. windows and K are per image; cycles and density are what
+# the board reported over the 128-image batch.
+#
+# "floor" is K: one activation enters the core per cycle, so a window cannot cost
+# less however wide the issue engine is. Measured cycles per window sit on that
+# floor at every layer, which is the finding -- this network is bound by the
+# input port, not by multipliers.
+CIFAR_LAYERS = [
+    # name    windows    K  COUT  nonzero      cycles  cyc/window
+    ("conv1",    1024,   27,   32,  0.951,    4194339,    32.0),
+    ("conv2",    1024,  288,   32,  0.586,   37879875,   289.0),
+    ("conv3",     256,  288,   64,  0.567,    9470075,   289.0),
+    ("conv4",     256,  576,   64,  0.381,   18907283,   577.0),
+    ("conv5",      64,  576,  128,  0.351,    4845439,   591.5),
+    ("conv6",      64, 1152,  128,  0.125,    9445532,  1153.0),
+]
+CIFAR_FIELDS = ("name", "windows", "K", "COUT", "nonzero", "cycles", "cycles_per_window")
+
+# Predicted before the run from the cycle model, using the per-layer density
+# measured on the host: scripts/cifar_budget.py --report build/cifar_run/report.json.
+# The model reproduces all seven configurations measured on the evaluation probe
+# to within 1.3 cycles per window, so this was a prediction, not a fit.
+CIFAR_PREDICTED_CYCLES_PER_IMAGE = 654336
+
+
+def cifar_layers():
+    return [dict(zip(CIFAR_FIELDS, r)) for r in CIFAR_LAYERS]
+
+
+def cifar_feed_floor():
+    """Cycles per image if every window cost exactly K -- the input port's limit."""
+    return sum(w * k for _n, w, k, _c, _d, _cy, _cw in CIFAR_LAYERS)
