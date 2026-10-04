@@ -36,7 +36,8 @@ sys.path.insert(0, str(ROOT/'scripts'))
 sys.path.insert(0, str(ROOT/'denoise'))
 import run_cifar  # noqa: E402
 from run_cifar import board_results, im2col, oracle, requant, run_board, write_board_files  # noqa: E402
-from common import QMAX_A, load_set, psnr, test_noise, to_image  # noqa: E402
+from common import (QMAX_A, load_set, pad_even, psnr, shuffle2, test_noise, to_image,  # noqa: E402
+                    unshuffle2)
 
 
 def load_layers(export):
@@ -91,8 +92,12 @@ def denoise(q_in, man, layers, args, tag, start=1):
     so a layer that fails on the board can be retried alone (start=N) instead of
     paying for every layer before it again.
     """
-    h, w = q_in.shape
-    q = q_in[None, None].astype(np.uint8)                 # (1, 1, H, W)
+    H, W = q_in.shape
+    unshuffled = man.get('unshuffle', False)
+    # An unshuffled model runs on the four 2x2 phases of the even-padded image.
+    base = (unshuffle2(pad_even(q_in)) if unshuffled else q_in[None]).astype(np.uint8)
+    h, w = base.shape[1:]
+    q = base[None]                                        # (1, C, h, w)
     save = getattr(args, 'out', None)
     if start > 1:
         src = args.out/f'{tag}_act{start}.npy'
@@ -108,7 +113,7 @@ def denoise(q_in, man, layers, args, tag, start=1):
         if save is not None and not args.emulate:
             np.save(args.out/f'{tag}_act{i+1}.npy', q)
         if i == len(layers)-1 and man['input_channel_appended_to_last_layer']:
-            q = np.concatenate([q, q_in[None, None].astype(np.uint8)], 1)
+            q = np.concatenate([q, base[None]], 1)
         x = im2col(q)
         if x.shape[1] != L['K']:
             raise SystemExit(f'{L["name"]}: windows are {x.shape[1]} taps, weights {L["K"]}')
@@ -134,8 +139,11 @@ def denoise(q_in, man, layers, args, tag, start=1):
         else:
             # (H*W, COUT) -> (COUT, H, W), then the same host arithmetic the
             # quantizer scored: one clean channel, or the residual sign pair.
-            out = to_image(acc.T.reshape(L['COUT'], h, w), q_in, L['to_pixel'],
-                           man.get('residual_output', False))
+            acc_maps = acc.T.reshape(L['COUT'], h, w)
+            if unshuffled:
+                out = shuffle2(to_image(acc_maps, base, L['to_pixel'], False), H, W)
+            else:
+                out = to_image(acc_maps, q_in, L['to_pixel'], man.get('residual_output', False))
     return out, recs
 
 

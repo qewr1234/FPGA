@@ -61,18 +61,29 @@ class Denoiser(nn.Module):
     in float, and in integers too, because both channels share one weight scale.
     The float model below is therefore the plain linear-output DnCNN; nothing
     about the split needs training."""
-    def __init__(self, depth=7, channels=32, skip=True, residual=False):
+    def __init__(self, depth=7, channels=32, skip=True, residual=False, unshuffle=False):
         super().__init__()
         if residual:
             skip = False                    # the residual already carries the input
+        assert not (residual and unshuffle), 'residual with unshuffle is not implemented'
         self.depth, self.channels, self.skip, self.residual = depth, channels, skip, residual
+        self.unshuffle = unshuffle
+        # unshuffle (FFDNet, Zhang et al. 2018): the image is split into its four
+        # 2x2 phases and the network runs on those half-size sub-images, then
+        # the four outputs are put back together. A quarter of the windows, each
+        # 3x3 tap covering twice the distance.
+        self.img_ch = 4 if unshuffle else 1
         c = channels
-        self.first = nn.Conv2d(1, c, 3, padding=1, bias=True)
+        self.first = nn.Conv2d(self.img_ch, c, 3, padding=1, bias=True)
         self.mid = nn.ModuleList(nn.Conv2d(c, c, 3, padding=1, bias=False) for _ in range(depth-2))
         self.bn = nn.ModuleList(nn.BatchNorm2d(c) for _ in range(depth-2))
-        self.last = nn.Conv2d(c + (1 if skip else 0), 1, 3, padding=1, bias=True)
+        self.last = nn.Conv2d(c + (self.img_ch if skip else 0), self.img_ch, 3, padding=1, bias=True)
 
     def forward(self, x):
+        if self.unshuffle:
+            hh, ww = x.shape[-2:]
+            x = F.pad(x, (0, ww % 2, 0, hh % 2), mode='replicate')   # = common.pad_even
+            x = F.pixel_unshuffle(x, 2)
         h = F.relu(self.first(x))
         for conv, bn in zip(self.mid, self.bn):
             h = F.relu(bn(conv(h)))
@@ -80,18 +91,25 @@ class Denoiser(nn.Module):
             h = torch.cat([h, x], 1)
         if self.residual:
             return x - self.last(h)         # ReLU(z) - ReLU(-z) = z, done on the host
-        return F.relu(self.last(h))         # the core's ReLU, on the image itself
+        y = F.relu(self.last(h))            # the core's ReLU, on the image itself
+        if self.unshuffle:
+            y = F.pixel_shuffle(y, 2)[..., :hh, :ww]
+        return y
 
     def layer_shapes(self):
         """(name, K, COUT) per layer, K = 9 * input channels, tap order (ky,kx,cin)."""
-        c = self.channels
-        s = [('conv1', 9, c)] + [(f'conv{i+2}', 9*c, c) for i in range(self.depth-2)]
+        c, g = self.channels, self.img_ch
+        s = [('conv1', 9*g, c)] + [(f'conv{i+2}', 9*c, c) for i in range(self.depth-2)]
         # The residual layer's two output channels are the sign pair.
-        s.append((f'conv{self.depth}', 9*(c + (1 if self.skip else 0)), 2 if self.residual else 1))
+        s.append((f'conv{self.depth}', 9*(c + (g if self.skip else 0)),
+                  2 if self.residual else g))
         return s
 
+    def windows_per_pixel(self):
+        return 0.25 if self.unshuffle else 1.0
 
-def board_cycles_per_pixel(shapes, p=16, t=4):
+
+def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=1.0):
     """Cycles one output pixel costs the board core (P=16, T=4), dense mode.
 
     scripts/cifar_budget.py's per-window model, which reproduces every measured
@@ -100,11 +118,15 @@ def board_cycles_per_pixel(shapes, p=16, t=4):
     K=27). Dense mode is the upper bound: sparse mode only shortens the issue
     term, and where the feed floor K dominates it changes nothing.
     """
-    return sum(per_window(k, cout, p, t, dense_per_group(k, t)) for _, k, cout in shapes)
+    return windows_per_pixel*sum(per_window(k, cout, p, t, dense_per_group(k, t))
+                                 for _, k, cout in shapes)
 
 
 class Patches:
-    """DnCNN's patch source: 40x40 crops of the training images at 4 scales."""
+    """DnCNN's patch source: square crops of the training images at 4 scales.
+
+    40x40 for DnCNN; FFDNet uses 50x50 for grayscale, and an unshuffled model
+    needs the larger patch, its receptive field being about 42 pixels wide."""
     def __init__(self, images, patch=40, scales=(1.0, 0.9, 0.8, 0.7)):
         self.patch = patch
         self.pyr = []
@@ -153,6 +175,9 @@ def main():
     ap.add_argument('--no-skip', action='store_true', help='no noisy-image input to the last layer')
     ap.add_argument('--residual', action='store_true',
                     help='predict the noise (DnCNN residual learning) through a sign-split last layer')
+    ap.add_argument('--unshuffle', action='store_true',
+                    help='FFDNet-style: run on the four 2x2 phases at half resolution')
+    ap.add_argument('--patch', type=int, default=40, help='training patch size (even)')
     ap.add_argument('--sigma', type=float, default=25)
     ap.add_argument('--epochs', type=int, default=40)
     ap.add_argument('--patches', type=int, default=32768, help='random patches per epoch')
@@ -167,18 +192,18 @@ def main():
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
 
-    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual)
+    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual, args.unshuffle)
     shapes = net.layer_shapes()
     for n, k, c in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
-    name = args.name or (f'dn_d{args.depth}_c{args.channels}' +
+    name = args.name or (f'dn_d{args.depth}_c{args.channels}' + ('_us' if net.unshuffle else '') +
                          ('_res' if net.residual else ('' if net.skip else '_noskip')))
-    cpp = board_cycles_per_pixel(shapes)
+    cpp = board_cycles_per_pixel(shapes, windows_per_pixel=net.windows_per_pixel())
     print(f'{name}: {sum(p.numel() for p in net.parameters()):,} parameters, '
           f'layers {[(k, c) for _, k, c in shapes]}')
-    print(f'board cost {cpp} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
+    print(f'board cost {cpp:.0f} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
 
-    patches = Patches(load_set('Train400'))
+    patches = Patches(load_set('Train400'), patch=args.patch)
     tests = test_noise(load_set('Set12'), args.sigma, seed=0)
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
     # DnCNN steps the rate down late in training; cosine does the same smoothly.
@@ -204,7 +229,8 @@ def main():
         print(f'epoch {ep:>3}/{args.epochs}  loss {tot/args.patches:.6f}  Set12 {val:.2f} dB  '
               f'{time.time()-t0:7.0f}s', flush=True)
         torch.save(dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
-                        skip=net.skip, residual=net.residual, sigma=args.sigma, epoch=ep, set12_psnr=val),
+                        skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
+                        sigma=args.sigma, epoch=ep, set12_psnr=val),
                    HERE/f'{name}.pt')
     (HERE/f'{name}_train.json').write_text(json.dumps(dict(
         name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,

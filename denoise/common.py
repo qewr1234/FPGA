@@ -63,6 +63,30 @@ def psnr(ref, img):
     return 10*np.log10(1.0/mse) if mse > 0 else float('inf')
 
 
+def pad_even(img):
+    """Repeat the last row/column so both sides are even (BSD68 is 481x321)."""
+    h, w = img.shape
+    return np.pad(img, ((0, h % 2), (0, w % 2)), mode='edge')
+
+
+def unshuffle2(img):
+    """(H, W), both even -> (4, H/2, W/2); channel 2*i + j holds img[i::2, j::2].
+
+    The layout of torch.nn.functional.pixel_unshuffle(x, 2) for one input
+    channel, which is what the network was trained on (checked in the self test).
+    """
+    return np.stack([img[i::2, j::2] for i in range(2) for j in range(2)])
+
+
+def shuffle2(sub, h, w):
+    """Inverse of unshuffle2, cropped back to the original (h, w)."""
+    c, hh, ww = sub.shape
+    out = np.empty((2*hh, 2*ww), sub.dtype)
+    for k in range(4):
+        out[k//2::2, k % 2::2] = sub[k]
+    return out[:h, :w]
+
+
 def to_image(acc_last, q_in, to_pixel, residual):
     """The last layer's INT32 outputs (COUT, H, W) -> the 8-bit image, on the host.
 
@@ -77,7 +101,12 @@ def to_image(acc_last, q_in, to_pixel, residual):
         z = acc_last[0].astype(np.int64) - acc_last[1].astype(np.int64)
         v = q_in.astype(np.float64)/QMAX_A - z*to_pixel
         return np.clip(np.rint(v*255), 0, 255).astype(np.uint8)
-    return np.clip(np.rint(acc_last[0]*to_pixel*255), 0, 255).astype(np.uint8)
+    if np.ndim(to_pixel) == 0:
+        return np.clip(np.rint(acc_last[0]*to_pixel*255), 0, 255).astype(np.uint8)
+    # Unshuffled models: one clean sub-image per channel, each with its own
+    # weight scale. Same operations per element as the scalar case above.
+    tp = np.asarray(to_pixel, np.float64)[:, None, None]
+    return np.clip(np.rint(acc_last*tp*255), 0, 255).astype(np.uint8)
 
 
 def test_noise(images, sigma, seed=0):

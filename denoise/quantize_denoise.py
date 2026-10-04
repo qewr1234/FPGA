@@ -41,7 +41,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from common import HERE, QMAX_A, load_set, psnr, test_noise, to_image
+from common import (HERE, QMAX_A, load_set, pad_even, psnr, shuffle2, test_noise, to_image,
+                    unshuffle2)
 from train_denoise import Denoiser, board_cycles_per_pixel
 
 QMIN_W, QMAX_W = -128, 127
@@ -90,8 +91,8 @@ def im2col(q):
 
 class IntModel:
     """The integer pipeline the board runs, layer by layer."""
-    def __init__(self, layers, skip, residual=False):
-        self.layers, self.skip, self.residual = layers, skip, residual
+    def __init__(self, layers, skip, residual=False, unshuffle=False):
+        self.layers, self.skip, self.residual, self.unshuffle = layers, skip, residual, unshuffle
 
     def layer(self, i, q):
         """One core pass: (C,H,W) 0..127 in -> INT32 accumulators after ReLU (COUT,H,W)."""
@@ -107,22 +108,32 @@ class IntModel:
 
     def run(self, q_in):
         """7-bit noisy image (H,W) -> denoised 8-bit image (H,W), and the per-layer maps."""
-        q = q_in[None].astype(np.int64)
+        H, W = q_in.shape
+        # An unshuffled model sees the four 2x2 phases of the (even-padded) image.
+        base = unshuffle2(pad_even(q_in)) if self.unshuffle else q_in[None]
+        base = base.astype(np.int64)
+        q = base
         maps = []
         for i, L in enumerate(self.layers):
             if i == len(self.layers)-1 and self.skip:
-                q = np.concatenate([q, q_in[None].astype(np.int64)], 0)
+                q = np.concatenate([q, base], 0)
             maps.append(q)
             acc = self.layer(i, q)
             if i < len(self.layers)-1:
                 q = np.clip(np.rint(acc*L['requant'][:, None, None]), 0, QMAX_A).astype(np.int64)
             else:
-                out = to_image(acc, q_in, L['to_pixel'], self.residual)
+                if self.unshuffle:
+                    out = shuffle2(to_image(acc, base, L['to_pixel'], False), H, W)
+                else:
+                    out = to_image(acc, q_in, L['to_pixel'], self.residual)
         return out, maps
 
 
-def quantize(FL, a_scale, skip):
-    """Integer layers for the given input scales. Nothing is written."""
+def quantize(FL, a_scale, skip, n_img=1):
+    """Integer layers for the given input scales. Nothing is written.
+
+    n_img is how many image channels the skip appends to the last layer's input
+    (1, or 4 for an unshuffled model) -- always the last n_img input channels."""
     nl = len(FL)
     layers = []
     for i, (w, b) in enumerate(FL):
@@ -132,7 +143,7 @@ def quantize(FL, a_scale, skip):
             # Taps of input channel C (the image) carry scale 1/127, the rest
             # a_scale[i]: fold the ratio into those weights (see the docstring).
             cin = w.shape[1]
-            img = np.arange(K) % cin == cin-1
+            img = np.arange(K) % cin >= cin - n_img
             wk[:, img] *= (1.0/QMAX_A)/a_scale[i]
         ws = np.abs(wk).max(axis=1)/QMAX_W
         ws[ws == 0] = 1.0
@@ -144,8 +155,10 @@ def quantize(FL, a_scale, skip):
                  a_scale_in=a_scale[i], w_scale=ws, worst=int(worst.max()))
         if i < nl-1:
             L['requant'] = a_scale[i]*ws/a_scale[i+1]
-        else:
+        elif cout == 1 or (cout == 2 and np.allclose(ws[0], ws[1])):
             L['to_pixel'] = float(a_scale[i]*ws[0])            # accumulator -> [0,1] pixel
+        else:
+            L['to_pixel'] = [float(a_scale[i]*v) for v in ws]  # one per sub-image
         layers.append(L)
     return layers
 
@@ -171,7 +184,9 @@ def main():
 
     ck = torch.load(args.ckpt, map_location='cpu', weights_only=False)
     residual = ck.get('residual', False)
-    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual)
+    unshuffle = ck.get('unshuffle', False)
+    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle)
+    n_img = 4 if unshuffle else 1
     net.load_state_dict(ck['state']); net.eval()
     name = args.ckpt.stem
     out_dir = args.out or HERE/'export'/name
@@ -194,7 +209,8 @@ def main():
     peak = [0.0]*nl
     with torch.no_grad():
         for x in calib:
-            x0 = torch.from_numpy(x).double()[None, None]
+            x0 = (torch.from_numpy(unshuffle2(pad_even(x))).double()[None] if unshuffle
+                  else torch.from_numpy(x).double()[None, None])
             h = x0
             for i, (w, b) in enumerate(FL):
                 v = h[0, :ck['channels']].reshape(-1).numpy()   # features only, not the image
@@ -220,22 +236,22 @@ def main():
         val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
         tried = {}
         for pct in (100.0, 99.999, 99.99, 99.9, 99.5):
-            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip']), ck['skip'],
-                                           residual), val)
+            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip'], n_img),
+                                           ck['skip'], residual, unshuffle), val)
             print(f'  range percentile {pct:<7} validation PSNR {tried[pct]:.3f} dB')
         pct = max(tried, key=tried.get)
         print(f'  -> percentile {pct}')
     else:
         pct, tried = float(args.percentile), {}
     a_scale = scales(pct)
-    layers = quantize(FL, a_scale, ck['skip'])
+    layers = quantize(FL, a_scale, ck['skip'], n_img)
     for L in layers:
         blob = np.concatenate([L['wq'].reshape(-1).astype('<i4'), L['bq'].astype('<i4')])
         (out_dir/f'{L["name"]}_config.bin').write_bytes(blob.tobytes())
         print(f'  {L["name"]}: K={L["K"]:>4} COUT={L["COUT"]:>3}  input scale {L["a_scale_in"]:.6f}  '
               f'worst accumulator {L["worst"]:>11,}')
 
-    model = IntModel(layers, ck['skip'], residual)
+    model = IntModel(layers, ck['skip'], residual, unshuffle)
     if residual:
         L = layers[-1]
         assert L['COUT'] == 2 and np.array_equal(L['wq'][0], -L['wq'][1]) \
@@ -269,7 +285,7 @@ def main():
               f'({np.mean(it)-np.mean(fl):+.2f})')
 
     shapes = [(L['name'], L['K'], L['COUT']) for L in layers]
-    cpp = board_cycles_per_pixel(shapes)
+    cpp = board_cycles_per_pixel(shapes, windows_per_pixel=0.25 if unshuffle else 1.0)
     (out_dir/'manifest.json').write_text(json.dumps(dict(
         note='activations unsigned 0..127; weights INT8 per output channel; tap order (ky, kx, cin); '
              'last layer output -> pixel = clip(round(acc*to_pixel*255), 0, 255)',
@@ -283,9 +299,10 @@ def main():
                 for L in layers],
         input_channel_appended_to_last_layer=ck['skip'],
         residual_output=residual,
+        unshuffle=unshuffle,
         board_cycles_per_pixel=cpp), indent=2), encoding='utf-8')
     (out_dir/'int_eval.json').write_text(json.dumps(res, indent=2), encoding='utf-8')
-    print(f'board cost {cpp} cycles/pixel (model, dense): 256x256 {cpp*65536/50e6:.2f} s, '
+    print(f'board cost {cpp:.0f} cycles/pixel (model, dense): 256x256 {cpp*65536/50e6:.2f} s, '
           f'512x512 {cpp*262144/50e6:.2f} s at 50 MHz')
     print(f'wrote {out_dir}')
 
