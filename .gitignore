@@ -1,3 +1,7 @@
 build/
 __pycache__/
 paper/paper_draft.html
+denoise/data/
+denoise/screen_*.pt
+denoise/figures/*_try*
+denoise/screen_*_train.json
