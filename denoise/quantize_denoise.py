@@ -112,12 +112,51 @@ class IntModel:
         return out, maps
 
 
+def quantize(FL, a_scale, skip):
+    """Integer layers for the given input scales. Nothing is written."""
+    nl = len(FL)
+    layers = []
+    for i, (w, b) in enumerate(FL):
+        wk = tap_order(w).numpy().copy()                       # (cout, K) float
+        cout, K = wk.shape
+        if i == nl-1 and skip:
+            # Taps of input channel C (the image) carry scale 1/127, the rest
+            # a_scale[i]: fold the ratio into those weights (see the docstring).
+            cin = w.shape[1]
+            img = np.arange(K) % cin == cin-1
+            wk[:, img] *= (1.0/QMAX_A)/a_scale[i]
+        ws = np.abs(wk).max(axis=1)/QMAX_W
+        ws[ws == 0] = 1.0
+        wq = np.clip(np.rint(wk/ws[:, None]), QMIN_W, QMAX_W).astype(np.int64)
+        bq = np.rint(b.numpy()/(a_scale[i]*ws)).astype(np.int64)
+        worst = np.abs(bq) + QMAX_A*np.abs(wq).sum(axis=1)
+        assert worst.max() <= 2**31-1, f'conv{i+1} accumulator could overflow INT32'
+        L = dict(name=f'conv{i+1}', K=int(K), COUT=int(cout), wq=wq, bq=bq,
+                 a_scale_in=a_scale[i], w_scale=ws, worst=int(worst.max()))
+        if i < nl-1:
+            L['requant'] = a_scale[i]*ws/a_scale[i+1]
+        else:
+            L['to_pixel'] = float(a_scale[i]*ws[0])            # accumulator -> [0,1] pixel
+        layers.append(L)
+    return layers
+
+
+def int_psnr(model, images):
+    """Mean PSNR of the integer model on (name, clean, noisy) images."""
+    vals = []
+    for _, clean, noisy in images:
+        out, _ = model.run(np.rint(noisy*QMAX_A).astype(np.int64))
+        vals.append(psnr(clean, out.astype(np.float32)/255))
+    return float(np.mean(vals))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--ckpt', type=Path, required=True)
     ap.add_argument('--calib', type=int, default=40, help='training images used for the ranges')
-    ap.add_argument('--percentile', type=float, default=100.0,
-                    help='activation range percentile (100 = max, as for CIFAR)')
+    ap.add_argument('--percentile', default='auto',
+                    help='activation range percentile (100 = max, as for CIFAR), or auto: '
+                         'the best of 100/99.999/99.99/99.9/99.5 on 40 validation images')
     ap.add_argument('--out', type=Path, default=None)
     args = ap.parse_args()
 
@@ -153,40 +192,36 @@ def main():
                 if i == nl-1 and ck['skip']:
                     h = torch.cat([h, x0], 1)
                 h = F.relu(F.conv2d(h, w, b, padding=1))
-    a_scale = [1.0/QMAX_A]
-    for i in range(1, nl):
-        r = peak[i] if args.percentile >= 100 else float(np.percentile(np.concatenate(samples[i]),
-                                                                        args.percentile))
-        a_scale.append(r/QMAX_A)
+    pooled = [np.concatenate(v) for v in samples]
 
-    # ---- quantize ----
-    layers = []
-    for i, (w, b) in enumerate(FL):
-        wk = tap_order(w).numpy().copy()                       # (cout, K) float
-        cout, K = wk.shape
-        if i == nl-1 and ck['skip']:
-            # Taps of input channel C (the image) carry scale 1/127, the rest
-            # a_scale[i]: fold the ratio into those weights (see the docstring).
-            cin = w.shape[1]
-            img = np.arange(K) % cin == cin-1
-            wk[:, img] *= (1.0/QMAX_A)/a_scale[i]
-        ws = np.abs(wk).max(axis=1)/QMAX_W
-        ws[ws == 0] = 1.0
-        wq = np.clip(np.rint(wk/ws[:, None]), QMIN_W, QMAX_W).astype(np.int64)
-        bq = np.rint(b.numpy()/(a_scale[i]*ws)).astype(np.int64)
-        worst = np.abs(bq) + QMAX_A*np.abs(wq).sum(axis=1)
-        assert worst.max() <= 2**31-1, f'conv{i+1} accumulator could overflow INT32'
-        blob = np.concatenate([wq.reshape(-1).astype('<i4'), bq.astype('<i4')])
-        (out_dir/f'conv{i+1}_config.bin').write_bytes(blob.tobytes())
-        L = dict(name=f'conv{i+1}', K=int(K), COUT=int(cout), wq=wq, bq=bq,
-                 a_scale_in=a_scale[i], w_scale=ws, worst=int(worst.max()))
-        if i < nl-1:
-            L['requant'] = a_scale[i]*ws/a_scale[i+1]
-        else:
-            L['to_pixel'] = float(a_scale[i]*ws[0])            # accumulator -> [0,1] pixel
-        layers.append(L)
-        print(f'  conv{i+1}: K={K:>4} COUT={cout:>3}  input scale {a_scale[i]:.6f}  '
-              f'worst accumulator {worst.max():>11,}')
+    def scales(pct):
+        a = [1.0/QMAX_A]
+        for i in range(1, nl):
+            a.append((peak[i] if pct >= 100 else float(np.percentile(pooled[i], pct)))/QMAX_A)
+        return a
+
+    # ---- choose the range percentile on VALIDATION images, never on the tests ----
+    # Train400[5::10] -- 40 training images disjoint from the calibration ones.
+    # They were seen in training, which flatters every candidate equally; what
+    # is compared here is how much each range loses to quantization.
+    if args.percentile == 'auto':
+        vrng = np.random.default_rng(11)
+        val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
+        tried = {}
+        for pct in (100.0, 99.999, 99.99, 99.9, 99.5):
+            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip']), ck['skip']), val)
+            print(f'  range percentile {pct:<7} validation PSNR {tried[pct]:.3f} dB')
+        pct = max(tried, key=tried.get)
+        print(f'  -> percentile {pct}')
+    else:
+        pct, tried = float(args.percentile), {}
+    a_scale = scales(pct)
+    layers = quantize(FL, a_scale, ck['skip'])
+    for L in layers:
+        blob = np.concatenate([L['wq'].reshape(-1).astype('<i4'), L['bq'].astype('<i4')])
+        (out_dir/f'{L["name"]}_config.bin').write_bytes(blob.tobytes())
+        print(f'  {L["name"]}: K={L["K"]:>4} COUT={L["COUT"]:>3}  input scale {L["a_scale_in"]:.6f}  '
+              f'worst accumulator {L["worst"]:>11,}')
 
     model = IntModel(layers, ck['skip'])
 
@@ -223,7 +258,7 @@ def main():
         note='activations unsigned 0..127; weights INT8 per output channel; tap order (ky, kx, cin); '
              'last layer output -> pixel = clip(round(acc*to_pixel*255), 0, 255)',
         model=name, depth=ck['depth'], channels=ck['channels'], skip=ck['skip'], sigma=sigma,
-        percentile=args.percentile,
+        percentile=pct, validation_psnr_by_percentile={str(k): v for k, v in tried.items()},
         layers=[dict(name=L['name'], K=L['K'], COUT=L['COUT'], a_scale_in=L['a_scale_in'],
                      w_scale=[float(v) for v in L['w_scale']],
                      **({'requant': [float(v) for v in L['requant']]} if 'requant' in L
