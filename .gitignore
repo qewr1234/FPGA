@@ -9,3 +9,6 @@ denoise/screen_*_train.json
 # added explicitly (git add -f) once it is final.
 denoise/*.pt
 denoise/*_last.pt
+# Rewritten every epoch while the validation-driven runs train; the final ones
+# are added with git add -f.
+denoise/*_es_train.json
