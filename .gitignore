@@ -8,3 +8,4 @@ denoise/screen_*_train.json
 # Checkpoints are rewritten every epoch while training; the finished one is
 # added explicitly (git add -f) once it is final.
 denoise/*.pt
+denoise/*_last.pt

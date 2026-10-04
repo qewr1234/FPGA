@@ -204,6 +204,9 @@ def main():
     ap.add_argument('--patience', type=int, default=6, help='plateau: epochs before halving the rate')
     ap.add_argument('--stop-patience', type=int, default=15, help='plateau: epochs before stopping')
     ap.add_argument('--min-lr', type=float, default=2e-5, help='plateau: stop below this rate')
+    ap.add_argument('--resume', action='store_true',
+                    help='continue <name>: exactly from <name>_last.pt when it exists, otherwise '
+                         'from the best checkpoint <name>.pt with a fresh optimizer at --lr')
     args = ap.parse_args()
     if args.threads:
         torch.set_num_threads(args.threads)
@@ -238,10 +241,45 @@ def main():
         sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='max', factor=0.5,
                                                            patience=args.patience)
     best_val, best_ep, stale = -1.0, 0, 0
+    curve, start_ep, resumed = [], 1, None
 
-    curve = []
+    # Everything needed to continue exactly where training stopped, written every
+    # epoch: the container this runs in can restart, and the best checkpoint
+    # alone loses the optimizer, the schedule and the random state.
+    last = HERE/f'{name}_last.pt'
+    if args.resume:
+        if last.exists():
+            st = torch.load(last, map_location='cpu', weights_only=False)
+            net.load_state_dict(st['state']); opt.load_state_dict(st['opt'])
+            sched.load_state_dict(st['sched'])
+            rng.bit_generator.state = st['np_rng']; torch.set_rng_state(st['torch_rng'])
+            best_val, best_ep, stale, curve = st['best_val'], st['best_ep'], st['stale'], st['curve']
+            start_ep = st['epoch'] + 1
+            resumed = dict(kind='exact', from_epoch=st['epoch'])
+        else:
+            ck = torch.load(HERE/f'{name}.pt', map_location='cpu', weights_only=False)
+            net.load_state_dict(ck['state'])
+            for g in opt.param_groups:
+                g['lr'] = args.lr
+            best_val, best_ep = ck.get('val_psnr', -1.0), ck['epoch']
+            start_ep = ck['epoch'] + 1
+            # A different stream from the first run's, so its patches are not replayed.
+            rng = np.random.default_rng([args.seed, start_ep])
+            resumed = dict(kind='from_best', from_epoch=ck['epoch'],
+                           note='optimizer, schedule and random state were not saved by the '
+                                'interrupted run; continued from its best checkpoint with a '
+                                'fresh Adam at --lr')
+        print(f'resuming {name} at epoch {start_ep} ({resumed["kind"]}), best validation '
+              f'{best_val:.3f} dB at epoch {best_ep}, lr {opt.param_groups[0]["lr"]:.1e}')
+
+    def write_json():
+        (HERE/f'{name}_train.json').write_text(json.dumps(dict(
+            name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,
+            best_val_epoch=best_ep if val is not None else None, resumed=resumed,
+            curve=curve), indent=2), encoding='utf-8')
+
     t0 = time.time()
-    for ep in range(1, args.epochs+1):
+    for ep in range(start_ep, args.epochs+1):
         clean = patches.sample(args.patches, rng)
         noisy = noisy_batch(clean, args.sigma, rng)
         order = rng.permutation(args.patches)
@@ -274,15 +312,18 @@ def main():
                 stale += 1
             msg = f'val {v:.3f} dB (best {best_val:.3f} @ {best_ep})  lr {rec["lr"]:.1e}  '
         curve.append(rec)
+        torch.save(dict(state=net.state_dict(), opt=opt.state_dict(), sched=sched.state_dict(),
+                        np_rng=rng.bit_generator.state, torch_rng=torch.get_rng_state(),
+                        epoch=ep, best_val=best_val, best_ep=best_ep, stale=stale, curve=curve),
+                   last)
+        write_json()
         print(f'epoch {ep:>3}/{args.epochs}  loss {tot/args.patches:.6f}  {msg}'
               f'Set12 {t12:.2f} dB (test, not used)  {time.time()-t0:7.0f}s', flush=True)
         if val is not None and (stale >= args.stop_patience or
                                 opt.param_groups[0]['lr'] < args.min_lr):
             print(f'early stop at epoch {ep}: best validation {best_val:.3f} dB at epoch {best_ep}')
             break
-    (HERE/f'{name}_train.json').write_text(json.dumps(dict(
-        name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,
-        best_val_epoch=best_ep if val is not None else None, curve=curve), indent=2), encoding='utf-8')
+    write_json()
     print(f'wrote {HERE/(name + ".pt")}')
 
 
