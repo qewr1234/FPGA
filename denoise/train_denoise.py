@@ -28,6 +28,18 @@ DnCNN draws ~240k patches per epoch; this draws --patches fresh random ones per
 epoch (default 32k) so an epoch fits a CPU.
 
 Writes denoise/<name>.pt and denoise/<name>_train.json (curve, Set12 PSNR).
+
+Two ways to decide how long to train:
+
+  --schedule cosine (default): a fixed --epochs, the rate annealed over them.
+      How the existing models were trained.
+  --schedule plateau: --epochs is only a ceiling. Every --val-every-th training
+      image is held out (never sampled for patches) as a VALIDATION set; when its
+      PSNR has not improved for --patience epochs the rate is halved, and when it
+      has not improved for --stop-patience epochs, or the rate is below --min-lr,
+      training stops. The checkpoint written is the best one on validation.
+      Set12 is still printed every epoch, but it is a TEST set: nothing is
+      decided by it.
 """
 import argparse
 import json
@@ -186,6 +198,12 @@ def main():
     ap.add_argument('--threads', type=int, default=0, help='torch threads (0 = default)')
     ap.add_argument('--seed', type=int, default=1)
     ap.add_argument('--name', default=None, help='output name (default from the shape)')
+    ap.add_argument('--schedule', choices=['cosine', 'plateau'], default='cosine')
+    ap.add_argument('--val-every', type=int, default=20,
+                    help='plateau: hold out every N-th training image for validation')
+    ap.add_argument('--patience', type=int, default=6, help='plateau: epochs before halving the rate')
+    ap.add_argument('--stop-patience', type=int, default=15, help='plateau: epochs before stopping')
+    ap.add_argument('--min-lr', type=float, default=2e-5, help='plateau: stop below this rate')
     args = ap.parse_args()
     if args.threads:
         torch.set_num_threads(args.threads)
@@ -203,11 +221,23 @@ def main():
           f'layers {[(k, c) for _, k, c in shapes]}')
     print(f'board cost {cpp:.0f} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
 
-    patches = Patches(load_set('Train400'), patch=args.patch)
+    train_imgs = load_set('Train400')
+    val = None
+    if args.schedule == 'plateau':
+        held = set(range(0, len(train_imgs), args.val_every))
+        val = test_noise([im for i, im in enumerate(train_imgs) if i in held], args.sigma, seed=1)
+        train_imgs = [im for i, im in enumerate(train_imgs) if i not in held]
+        print(f'validation: {len(val)} training images held out, {len(train_imgs)} left to train on')
+    patches = Patches(train_imgs, patch=args.patch)
     tests = test_noise(load_set('Set12'), args.sigma, seed=0)
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
-    # DnCNN steps the rate down late in training; cosine does the same smoothly.
-    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs, eta_min=args.lr/20)
+    if args.schedule == 'cosine':
+        # DnCNN steps the rate down late in training; cosine does the same smoothly.
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs, eta_min=args.lr/20)
+    else:
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='max', factor=0.5,
+                                                           patience=args.patience)
+    best_val, best_ep, stale = -1.0, 0, 0
 
     curve = []
     t0 = time.time()
@@ -222,19 +252,37 @@ def main():
             loss = F.mse_loss(net(x), y)
             opt.zero_grad(); loss.backward(); opt.step()
             tot += loss.item()*len(idx)
-        sched.step()
-        val = evaluate(net, tests)
-        curve.append(dict(epoch=ep, loss=tot/args.patches, set12_psnr=val,
-                          seconds=round(time.time()-t0, 1)))
-        print(f'epoch {ep:>3}/{args.epochs}  loss {tot/args.patches:.6f}  Set12 {val:.2f} dB  '
-              f'{time.time()-t0:7.0f}s', flush=True)
-        torch.save(dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
-                        skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
-                        sigma=args.sigma, epoch=ep, set12_psnr=val),
-                   HERE/f'{name}.pt')
+        t12 = evaluate(net, tests)
+        rec = dict(epoch=ep, loss=tot/args.patches, set12_psnr=t12, lr=opt.param_groups[0]['lr'],
+                   seconds=round(time.time()-t0, 1))
+        ckpt = dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
+                    skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
+                    sigma=args.sigma, epoch=ep, set12_psnr=t12)
+        if val is None:
+            sched.step()
+            torch.save(ckpt, HERE/f'{name}.pt')
+            msg = ''
+        else:
+            v = evaluate(net, val)
+            rec['val_psnr'] = v
+            ckpt['val_psnr'] = v
+            sched.step(v)
+            if v > best_val:
+                best_val, best_ep, stale = v, ep, 0
+                torch.save(ckpt, HERE/f'{name}.pt')      # the best on validation
+            else:
+                stale += 1
+            msg = f'val {v:.3f} dB (best {best_val:.3f} @ {best_ep})  lr {rec["lr"]:.1e}  '
+        curve.append(rec)
+        print(f'epoch {ep:>3}/{args.epochs}  loss {tot/args.patches:.6f}  {msg}'
+              f'Set12 {t12:.2f} dB (test, not used)  {time.time()-t0:7.0f}s', flush=True)
+        if val is not None and (stale >= args.stop_patience or
+                                opt.param_groups[0]['lr'] < args.min_lr):
+            print(f'early stop at epoch {ep}: best validation {best_val:.3f} dB at epoch {best_ep}')
+            break
     (HERE/f'{name}_train.json').write_text(json.dumps(dict(
         name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,
-        curve=curve), indent=2), encoding='utf-8')
+        best_val_epoch=best_ep if val is not None else None, curve=curve), indent=2), encoding='utf-8')
     print(f'wrote {HERE/(name + ".pt")}')
 
 
