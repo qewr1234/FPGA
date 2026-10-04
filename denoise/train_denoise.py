@@ -171,10 +171,11 @@ def noisy_batch(clean, sigma, rng):
 
 def evaluate(net, tests):
     net.eval()
+    dev = next(net.parameters()).device
     vals = []
     with torch.no_grad():
         for _, clean, noisy in tests:
-            out = net(torch.from_numpy(noisy)[None, None])[0, 0].numpy()
+            out = net(torch.from_numpy(noisy)[None, None].to(dev))[0, 0].cpu().numpy()
             vals.append(psnr(clean, out))
     net.train()
     return float(np.mean(vals))
@@ -196,6 +197,7 @@ def main():
     ap.add_argument('--batch', type=int, default=128)
     ap.add_argument('--lr', type=float, default=1e-3)
     ap.add_argument('--threads', type=int, default=0, help='torch threads (0 = default)')
+    ap.add_argument('--device', default='auto', help="auto (cuda when there is one), cuda or cpu")
     ap.add_argument('--seed', type=int, default=1)
     ap.add_argument('--name', default=None, help='output name (default from the shape)')
     ap.add_argument('--schedule', choices=['cosine', 'plateau'], default='cosine')
@@ -213,7 +215,10 @@ def main():
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
 
-    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual, args.unshuffle)
+    dev = ('cuda' if torch.cuda.is_available() else 'cpu') if args.device == 'auto' else args.device
+    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual,
+                   args.unshuffle).to(dev)
+    print(f'device: {dev}')
     shapes = net.layer_shapes()
     for n, k, c in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
@@ -286,7 +291,7 @@ def main():
         tot = 0.0
         for i in range(0, args.patches, args.batch):
             idx = order[i:i+args.batch]
-            x = torch.from_numpy(noisy[idx]); y = torch.from_numpy(clean[idx])
+            x = torch.from_numpy(noisy[idx]).to(dev); y = torch.from_numpy(clean[idx]).to(dev)
             loss = F.mse_loss(net(x), y)
             opt.zero_grad(); loss.backward(); opt.step()
             tot += loss.item()*len(idx)

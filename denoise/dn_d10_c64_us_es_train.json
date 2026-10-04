@@ -1,0 +1,133 @@
+{
+  "name": "dn_d10_c64_us_es",
+  "args": {
+    "depth": 10,
+    "channels": 64,
+    "no_skip": false,
+    "residual": false,
+    "unshuffle": true,
+    "patch": 50,
+    "sigma": 25,
+    "epochs": 300,
+    "patches": 20480,
+    "batch": 128,
+    "lr": 0.0005,
+    "threads": 2,
+    "seed": 1,
+    "name": "dn_d10_c64_us_es",
+    "schedule": "plateau",
+    "val_every": 20,
+    "patience": 6,
+    "stop_patience": 15,
+    "min_lr": 2e-05,
+    "resume": true
+  },
+  "layers": [
+    [
+      "conv1",
+      36,
+      64
+    ],
+    [
+      "conv2",
+      576,
+      64
+    ],
+    [
+      "conv3",
+      576,
+      64
+    ],
+    [
+      "conv4",
+      576,
+      64
+    ],
+    [
+      "conv5",
+      576,
+      64
+    ],
+    [
+      "conv6",
+      576,
+      64
+    ],
+    [
+      "conv7",
+      576,
+      64
+    ],
+    [
+      "conv8",
+      576,
+      64
+    ],
+    [
+      "conv9",
+      576,
+      64
+    ],
+    [
+      "conv10",
+      612,
+      4
+    ]
+  ],
+  "board_cycles_per_pixel": 1314.0,
+  "best_val_epoch": 50,
+  "resumed": {
+    "kind": "exact",
+    "from_epoch": 49
+  },
+  "curve": [
+    {
+      "epoch": 45,
+      "loss": 0.00169163216924062,
+      "set12_psnr": 29.574624205795605,
+      "lr": 0.0005,
+      "seconds": 192.9,
+      "val_psnr": 28.13065316877096
+    },
+    {
+      "epoch": 46,
+      "loss": 0.0016283650584227871,
+      "set12_psnr": 29.674832875628056,
+      "lr": 0.0005,
+      "seconds": 361.6,
+      "val_psnr": 28.222048853308156
+    },
+    {
+      "epoch": 47,
+      "loss": 0.0016260628457530403,
+      "set12_psnr": 29.72625451804045,
+      "lr": 0.0005,
+      "seconds": 529.2,
+      "val_psnr": 28.256328152895954
+    },
+    {
+      "epoch": 48,
+      "loss": 0.0016232094167207833,
+      "set12_psnr": 29.6197229418943,
+      "lr": 0.0005,
+      "seconds": 171.5,
+      "val_psnr": 28.236283826055615
+    },
+    {
+      "epoch": 49,
+      "loss": 0.0016214643816056195,
+      "set12_psnr": 29.671070830094212,
+      "lr": 0.0005,
+      "seconds": 334.0,
+      "val_psnr": 28.274897912239943
+    },
+    {
+      "epoch": 50,
+      "loss": 0.0016064133786130696,
+      "set12_psnr": 29.74996684899087,
+      "lr": 0.0005,
+      "seconds": 164.8,
+      "val_psnr": 28.30398539559784
+    }
+  ]
+}
