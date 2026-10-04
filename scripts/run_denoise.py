@@ -84,19 +84,42 @@ def run_layer(L, x, args, tag):
                      mismatches=0, fclk_mhz=sorted(clocks))
 
 
-def denoise(q_in, man, layers, args, tag):
-    """7-bit noisy image (H, W) -> 8-bit denoised image, per-layer records."""
+def denoise(q_in, man, layers, args, tag, start=1):
+    """7-bit noisy image (H, W) -> 8-bit denoised image, per-layer records.
+
+    Each layer's input is saved to <out>/<tag>_act<N>.npy before the layer runs,
+    so a layer that fails on the board can be retried alone (start=N) instead of
+    paying for every layer before it again.
+    """
     h, w = q_in.shape
     q = q_in[None, None].astype(np.uint8)                 # (1, 1, H, W)
+    save = getattr(args, 'out', None)
+    if start > 1:
+        src = args.out/f'{tag}_act{start}.npy'
+        if not src.exists():
+            raise SystemExit(f'{src} is not there, so layer {start} has nothing to resume '
+                             f'from. Run from layer 1.')
+        q = np.load(src)
+        print(f'  resuming at {layers[start-1]["name"]} from {src}')
     recs = []
     for i, L in enumerate(layers):
+        if i+1 < start:
+            continue
+        if save is not None and not args.emulate:
+            np.save(args.out/f'{tag}_act{i+1}.npy', q)
         if i == len(layers)-1 and man['input_channel_appended_to_last_layer']:
             q = np.concatenate([q, q_in[None, None].astype(np.uint8)], 1)
         x = im2col(q)
         if x.shape[1] != L['K']:
             raise SystemExit(f'{L["name"]}: windows are {x.shape[1]} taps, weights {L["K"]}')
         t0 = time.time()
-        acc, info = run_layer(L, x, args, tag)
+        try:
+            acc, info = run_layer(L, x, args, tag)
+        except SystemExit as e:
+            raise SystemExit(f'{e}\n\nRetry from this layer with\n'
+                             f'  --images {tag}.png --start-layer {i+1}\n'
+                             f'which reads {args.out}/{tag}_act{i+1}.npy and skips the '
+                             f'{i} layer(s) that already passed.')
         info.update(name=L['name'], K=L['K'], COUT=L['COUT'], windows=int(x.shape[0]),
                     nonzero_fraction=float((x != 0).mean()), host_seconds=round(time.time()-t0, 1))
         recs.append(info)
@@ -126,6 +149,8 @@ def main():
     ap.add_argument('--mode', type=int, default=1, choices=[0, 1])
     ap.add_argument('--tile', type=int, default=65536,
                     help='windows per board run (65536 = one 256x256 image)')
+    ap.add_argument('--start-layer', type=int, default=1,
+                    help='resume one image at this layer, from the input the failed run saved')
     ap.add_argument('--out', type=Path, default=ROOT/'build'/'denoise_run')
     ap.add_argument('--board-dir', type=Path, default=ROOT/'build'/'denoise_board')
     args = ap.parse_args()
@@ -143,6 +168,8 @@ def main():
         missing = set(want) - {t[0] for t in tests}
         if missing:
             raise SystemExit(f'not in {args.set}: {sorted(missing)}')
+    if args.start_layer > 1 and len(tests) != 1:
+        raise SystemExit('--start-layer resumes one image: give exactly one with --images')
     args.out.mkdir(parents=True, exist_ok=True)
     print(f'{man["model"]}: {len(layers)} layers, {"emulating" if args.emulate else "on the board"}, '
           f'{len(tests)} image(s) of {args.set}, sigma {man["sigma"]}\n')
@@ -152,7 +179,7 @@ def main():
         stem = Path(name).stem
         q_in = np.rint(noisy*QMAX_A).astype(np.uint8)
         print(f'{name} {clean.shape[1]}x{clean.shape[0]}')
-        out, recs = denoise(q_in, man, layers, args, stem)
+        out, recs = denoise(q_in, man, layers, args, stem, args.start_layer)
         p_noisy, p_out = psnr(clean, noisy), psnr(clean, out.astype(np.float32)/255)
         # The quantizer scored this exact image with the same integer model.
         if abs(p_out - int_eval[name]) > 1e-6:
@@ -162,8 +189,9 @@ def main():
         Image.fromarray(np.uint8(np.rint(noisy*255))).save(args.out/f'{stem}_noisy.png')
         Image.fromarray(out).save(args.out/f'{stem}_denoised.png')
         row = dict(image=name, width=clean.shape[1], height=clean.shape[0],
-                   psnr_noisy=p_noisy, psnr_denoised=p_out, layers=recs)
-        if not args.emulate:
+                   psnr_noisy=p_noisy, psnr_denoised=p_out, start_layer=args.start_layer,
+                   layers=recs)
+        if not args.emulate and args.start_layer == 1:
             row['cycles'] = sum(r['cycles'] for r in recs)
         rows.append(row)
         print(f'  PSNR {p_noisy:.2f} dB -> {p_out:.2f} dB   (matches int_eval.json)\n')

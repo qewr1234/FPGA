@@ -751,8 +751,10 @@ proc wm_connect_pl {} {
     global LVL_SHFTR_EN FPGA_RST_CTRL
     wm_slcr_unlock
     catch {ps7_post_config}
-    catch {wm_wr $FPGA_RST_CTRL 0x00000000}
+    # Level shifters on first, then the PL out of reset: the order Linux's
+    # zynq-fpga driver uses (zynq_fpga_ops_write_complete).
     catch {wm_wr $LVL_SHFTR_EN  0x0000000F}
+    catch {wm_wr $FPGA_RST_CTRL 0x00000000}
     after 100
     set lvl "?"
     set rst "?"
@@ -761,6 +763,33 @@ proc wm_connect_pl {} {
     if {$lvl ne "?" && ($lvl & 0xf) == 0xf && $rst eq "0"} { return "" }
     if {$lvl ne "?" && ($lvl & 0xf) != 0xf} {
         return "level shifters still read [wm_hex $lvl] after being written to 0xF"
+    }
+    return ""
+}
+
+# Before a full configuration, hold the PL in reset and cut the PL-to-PS level
+# shifters, so nothing the fabric drives while it is being configured reaches the
+# PS. This is what Linux's zynq-fpga driver does (zynq_fpga_ops_write_init:
+# FPGA_RST_CTRL = 0xF, LVL_SHFTR_EN = 0x0 then 0xA) and wm_connect_pl undoes it
+# afterwards the same way the driver does.
+#
+# Without it the DMA's AXI master on S_AXI_HP0 is live, through the shifters,
+# while the bitstream loads. On this board the configuration DMA then hung --
+# running, no error, not one beat delivered -- on the sixth consecutive session
+# of both the CIFAR run and the denoiser run, with five clean sessions before
+# each. A glitch reaching the HP port during configuration fits that; it is the
+# standard precaution either way.
+proc wm_pl_quiesce {} {
+    global LVL_SHFTR_EN FPGA_RST_CTRL
+    catch {wm_wr $FPGA_RST_CTRL 0x0000000F}
+    catch {wm_wr $LVL_SHFTR_EN  0x00000000}
+    catch {wm_wr $LVL_SHFTR_EN  0x0000000A}
+    set rst "?" ; set lvl "?"
+    catch {set rst [wm_rd $FPGA_RST_CTRL]}
+    catch {set lvl [wm_rd $LVL_SHFTR_EN]}
+    if {$rst eq "?" || $lvl eq "?" || ($rst & 0xf) != 0xf || ($lvl & 0xf) != 0xa} {
+        return "PL reset / level shifters read [expr {$rst eq "?" ? "?" : [wm_hex $rst]}] /\
+                [expr {$lvl eq "?" ? "?" : [wm_hex $lvl]}] after writing 0xF / 0xA"
     }
     return ""
 }
@@ -847,6 +876,9 @@ if {$lock ne "unlocked"} {
            error, so nothing below would take effect."
 }
 
+set why [wm_pl_quiesce]
+if {$why ne ""} { error "could not quiesce the PL before configuring it: $why" }
+puts "PL quiet : held in reset, PL-to-PS level shifters off while it is configured"
 puts "Configuring the PL..."
 fpga -file $bit
 catch {loadhw -hw $xsa -mem-ranges [list {0x40000000 0xbfffffff}]}
