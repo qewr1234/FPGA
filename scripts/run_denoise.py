@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT/'scripts'))
 sys.path.insert(0, str(ROOT/'denoise'))
 import run_cifar  # noqa: E402
 from run_cifar import board_results, im2col, oracle, requant, run_board, write_board_files  # noqa: E402
-from common import QMAX_A, load_set, psnr, test_noise  # noqa: E402
+from common import QMAX_A, load_set, psnr, test_noise, to_image  # noqa: E402
 
 
 def load_layers(export):
@@ -132,8 +132,11 @@ def denoise(q_in, man, layers, args, tag, start=1):
             q = requant(acc, np.asarray(L['requant'])).reshape(1, h, w, L['COUT']).transpose(0, 3, 1, 2)
             q = np.ascontiguousarray(q)
         else:
-            out = np.clip(np.rint(acc[:, 0]*L['to_pixel']*255), 0, 255).astype(np.uint8)
-    return out.reshape(h, w), recs
+            # (H*W, COUT) -> (COUT, H, W), then the same host arithmetic the
+            # quantizer scored: one clean channel, or the residual sign pair.
+            out = to_image(acc.T.reshape(L['COUT'], h, w), q_in, L['to_pixel'],
+                           man.get('residual_output', False))
+    return out, recs
 
 
 def main():

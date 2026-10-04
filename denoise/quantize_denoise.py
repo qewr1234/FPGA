@@ -20,6 +20,12 @@ Two things are particular to the denoiser:
     scale. One accumulator cannot add taps of two scales, so the ratio is folded
     into the weights of the image taps before they are quantized: the core still
     multiplies integers, and the host still feeds the image's own 7-bit values.
+  * Residual models (train_denoise.py --residual) predict the noise z with a
+    linear last layer. It is exported as two output channels, (w, b) and
+    (-w, -b), so the core returns ReLU(z) and ReLU(-z); the host subtracts them
+    (common.to_image). Both channels have the same largest weight, so they get
+    the same INT8 scale and the difference is the integer z exactly -- the split
+    adds no error of its own.
 
 The PSNR printed for the integer model is what the board will produce, pixel for
 pixel: the last layer's accumulator becomes an 8-bit image on the host.
@@ -35,7 +41,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from common import HERE, QMAX_A, load_set, psnr, test_noise
+from common import HERE, QMAX_A, load_set, psnr, test_noise, to_image
 from train_denoise import Denoiser, board_cycles_per_pixel
 
 QMIN_W, QMAX_W = -128, 127
@@ -51,7 +57,10 @@ def float_layers(net):
     """[(weight (cout,cin,3,3), bias (cout,))] of the plain conv+ReLU network."""
     L = [(net.first.weight.detach().double(), net.first.bias.detach().double())]
     L += [fold_bn(c, b) for c, b in zip(net.mid, net.bn)]
-    L.append((net.last.weight.detach().double(), net.last.bias.detach().double()))
+    w, b = net.last.weight.detach().double(), net.last.bias.detach().double()
+    if getattr(net, 'residual', False):
+        w, b = torch.cat([w, -w]), torch.cat([b, -b])       # the sign pair
+    L.append((w, b))
     return L
 
 
@@ -81,8 +90,8 @@ def im2col(q):
 
 class IntModel:
     """The integer pipeline the board runs, layer by layer."""
-    def __init__(self, layers, skip):
-        self.layers, self.skip = layers, skip
+    def __init__(self, layers, skip, residual=False):
+        self.layers, self.skip, self.residual = layers, skip, residual
 
     def layer(self, i, q):
         """One core pass: (C,H,W) 0..127 in -> INT32 accumulators after ReLU (COUT,H,W)."""
@@ -108,7 +117,7 @@ class IntModel:
             if i < len(self.layers)-1:
                 q = np.clip(np.rint(acc*L['requant'][:, None, None]), 0, QMAX_A).astype(np.int64)
             else:
-                out = np.clip(np.rint(acc[0]*L['to_pixel']*255), 0, 255).astype(np.uint8)
+                out = to_image(acc, q_in, L['to_pixel'], self.residual)
         return out, maps
 
 
@@ -161,13 +170,15 @@ def main():
     args = ap.parse_args()
 
     ck = torch.load(args.ckpt, map_location='cpu', weights_only=False)
-    net = Denoiser(ck['depth'], ck['channels'], ck['skip'])
+    residual = ck.get('residual', False)
+    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual)
     net.load_state_dict(ck['state']); net.eval()
     name = args.ckpt.stem
     out_dir = args.out or HERE/'export'/name
     out_dir.mkdir(parents=True, exist_ok=True)
     sigma = ck['sigma']
     print(f'{name}: depth {ck["depth"]}, {ck["channels"]} channels, skip={ck["skip"]}, '
+          f'residual={residual}, '
           f'sigma {sigma}, float Set12 {ck["set12_psnr"]:.2f} dB at training end')
 
     FL = float_layers(net)
@@ -209,7 +220,8 @@ def main():
         val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
         tried = {}
         for pct in (100.0, 99.999, 99.99, 99.9, 99.5):
-            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip']), ck['skip']), val)
+            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip']), ck['skip'],
+                                           residual), val)
             print(f'  range percentile {pct:<7} validation PSNR {tried[pct]:.3f} dB')
         pct = max(tried, key=tried.get)
         print(f'  -> percentile {pct}')
@@ -223,7 +235,11 @@ def main():
         print(f'  {L["name"]}: K={L["K"]:>4} COUT={L["COUT"]:>3}  input scale {L["a_scale_in"]:.6f}  '
               f'worst accumulator {L["worst"]:>11,}')
 
-    model = IntModel(layers, ck['skip'])
+    model = IntModel(layers, ck['skip'], residual)
+    if residual:
+        L = layers[-1]
+        assert L['COUT'] == 2 and np.array_equal(L['wq'][0], -L['wq'][1]) \
+            and L['bq'][0] == -L['bq'][1], 'the sign pair did not quantize symmetrically'
 
     # ---- the convolution form must equal what the board streams (im2col) ----
     q_in = np.rint(calib[0][:24, :20]*QMAX_A).astype(np.int64)
@@ -266,6 +282,7 @@ def main():
                      config=f'{L["name"]}_config.bin', worst_accumulator=L['worst'])
                 for L in layers],
         input_channel_appended_to_last_layer=ck['skip'],
+        residual_output=residual,
         board_cycles_per_pixel=cpp), indent=2), encoding='utf-8')
     (out_dir/'int_eval.json').write_text(json.dumps(res, indent=2), encoding='utf-8')
     print(f'board cost {cpp} cycles/pixel (model, dense): 256x256 {cpp*65536/50e6:.2f} s, '

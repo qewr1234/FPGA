@@ -63,6 +63,23 @@ def psnr(ref, img):
     return 10*np.log10(1.0/mse) if mse > 0 else float('inf')
 
 
+def to_image(acc_last, q_in, to_pixel, residual):
+    """The last layer's INT32 outputs (COUT, H, W) -> the 8-bit image, on the host.
+
+    Shared by the quantizer and the board driver, so the two compute the final
+    image with the same float operations in the same order and agree to the bit.
+
+      residual=False: one channel, the clean image itself:  acc * to_pixel
+      residual=True:  two channels, ReLU(z) and ReLU(-z); their difference is
+                      the noise z, and the clean image is noisy - z * to_pixel
+    """
+    if residual:
+        z = acc_last[0].astype(np.int64) - acc_last[1].astype(np.int64)
+        v = q_in.astype(np.float64)/QMAX_A - z*to_pixel
+        return np.clip(np.rint(v*255), 0, 255).astype(np.uint8)
+    return np.clip(np.rint(acc_last[0]*to_pixel*255), 0, 255).astype(np.uint8)
+
+
 def test_noise(images, sigma, seed=0):
     """The same noisy copies of a test set on every run, for every method."""
     rng = np.random.default_rng(seed)

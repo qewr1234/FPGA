@@ -11,6 +11,9 @@ to fit the hardware, and each is a property of the core, not a choice:
     noise and subtracts it, but noise is signed and the core applies ReLU to
     every output it produces. A clean pixel is never negative, so ReLU costs
     the clean-image output nothing.
+    --residual instead gets DnCNN's noise prediction past the ReLU: the last
+    layer becomes a sign pair, (w, b) and (-w, -b), and the host subtracts the
+    two ReLU outputs (see Denoiser).
   * --skip feeds the noisy image into the last layer as one more input channel
     (concatenation). That gives the network the easy path DnCNN's residual gives
     it -- "copy the input, then correct it" -- without a subtraction the core
@@ -47,9 +50,22 @@ K_MAX, COUT_MAX = 1152, 128      # what the board build provides
 
 
 class Denoiser(nn.Module):
-    def __init__(self, depth=7, channels=32, skip=True):
+    """residual=False: the last layer outputs the clean image through the core's
+    ReLU (optionally with the noisy image as an extra input, skip).
+
+    residual=True: DnCNN's residual learning -- the last layer outputs the noise
+    z, linear, and the clean image is x - z. The core cannot output a signed z,
+    because it applies ReLU to everything. So the last layer is built as TWO
+    output channels with weights (w, b) and (-w, -b): the core returns ReLU(z)
+    and ReLU(-z), and the host takes their difference, which is z exactly --
+    in float, and in integers too, because both channels share one weight scale.
+    The float model below is therefore the plain linear-output DnCNN; nothing
+    about the split needs training."""
+    def __init__(self, depth=7, channels=32, skip=True, residual=False):
         super().__init__()
-        self.depth, self.channels, self.skip = depth, channels, skip
+        if residual:
+            skip = False                    # the residual already carries the input
+        self.depth, self.channels, self.skip, self.residual = depth, channels, skip, residual
         c = channels
         self.first = nn.Conv2d(1, c, 3, padding=1, bias=True)
         self.mid = nn.ModuleList(nn.Conv2d(c, c, 3, padding=1, bias=False) for _ in range(depth-2))
@@ -62,13 +78,16 @@ class Denoiser(nn.Module):
             h = F.relu(bn(conv(h)))
         if self.skip:
             h = torch.cat([h, x], 1)
+        if self.residual:
+            return x - self.last(h)         # ReLU(z) - ReLU(-z) = z, done on the host
         return F.relu(self.last(h))         # the core's ReLU, on the image itself
 
     def layer_shapes(self):
         """(name, K, COUT) per layer, K = 9 * input channels, tap order (ky,kx,cin)."""
         c = self.channels
         s = [('conv1', 9, c)] + [(f'conv{i+2}', 9*c, c) for i in range(self.depth-2)]
-        s.append((f'conv{self.depth}', 9*(c + (1 if self.skip else 0)), 1))
+        # The residual layer's two output channels are the sign pair.
+        s.append((f'conv{self.depth}', 9*(c + (1 if self.skip else 0)), 2 if self.residual else 1))
         return s
 
 
@@ -132,6 +151,8 @@ def main():
     ap.add_argument('--depth', type=int, default=7)
     ap.add_argument('--channels', type=int, default=32)
     ap.add_argument('--no-skip', action='store_true', help='no noisy-image input to the last layer')
+    ap.add_argument('--residual', action='store_true',
+                    help='predict the noise (DnCNN residual learning) through a sign-split last layer')
     ap.add_argument('--sigma', type=float, default=25)
     ap.add_argument('--epochs', type=int, default=40)
     ap.add_argument('--patches', type=int, default=32768, help='random patches per epoch')
@@ -146,11 +167,12 @@ def main():
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
 
-    net = Denoiser(args.depth, args.channels, not args.no_skip)
+    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual)
     shapes = net.layer_shapes()
     for n, k, c in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
-    name = args.name or f'dn_d{args.depth}_c{args.channels}{"" if net.skip else "_noskip"}'
+    name = args.name or (f'dn_d{args.depth}_c{args.channels}' +
+                         ('_res' if net.residual else ('' if net.skip else '_noskip')))
     cpp = board_cycles_per_pixel(shapes)
     print(f'{name}: {sum(p.numel() for p in net.parameters()):,} parameters, '
           f'layers {[(k, c) for _, k, c in shapes]}')
@@ -182,7 +204,7 @@ def main():
         print(f'epoch {ep:>3}/{args.epochs}  loss {tot/args.patches:.6f}  Set12 {val:.2f} dB  '
               f'{time.time()-t0:7.0f}s', flush=True)
         torch.save(dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
-                        skip=net.skip, sigma=args.sigma, epoch=ep, set12_psnr=val),
+                        skip=net.skip, residual=net.residual, sigma=args.sigma, epoch=ep, set12_psnr=val),
                    HERE/f'{name}.pt')
     (HERE/f'{name}_train.json').write_text(json.dumps(dict(
         name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,
