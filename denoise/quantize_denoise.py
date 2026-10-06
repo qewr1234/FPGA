@@ -177,8 +177,11 @@ def main():
     ap.add_argument('--ckpt', type=Path, required=True)
     ap.add_argument('--calib', type=int, default=40, help='training images used for the ranges')
     ap.add_argument('--percentile', default='auto',
-                    help='activation range percentile (100 = max, as for CIFAR), or auto: '
-                         'the best of 100/99.999/99.99/99.9/99.5 on 40 validation images')
+                    help='activation range percentile for every layer (100 = max, as for CIFAR), '
+                         'or auto: the best on 40 validation images, first one value for all '
+                         'layers, then refined layer by layer (see --global-only)')
+    ap.add_argument('--global-only', action='store_true',
+                    help='auto: stop after choosing one percentile for all layers')
     ap.add_argument('--out', type=Path, default=None)
     args = ap.parse_args()
 
@@ -221,29 +224,55 @@ def main():
                 h = F.relu(F.conv2d(h, w, b, padding=1))
     pooled = [np.concatenate(v) for v in samples]
 
-    def scales(pct):
+    def scales(pcts):
+        """Input scales for one percentile per layer (layer 1's input is the 7-bit image)."""
         a = [1.0/QMAX_A]
         for i in range(1, nl):
-            a.append((peak[i] if pct >= 100 else float(np.percentile(pooled[i], pct)))/QMAX_A)
+            p = pcts[i]
+            a.append((peak[i] if p >= 100 else float(np.percentile(pooled[i], p)))/QMAX_A)
         return a
 
     # ---- choose the range percentile on VALIDATION images, never on the tests ----
     # Train400[5::10] -- 40 training images disjoint from the calibration ones.
     # They were seen in training, which flatters every candidate equally; what
     # is compared here is how much each range loses to quantization.
+    #
+    # One value for every layer is not enough when layers differ: on the
+    # unshuffled 64-channel model the PSNR fell from 28.5 to 16 dB between
+    # percentile 99.95 and 99.995, a step the old five-value grid jumped over.
+    # So the grid is finer, and after the best common value each layer in turn
+    # takes the grid value that is best with the others held (one sweep of
+    # coordinate ascent), still scored on the validation images only.
+    GRID = (100.0, 99.999, 99.995, 99.99, 99.98, 99.97, 99.95, 99.9, 99.5)
+    search = []
     if args.percentile == 'auto':
         vrng = np.random.default_rng(11)
         val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
+
+        def score(pcts):
+            return int_psnr(IntModel(quantize(FL, scales(pcts), ck['skip'], n_img),
+                                     ck['skip'], residual, unshuffle), val)
         tried = {}
-        for pct in (100.0, 99.999, 99.99, 99.9, 99.5):
-            tried[pct] = int_psnr(IntModel(quantize(FL, scales(pct), ck['skip'], n_img),
-                                           ck['skip'], residual, unshuffle), val)
-            print(f'  range percentile {pct:<7} validation PSNR {tried[pct]:.3f} dB')
-        pct = max(tried, key=tried.get)
-        print(f'  -> percentile {pct}')
+        for g in GRID:
+            tried[g] = score([g]*nl)
+            print(f'  range percentile {g:<7} validation PSNR {tried[g]:.3f} dB')
+        g = max(tried, key=tried.get)
+        pcts, best = [g]*nl, tried[g]
+        print(f'  -> percentile {g} for every layer')
+        if not args.global_only:
+            for i in range(1, nl):
+                for cand in GRID:
+                    if cand == pcts[i]:
+                        continue
+                    trial = pcts[:i] + [cand] + pcts[i+1:]
+                    v = score(trial)
+                    if v > best:
+                        pcts, best = trial, v
+                search.append(dict(layer=f'conv{i+1}', percentile=pcts[i], validation_psnr=best))
+                print(f'  conv{i+1} input: percentile {pcts[i]:<7} validation PSNR {best:.3f} dB')
     else:
-        pct, tried = float(args.percentile), {}
-    a_scale = scales(pct)
+        pcts, tried = [float(args.percentile)]*nl, {}
+    a_scale = scales(pcts)
     layers = quantize(FL, a_scale, ck['skip'], n_img)
     for L in layers:
         blob = np.concatenate([L['wq'].reshape(-1).astype('<i4'), L['bq'].astype('<i4')])
@@ -290,7 +319,9 @@ def main():
         note='activations unsigned 0..127; weights INT8 per output channel; tap order (ky, kx, cin); '
              'last layer output -> pixel = clip(round(acc*to_pixel*255), 0, 255)',
         model=name, depth=ck['depth'], channels=ck['channels'], skip=ck['skip'], sigma=sigma,
-        percentile=pct, validation_psnr_by_percentile={str(k): v for k, v in tried.items()},
+        percentile_by_layer=pcts[1:],      # layer 1's input is the image, fixed at 1/127
+        validation_psnr_by_percentile={str(k): v for k, v in tried.items()},
+        per_layer_search=search,
         layers=[dict(name=L['name'], K=L['K'], COUT=L['COUT'], a_scale_in=L['a_scale_in'],
                      w_scale=[float(v) for v in L['w_scale']],
                      **({'requant': [float(v) for v in L['requant']]} if 'requant' in L
