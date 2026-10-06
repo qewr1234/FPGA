@@ -136,6 +136,11 @@ def denoise(q_in, man, layers, args, tag, start=1):
         print(msg, flush=True)
         if i < len(layers)-1:
             q = requant(acc, np.asarray(L['requant'])).reshape(1, h, w, L['COUT']).transpose(0, 3, 1, 2)
+            if man.get('maxout', False):
+                # maxout: the core computed 2C maps; channel c goes on as the larger
+                # of maps c and c+C (after requantization, which is monotonic).
+                c = L['COUT']//2
+                q = np.maximum(q[:, :c], q[:, c:])
             q = np.ascontiguousarray(q)
         else:
             # (H*W, COUT) -> (COUT, H, W), then the same host arithmetic the

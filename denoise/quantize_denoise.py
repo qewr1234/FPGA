@@ -92,9 +92,11 @@ def im2col(q, d=1):
 
 class IntModel:
     """The integer pipeline the board runs, layer by layer."""
-    def __init__(self, layers, skip, residual=False, unshuffle=False, dilation=None):
+    def __init__(self, layers, skip, residual=False, unshuffle=False, dilation=None,
+                 maxout=False):
         self.layers, self.skip, self.residual, self.unshuffle = layers, skip, residual, unshuffle
         self.dilation = dilation or [1]*len(layers)
+        self.maxout = maxout
 
     def layer(self, i, q):
         """One core pass: (C,H,W) 0..127 in -> INT32 accumulators after ReLU (COUT,H,W)."""
@@ -124,6 +126,11 @@ class IntModel:
             acc = self.layer(i, q)
             if i < len(self.layers)-1:
                 q = np.clip(np.rint(acc*L['requant'][:, None, None]), 0, QMAX_A).astype(np.int64)
+                if self.maxout:
+                    # Requantization is monotonic per channel, so taking the max
+                    # after it is the max of the two real values, requantized.
+                    c = q.shape[0]//2
+                    q = np.maximum(q[:c], q[c:])
             else:
                 if self.unshuffle:
                     out = shuffle2(to_image(acc, base, L['to_pixel'], False), H, W)
@@ -192,7 +199,8 @@ def main():
     residual = ck.get('residual', False)
     unshuffle = ck.get('unshuffle', False)
     dil = ck.get('dilation') or [1]*ck['depth']        # older checkpoints: plain 3x3
-    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle, dil)
+    maxout = ck.get('maxout', False)
+    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle, dil, maxout)
     n_img = 4 if unshuffle else 1
     net.load_state_dict(ck['state']); net.eval()
     name = args.ckpt.stem
@@ -200,7 +208,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     sigma = ck['sigma']
     print(f'{name}: depth {ck["depth"]}, {ck["channels"]} channels, skip={ck["skip"]}, '
-          f'residual={residual}, dilation {dil}, '
+          f'residual={residual}, dilation {dil}, maxout={maxout}, '
           f'sigma {sigma}, float Set12 {ck["set12_psnr"]:.2f} dB at training end')
 
     FL = float_layers(net)
@@ -226,6 +234,8 @@ def main():
                 if i == nl-1 and ck['skip']:
                     h = torch.cat([h, x0], 1)
                 h = F.relu(F.conv2d(h, w, b, padding=dil[i], dilation=dil[i]))
+                if maxout and i < nl-1:
+                    h = torch.maximum(h[:, :ck['channels']], h[:, ck['channels']:])
     pooled = [np.concatenate(v) for v in samples]
 
     def scales(pcts):
@@ -255,7 +265,7 @@ def main():
 
         def score(pcts):
             return int_psnr(IntModel(quantize(FL, scales(pcts), ck['skip'], n_img),
-                                     ck['skip'], residual, unshuffle, dil), val)
+                                     ck['skip'], residual, unshuffle, dil, maxout), val)
         tried = {}
         for g in GRID:
             tried[g] = score([g]*nl)
@@ -284,7 +294,7 @@ def main():
         print(f'  {L["name"]}: K={L["K"]:>4} COUT={L["COUT"]:>3}  input scale {L["a_scale_in"]:.6f}  '
               f'worst accumulator {L["worst"]:>11,}')
 
-    model = IntModel(layers, ck['skip'], residual, unshuffle, dil)
+    model = IntModel(layers, ck['skip'], residual, unshuffle, dil, maxout)
     if residual:
         L = layers[-1]
         assert L['COUT'] == 2 and np.array_equal(L['wq'][0], -L['wq'][1]) \
@@ -336,6 +346,7 @@ def main():
         input_channel_appended_to_last_layer=ck['skip'],
         residual_output=residual,
         unshuffle=unshuffle,
+        maxout=maxout,       # hidden layers output 2C; the host keeps max(c, c+C)
         board_cycles_per_pixel=cpp), indent=2), encoding='utf-8')
     (out_dir/'int_eval.json').write_text(json.dumps(res, indent=2), encoding='utf-8')
     print(f'board cost {cpp:.0f} cycles/pixel (model, dense): 256x256 {cpp*65536/50e6:.2f} s, '
