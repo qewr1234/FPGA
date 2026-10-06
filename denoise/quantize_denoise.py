@@ -76,23 +76,25 @@ def from_tap_order(wk, cin):
     return wk.reshape(cout, 3, 3, cin).permute(0, 3, 1, 2)
 
 
-def im2col(q):
-    """(C, H, W) integer map -> (H*W, 9C) windows in (ky, kx, cin) order, zero padded.
+def im2col(q, d=1):
+    """(C, H, W) integer map -> (H*W, 9C) windows in (ky, kx, cin) order, zero padded;
+    tap (ky, kx) d*ky, d*kx pixels away for dilation d.
 
     This is the layout the board driver streams. Used here only to prove that
     the convolution form of the integer model is the same computation.
     """
     c, h, w = q.shape
-    p = np.zeros((c, h+2, w+2), q.dtype)
-    p[:, 1:h+1, 1:w+1] = q
-    cols = np.stack([p[:, ky:ky+h, kx:kx+w] for ky in range(3) for kx in range(3)], 0)
+    p = np.zeros((c, h+2*d, w+2*d), q.dtype)
+    p[:, d:d+h, d:d+w] = q
+    cols = np.stack([p[:, d*ky:d*ky+h, d*kx:d*kx+w] for ky in range(3) for kx in range(3)], 0)
     return cols.transpose(2, 3, 0, 1).reshape(h*w, 9*c)
 
 
 class IntModel:
     """The integer pipeline the board runs, layer by layer."""
-    def __init__(self, layers, skip, residual=False, unshuffle=False):
+    def __init__(self, layers, skip, residual=False, unshuffle=False, dilation=None):
         self.layers, self.skip, self.residual, self.unshuffle = layers, skip, residual, unshuffle
+        self.dilation = dilation or [1]*len(layers)
 
     def layer(self, i, q):
         """One core pass: (C,H,W) 0..127 in -> INT32 accumulators after ReLU (COUT,H,W)."""
@@ -100,8 +102,9 @@ class IntModel:
         w = torch.from_numpy(L['wq']).double()                 # (cout, K)
         x = torch.from_numpy(q.astype(np.float64))[None]
         # Integers below 2**53 are exact in float64, so this IS integer arithmetic.
+        d = self.dilation[i]
         acc = F.conv2d(x, from_tap_order(w, q.shape[0]), torch.from_numpy(L['bq']).double(),
-                       padding=1)[0]
+                       padding=d, dilation=d)[0]
         acc = torch.clamp(acc, min=0).numpy()
         assert np.all(acc == np.rint(acc)) and acc.max() < 2**31
         return acc.astype(np.int64)
@@ -188,7 +191,8 @@ def main():
     ck = torch.load(args.ckpt, map_location='cpu', weights_only=False)
     residual = ck.get('residual', False)
     unshuffle = ck.get('unshuffle', False)
-    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle)
+    dil = ck.get('dilation') or [1]*ck['depth']        # older checkpoints: plain 3x3
+    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle, dil)
     n_img = 4 if unshuffle else 1
     net.load_state_dict(ck['state']); net.eval()
     name = args.ckpt.stem
@@ -196,7 +200,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     sigma = ck['sigma']
     print(f'{name}: depth {ck["depth"]}, {ck["channels"]} channels, skip={ck["skip"]}, '
-          f'residual={residual}, '
+          f'residual={residual}, dilation {dil}, '
           f'sigma {sigma}, float Set12 {ck["set12_psnr"]:.2f} dB at training end')
 
     FL = float_layers(net)
@@ -221,7 +225,7 @@ def main():
                 samples[i].append(rng.choice(v, size=min(20000, v.size), replace=False))
                 if i == nl-1 and ck['skip']:
                     h = torch.cat([h, x0], 1)
-                h = F.relu(F.conv2d(h, w, b, padding=1))
+                h = F.relu(F.conv2d(h, w, b, padding=dil[i], dilation=dil[i]))
     pooled = [np.concatenate(v) for v in samples]
 
     def scales(pcts):
@@ -251,7 +255,7 @@ def main():
 
         def score(pcts):
             return int_psnr(IntModel(quantize(FL, scales(pcts), ck['skip'], n_img),
-                                     ck['skip'], residual, unshuffle), val)
+                                     ck['skip'], residual, unshuffle, dil), val)
         tried = {}
         for g in GRID:
             tried[g] = score([g]*nl)
@@ -280,7 +284,7 @@ def main():
         print(f'  {L["name"]}: K={L["K"]:>4} COUT={L["COUT"]:>3}  input scale {L["a_scale_in"]:.6f}  '
               f'worst accumulator {L["worst"]:>11,}')
 
-    model = IntModel(layers, ck['skip'], residual, unshuffle)
+    model = IntModel(layers, ck['skip'], residual, unshuffle, dil)
     if residual:
         L = layers[-1]
         assert L['COUT'] == 2 and np.array_equal(L['wq'][0], -L['wq'][1]) \
@@ -290,7 +294,7 @@ def main():
     q_in = np.rint(calib[0][:24, :20]*QMAX_A).astype(np.int64)
     _, maps = model.run(q_in)
     for i, L in enumerate(layers):
-        cols = im2col(maps[i])
+        cols = im2col(maps[i], dil[i])
         ref = np.maximum(0, cols @ L['wq'].T + L['bq'])          # (H*W, cout)
         got = model.layer(i, maps[i]).reshape(L['COUT'], -1).T
         assert np.array_equal(ref, got), f'conv{i+1}: conv form differs from im2col form'
@@ -322,12 +326,13 @@ def main():
         percentile_by_layer=pcts[1:],      # layer 1's input is the image, fixed at 1/127
         validation_psnr_by_percentile={str(k): v for k, v in tried.items()},
         per_layer_search=search,
-        layers=[dict(name=L['name'], K=L['K'], COUT=L['COUT'], a_scale_in=L['a_scale_in'],
+        layers=[dict(name=L['name'], K=L['K'], COUT=L['COUT'], dilation=dil[i],
+                     a_scale_in=L['a_scale_in'],
                      w_scale=[float(v) for v in L['w_scale']],
                      **({'requant': [float(v) for v in L['requant']]} if 'requant' in L
                         else {'to_pixel': L['to_pixel']}),
                      config=f'{L["name"]}_config.bin', worst_accumulator=L['worst'])
-                for L in layers],
+                for i, L in enumerate(layers)],
         input_channel_appended_to_last_layer=ck['skip'],
         residual_output=residual,
         unshuffle=unshuffle,

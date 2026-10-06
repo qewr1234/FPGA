@@ -27,6 +27,12 @@ at scales 1, 0.9, 0.8, 0.7, with the 8 flips/rotations, sigma 25, MSE, Adam.
 DnCNN draws ~240k patches per epoch; this draws --patches fresh random ones per
 epoch (default 32k) so an epoch fits a CPU.
 
+--dilation 1,2,3,4,3,2,1 makes layer i a 3x3 convolution with dilation d_i
+(IRCNN, Zhang et al. 2017): the nine taps are d_i pixels apart. K, and so the
+board's cycles, do not change -- the host builds the windows (im2col) and the
+core sees K values either way -- but the receptive field grows from
+1 + 2*depth to 1 + 2*sum(d_i).
+
 Writes denoise/<name>.pt and denoise/<name>_train.json (curve, Set12 PSNR).
 
 Two ways to decide how long to train:
@@ -73,8 +79,13 @@ class Denoiser(nn.Module):
     in float, and in integers too, because both channels share one weight scale.
     The float model below is therefore the plain linear-output DnCNN; nothing
     about the split needs training."""
-    def __init__(self, depth=7, channels=32, skip=True, residual=False, unshuffle=False):
+    def __init__(self, depth=7, channels=32, skip=True, residual=False, unshuffle=False,
+                 dilation=None):
         super().__init__()
+        self.dilation = [int(d) for d in (dilation or [1]*depth)]
+        assert len(self.dilation) == depth and min(self.dilation) >= 1, \
+            f'need {depth} dilations >= 1, got {self.dilation}'
+        dl = self.dilation
         if residual:
             skip = False                    # the residual already carries the input
         assert not (residual and unshuffle), 'residual with unshuffle is not implemented'
@@ -86,10 +97,12 @@ class Denoiser(nn.Module):
         # 3x3 tap covering twice the distance.
         self.img_ch = 4 if unshuffle else 1
         c = channels
-        self.first = nn.Conv2d(self.img_ch, c, 3, padding=1, bias=True)
-        self.mid = nn.ModuleList(nn.Conv2d(c, c, 3, padding=1, bias=False) for _ in range(depth-2))
+        self.first = nn.Conv2d(self.img_ch, c, 3, padding=dl[0], dilation=dl[0], bias=True)
+        self.mid = nn.ModuleList(nn.Conv2d(c, c, 3, padding=dl[i+1], dilation=dl[i+1], bias=False)
+                                 for i in range(depth-2))
         self.bn = nn.ModuleList(nn.BatchNorm2d(c) for _ in range(depth-2))
-        self.last = nn.Conv2d(c + (self.img_ch if skip else 0), self.img_ch, 3, padding=1, bias=True)
+        self.last = nn.Conv2d(c + (self.img_ch if skip else 0), self.img_ch, 3,
+                              padding=dl[-1], dilation=dl[-1], bias=True)
 
     def forward(self, x):
         if self.unshuffle:
@@ -119,6 +132,10 @@ class Denoiser(nn.Module):
 
     def windows_per_pixel(self):
         return 0.25 if self.unshuffle else 1.0
+
+    def receptive_field(self):
+        """Width in input pixels that one output pixel depends on."""
+        return (1 + 2*sum(self.dilation))*(2 if self.unshuffle else 1)
 
 
 def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=1.0):
@@ -190,6 +207,8 @@ def main():
                     help='predict the noise (DnCNN residual learning) through a sign-split last layer')
     ap.add_argument('--unshuffle', action='store_true',
                     help='FFDNet-style: run on the four 2x2 phases at half resolution')
+    ap.add_argument('--dilation', default=None,
+                    help='comma separated dilation per layer, e.g. 1,2,3,4,3,2,1 (default all 1)')
     ap.add_argument('--patch', type=int, default=40, help='training patch size (even)')
     ap.add_argument('--sigma', type=float, default=25)
     ap.add_argument('--epochs', type=int, default=40)
@@ -216,17 +235,20 @@ def main():
     rng = np.random.default_rng(args.seed)
 
     dev = ('cuda' if torch.cuda.is_available() else 'cpu') if args.device == 'auto' else args.device
+    dil = [int(v) for v in args.dilation.split(',')] if args.dilation else None
     net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual,
-                   args.unshuffle).to(dev)
+                   args.unshuffle, dil).to(dev)
     print(f'device: {dev}')
     shapes = net.layer_shapes()
     for n, k, c in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
     name = args.name or (f'dn_d{args.depth}_c{args.channels}' + ('_us' if net.unshuffle else '') +
+                         ('_dil' if max(net.dilation) > 1 else '') +
                          ('_res' if net.residual else ('' if net.skip else '_noskip')))
     cpp = board_cycles_per_pixel(shapes, windows_per_pixel=net.windows_per_pixel())
     print(f'{name}: {sum(p.numel() for p in net.parameters()):,} parameters, '
-          f'layers {[(k, c) for _, k, c in shapes]}')
+          f'layers {[(k, c) for _, k, c in shapes]}, dilation {net.dilation}, '
+          f'receptive field {net.receptive_field()}x{net.receptive_field()}')
     print(f'board cost {cpp:.0f} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
 
     train_imgs = load_set('Train400')
@@ -300,7 +322,7 @@ def main():
                    seconds=round(time.time()-t0, 1))
         ckpt = dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
                     skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
-                    sigma=args.sigma, epoch=ep, set12_psnr=t12)
+                    dilation=net.dilation, sigma=args.sigma, epoch=ep, set12_psnr=t12)
         if val is None:
             sched.step()
             torch.save(ckpt, HERE/f'{name}.pt')

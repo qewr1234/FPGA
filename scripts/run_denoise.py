@@ -114,7 +114,8 @@ def denoise(q_in, man, layers, args, tag, start=1):
             np.save(args.out/f'{tag}_act{i+1}.npy', q)
         if i == len(layers)-1 and man['input_channel_appended_to_last_layer']:
             q = np.concatenate([q, base[None]], 1)
-        x = im2col(q)
+        # A dilated layer's windows take taps d pixels apart; the core is not told.
+        x = im2col(q, dilation=L.get('dilation', 1))
         if x.shape[1] != L['K']:
             raise SystemExit(f'{L["name"]}: windows are {x.shape[1]} taps, weights {L["K"]}')
         t0 = time.time()
