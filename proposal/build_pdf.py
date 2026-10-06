@@ -1,6 +1,7 @@
-"""PROPOSAL_KO.md -> PROPOSAL_KO.pdf (A4), through HTML and headless Chromium.
+"""A Korean Markdown file -> PDF beside it (A4), through HTML and headless Chromium.
 
-    python proposal/build_pdf.py [--chrome PATH]
+    python proposal/build_pdf.py [--chrome PATH]                 # PROPOSAL_KO.md
+    python proposal/build_pdf.py --src iweict2026/PAPER_KO.md
 
 Needs the `markdown` package and a Chromium/Chrome binary. Korean text uses
 Nanum Gothic, then Malgun Gothic, then whatever sans-serif the system has.
@@ -23,6 +24,7 @@ h1 + p { color: #44505c; margin-top: 0; }
 h2 { font-size: 13pt; border-bottom: 1.5px solid #c9d1d9; padding-bottom: 3pt;
      margin-top: 18pt; break-after: avoid; }
 h3 { font-size: 11pt; margin-top: 12pt; break-after: avoid; }
+p:has(+ table) { break-after: avoid; }   /* keep a caption with its table */
 table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 9.2pt;
         break-inside: avoid; }
 th, td { border: 1px solid #c9d1d9; padding: 3.5pt 6pt; vertical-align: top; }
@@ -52,14 +54,16 @@ def find_chrome(explicit):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--chrome')
+    ap.add_argument('--src', type=Path, default=HERE/'PROPOSAL_KO.md')
     args = ap.parse_args()
-    src = HERE/'PROPOSAL_KO.md'
+    src = args.src.resolve()
     body = markdown.markdown(src.read_text(encoding='utf-8'), extensions=['tables'])
-    html = HERE/'PROPOSAL_KO.html'
+    # Beside the source, so relative image paths resolve as they do in the Markdown.
+    html = src.with_suffix('.html')
     html.write_text(f'<!doctype html><html lang="ko"><head><meta charset="utf-8">'
-                    f'<title>제안서</title><style>{CSS}</style></head><body>{body}</body></html>',
+                    f'<title>{src.stem}</title><style>{CSS}</style></head><body>{body}</body></html>',
                     encoding='utf-8')
-    pdf = HERE/'PROPOSAL_KO.pdf'
+    pdf = src.with_suffix('.pdf')
     subprocess.run([find_chrome(args.chrome), '--headless', '--disable-gpu', '--no-sandbox',
                     '--no-pdf-header-footer', f'--print-to-pdf={pdf}', html.as_uri()],
                    check=True, capture_output=True)
