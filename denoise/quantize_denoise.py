@@ -257,7 +257,9 @@ def main():
     # So the grid is finer, and after the best common value each layer in turn
     # takes the grid value that is best with the others held (one sweep of
     # coordinate ascent), still scored on the validation images only.
-    GRID = (100.0, 99.999, 99.995, 99.99, 99.98, 99.97, 99.95, 99.9, 99.5)
+    # 99 and 98 were added when a maxout model chose 99.5, the lowest value then
+    # offered, on three layers.
+    GRID = (100.0, 99.999, 99.995, 99.99, 99.98, 99.97, 99.95, 99.9, 99.5, 99.0, 98.0)
     search = []
     if args.percentile == 'auto':
         vrng = np.random.default_rng(11)
