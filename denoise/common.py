@@ -63,10 +63,15 @@ def psnr(ref, img):
     return 10*np.log10(1.0/mse) if mse > 0 else float('inf')
 
 
-def pad_even(img):
-    """Repeat the last row/column so both sides are even (BSD68 is 481x321)."""
+def pad_mult(img, m):
+    """Repeat the last row/column until both sides are multiples of m."""
     h, w = img.shape
-    return np.pad(img, ((0, h % 2), (0, w % 2)), mode='edge')
+    return np.pad(img, ((0, (-h) % m), (0, (-w) % m)), mode='edge')
+
+
+def pad_even(img):
+    """Both sides even (BSD68 is 481x321)."""
+    return pad_mult(img, 2)
 
 
 def unshuffle2(img):
@@ -85,6 +90,17 @@ def shuffle2(sub, h, w):
     for k in range(4):
         out[k//2::2, k % 2::2] = sub[k]
     return out[:h, :w]
+
+
+def shuffle2c(sub):
+    """(4C, h, w) -> (C, 2h, 2w): channel 4c + 2i + j goes to [c, i::2, j::2], the
+    layout of torch.nn.functional.pixel_shuffle(x, 2). A network's up layer
+    outputs 4C channels at one level and the host places them one level up."""
+    c4, h, w = sub.shape
+    out = np.empty((c4//4, 2*h, 2*w), sub.dtype)
+    for k in range(4):
+        out[:, k//2::2, k % 2::2] = sub[k::4]
+    return out
 
 
 def to_image(acc_last, q_in, to_pixel, residual):

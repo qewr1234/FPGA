@@ -26,23 +26,22 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from common import HERE, QMAX_A, load_set, test_noise
-from train_denoise import (Denoiser, FoldedQ, Patches, board_cycles_per_pixel, evaluate,
-                           float_layers, noisy_batch)
+from common import HERE, QMAX_A, add_noise, load_set, test_noise
+from quantize_denoise import load_model
+from train_denoise import FoldedQ, Patches, board_cycles_per_pixel, evaluate, float_layers, graph_shapes, noisy_batch
 
 
 def calibrate(model, images, pct=99.99, seed=7):
-    """Input scale per layer from the float folded model: percentile of the
-    features entering each layer on the given noisy images (the image's own
-    scale is 1/127)."""
+    """Output scale per node (but the last) from the float folded model: a
+    percentile of each map on the given noisy images."""
     nl = len(model.W)
     model.quant, model.record = False, [[] for _ in range(nl)]
     with torch.no_grad():
         for x in images:
             model(torch.from_numpy(x)[None, None])
     rng = np.random.default_rng(seed)
-    a = [1.0/QMAX_A]
-    for i in range(1, nl):
+    a = []
+    for i in range(nl-1):
         v = torch.cat([f.reshape(-1) for f in model.record[i]]).numpy()
         v = rng.choice(v, size=min(400000, v.size), replace=False)
         a.append(float(np.percentile(v, pct))/QMAX_A)
@@ -82,43 +81,42 @@ def main():
     name = args.name or f'{args.ckpt.stem}_qat'
     patch = args.patch or (50 if unshuffle else 40)
 
+    src_net, spec = load_model(ck)
+    layers = [(w.float(), b.float()) for w, b in float_layers(src_net)]
+    nl = len(layers)
     if ck.get('folded'):
-        layers, a_scale = ck['layers'], list(ck['a_scale'])
-        src = 'the folded checkpoint'
+        a_out, src = src_net.scales(), 'the folded checkpoint'
     else:
-        net = Denoiser(ck['depth'], ck['channels'], ck['skip'], False, unshuffle, dil, maxout)
-        net.load_state_dict(ck['state']); net.eval()
-        layers = [(w.float(), b.float()) for w, b in float_layers(net)]
+        a_out = None
         man = args.scales or HERE/'export'/args.ckpt.stem/'manifest.json'
         if man.exists():
-            m = json.loads(man.read_text())
-            a_scale = [L['a_scale_in'] for L in m['layers']]
+            m = json.loads(man.read_text())['layers']
+            # Output scale per node: written by the graph quantizer; an older
+            # (chain) manifest has it as the next layer's input scale.
+            a_out = ([L['a_scale_out'] for L in m[:-1]] if 'a_scale_out' in m[0]
+                     else [L['a_scale_in'] for L in m[1:]])
             src = str(man)
-        else:
-            a_scale = None
-    model = FoldedQ(layers, a_scale or [1.0/QMAX_A]*len(layers), ck['channels'], ck['skip'],
-                    unshuffle, dil, maxout)
+    model = FoldedQ(spec, layers, a_out or [1.0/QMAX_A]*(nl-1))
 
     train_imgs = load_set('Train400')
     held = set(range(0, len(train_imgs), args.val_every))
     val = test_noise([im for i, im in enumerate(train_imgs) if i in held], sigma, seed=1)
     train_imgs = [im for i, im in enumerate(train_imgs) if i not in held]
     tests = test_noise(load_set('Set12'), sigma, seed=0)
-    if a_scale is None:
-        from common import add_noise
+    if a_out is None:
         crng = np.random.default_rng(7)
         calib = [add_noise(c, sigma, crng) for _, c in train_imgs[::10]]
-        a_scale = calibrate(model, calib)
+        a_out = calibrate(model, calib)
         with torch.no_grad():
-            for p, v in zip(model.a, a_scale[1:]):
+            for p, v in zip(model.a, a_out):
                 p.fill_(v)
         src = 'a 99.99th-percentile calibration pass'
-    shapes = Denoiser(ck['depth'], ck['channels'], ck['skip'], False, unshuffle, dil,
-                      maxout).layer_shapes()
-    cpp = board_cycles_per_pixel(shapes, windows_per_pixel=0.25 if unshuffle else 1.0)
+    shapes = graph_shapes(spec)
+    cpp = board_cycles_per_pixel(shapes)
     print(f'{name}: from {args.ckpt}, scales from {src}')
-    print(f'  depth {ck["depth"]}, {ck["channels"]} channels, maxout={maxout}, dilation {dil}, '
-          f'sigma {sigma}, board cost {cpp:.0f} cycles/pixel')
+    print(f'  {nl} nodes, ' + (f'unet {spec["unet"]}' if 'unet' in spec else
+                               f'{ck["channels"]} channels, maxout={maxout}, dilation {dil}')
+          + f', sigma {sigma}, board cost {cpp:.0f} cycles/pixel')
 
     model.quant = False
     f_val, f_set12 = evaluate(model, val), evaluate(model, tests)
@@ -134,7 +132,8 @@ def main():
     last = HERE/f'{name}_last.pt'
 
     def folded_ckpt(ep, set12, v):
-        return dict(folded=True, layers=model.layers(), a_scale=model.scales(),
+        return dict(folded=True, graph=spec, layers=model.layers(), a_out=model.scales(),
+                    arch=ck.get('arch', 'chain'), unet=ck.get('unet'),
                     depth=ck['depth'], channels=ck['channels'], skip=ck['skip'], residual=False,
                     unshuffle=unshuffle, dilation=dil, maxout=maxout, sigma=sigma, epoch=ep,
                     set12_psnr=set12, val_psnr=v,

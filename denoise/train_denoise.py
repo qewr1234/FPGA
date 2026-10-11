@@ -141,16 +141,23 @@ class Denoiser(nn.Module):
         c = self.channels
         return torch.maximum(h[:, :c], h[:, c:])
 
+    def graph(self):
+        """The chain as a graph (see graph_shapes): every layer reads the one
+        before it, the last also the image when skip."""
+        c, g, m = self.channels, self.img_ch, 2 if self.maxout else 1
+        wpp, post = self.windows_per_pixel(), 'maxout' if self.maxout else 'none'
+        nodes = [node('conv1', ['image'], m*c, self.dilation[0], post=post, wpp=wpp, bias=True)]
+        for i in range(self.depth-2):
+            nodes.append(node(f'conv{i+2}', [f'conv{i+1}'], m*c, self.dilation[i+1], post=post, wpp=wpp))
+        nodes.append(node(f'conv{self.depth}', [f'conv{self.depth-1}'] + (['image'] if self.skip else []),
+                          2 if self.residual else g, self.dilation[-1], wpp=wpp, bias=True))
+        return dict(img_ch=g, unshuffle=self.unshuffle, pad_to=2 if self.unshuffle else 1,
+                    residual=self.residual, nodes=nodes)
+
     def layer_shapes(self):
-        """(name, K, COUT) per layer, K = 9 * input channels, tap order (ky,kx,cin).
-        COUT is what the core computes: 2C on a maxout layer, of which C go on."""
-        c, g = self.channels, self.img_ch
-        m = 2 if self.maxout else 1
-        s = [('conv1', 9*g, m*c)] + [(f'conv{i+2}', 9*c, m*c) for i in range(self.depth-2)]
-        # The residual layer's two output channels are the sign pair.
-        s.append((f'conv{self.depth}', 9*(c + (g if self.skip else 0)),
-                  2 if self.residual else g))
-        return s
+        """(name, K, COUT, windows per pixel) per layer. COUT is what the core
+        computes: 2C on a maxout layer, of which C go on."""
+        return graph_shapes(self.graph())
 
     def windows_per_pixel(self):
         return 0.25 if self.unshuffle else 1.0
@@ -158,6 +165,141 @@ class Denoiser(nn.Module):
     def receptive_field(self):
         """Width in input pixels that one output pixel depends on."""
         return (1 + 2*sum(self.dilation))*(2 if self.unshuffle else 1)
+
+
+# ------------------------------------------------------------ layer graphs ---
+# A model is a list of nodes run in order. Each node is one core pass: a window
+# of kh x kw taps (dilated, strided) over the CONCATENATION of its input maps,
+# COUT output channels, bias, ReLU. The host then requantizes the outputs to
+# 7-bit codes (one scale per node) and applies the node's post-op:
+#   none      the map is the COUT codes
+#   maxout    channel c of the map is max(code c, code c + COUT/2)
+#   shuffle2  the COUT codes are placed one level up (pixel shuffle), COUT/4
+#             channels at twice the height and width; the node's output
+#             channels are quantized in groups of four so each map channel
+#             keeps one scale
+# The image (its 2x2 phases when unshuffle) is the map 'image', scale 1/127.
+# Everything but the core pass is host indexing, so a map can feed several
+# nodes (a U-Net skip), a node can read several maps (concatenation), and a
+# 2x2 stride-2 window is a downsampling that costs 4*C taps, not a layer.
+def node(name, inputs, cout, dilation=1, kh=3, kw=3, stride=1, post='none', wpp=1.0, bias=False):
+    return dict(name=name, inputs=list(inputs), kh=kh, kw=kw, stride=stride, dilation=int(dilation),
+                cout=int(cout), post=post, wpp=float(wpp), bias=bool(bias))
+
+
+def node_padding(n):
+    """Zero padding that keeps the size for odd kernels; none for even (strided) ones."""
+    return n['dilation']*(n['kh']//2) if n['kh'] % 2 else 0
+
+
+def map_channels(spec):
+    """Channels of every map: the image, and each node's output after its post-op."""
+    ch = {'image': spec['img_ch']}
+    for n in spec['nodes']:
+        ch[n['name']] = n['cout']//{'none': 1, 'maxout': 2, 'shuffle2': 4}[n['post']]
+    return ch
+
+
+def graph_shapes(spec):
+    """(name, K, COUT, windows per pixel) per node; K = kh*kw * input channels."""
+    ch = map_channels(spec)
+    return [(n['name'], n['kh']*n['kw']*sum(ch[m] for m in n['inputs']), n['cout'], n['wpp'])
+            for n in spec['nodes']]
+
+
+def unet_spec(c1=64, c2=64, enc=3, body=11, dec=2, up_ch=32, dilation=None, maxout_l1=False,
+              maxout_l2=False):
+    """Two-level U-Net on the unshuffled image. Level 1 is the four 2x2 phases
+    (1/4 windows per pixel), level 2 a 2x2 stride-2 window below it (1/16).
+    enc 3x3 layers at level 1, a stride-2 node down, body 3x3 layers at level 2,
+    an up node whose 4*up_ch outputs are pixel-shuffled to up_ch channels at
+    level 1, dec 3x3 layers at level 1 reading [up, last encoder], and an
+    output node reading [last decoder, image]. dilation: one value per 3x3
+    node in order (enc, body, dec, out)."""
+    m1, m2 = 2 if maxout_l1 else 1, 2 if maxout_l2 else 1
+    p1, p2 = 'maxout' if maxout_l1 else 'none', 'maxout' if maxout_l2 else 'none'
+    n3 = enc + body + dec + 1
+    dil = [int(d) for d in (dilation or [1]*n3)]
+    assert len(dil) == n3, f'need {n3} dilations (enc {enc} + body {body} + dec {dec} + out), got {len(dil)}'
+    d = iter(dil)
+    nodes = [node('e1', ['image'], m1*c1, next(d), post=p1, wpp=0.25, bias=True)]
+    for i in range(2, enc+1):
+        nodes.append(node(f'e{i}', [f'e{i-1}'], m1*c1, next(d), post=p1, wpp=0.25))
+    nodes.append(node('down', [f'e{enc}'], c2, 1, kh=2, kw=2, stride=2, wpp=1/16))
+    prev = 'down'
+    for i in range(1, body+1):
+        nodes.append(node(f'b{i}', [prev], m2*c2, next(d), post=p2, wpp=1/16)); prev = f'b{i}'
+    nodes.append(node('up', [prev], 4*up_ch, 1, post='shuffle2', wpp=1/16))
+    prev = 'up'
+    for i in range(1, dec+1):
+        nodes.append(node(f'r{i}', [prev] + ([f'e{enc}'] if i == 1 else []), m1*c1, next(d), post=p1,
+                          wpp=0.25)); prev = f'r{i}'
+    nodes.append(node('out', [prev, 'image'], 4, next(d), wpp=0.25, bias=True))
+    return dict(img_ch=4, unshuffle=True, pad_to=4, residual=False, nodes=nodes,
+                unet=dict(c1=c1, c2=c2, enc=enc, body=body, dec=dec, up_ch=up_ch, dilation=dil,
+                          maxout_l1=maxout_l1, maxout_l2=maxout_l2))
+
+
+class GraphDenoiser(nn.Module):
+    """A float model of any graph: conv per node, BatchNorm on the nodes without
+    a bias (as the chain's hidden layers), ReLU everywhere (the core's), the
+    post-ops on the host side done in float."""
+    def __init__(self, spec):
+        super().__init__()
+        self.spec = spec
+        ch = map_channels(spec)
+        self.conv = nn.ModuleDict()
+        self.bn = nn.ModuleDict()
+        for n in spec['nodes']:
+            cin = sum(ch[m] for m in n['inputs'])
+            self.conv[n['name']] = nn.Conv2d(cin, n['cout'], (n['kh'], n['kw']), stride=n['stride'],
+                                             padding=node_padding(n), dilation=n['dilation'],
+                                             bias=n['bias'])
+            if not n['bias']:
+                self.bn[n['name']] = nn.BatchNorm2d(n['cout'])
+        self.residual, self.unshuffle, self.img_ch = spec['residual'], spec['unshuffle'], spec['img_ch']
+        assert not self.residual
+
+    def graph(self):
+        return self.spec
+
+    def layer_shapes(self):
+        return graph_shapes(self.spec)
+
+    def windows_per_pixel(self):
+        return min(n['wpp'] for n in self.spec['nodes'])
+
+    def receptive_field(self):
+        return 0            # not a chain; the training patch is chosen by hand
+
+    def forward(self, x):
+        hh, ww = x.shape[-2:]
+        m = self.spec['pad_to']
+        if m > 1:
+            x = F.pad(x, (0, (-ww) % m, 0, (-hh) % m), mode='replicate')   # = common.pad_mult
+        if self.unshuffle:
+            x = F.pixel_unshuffle(x, 2)
+        maps = {'image': x}
+        for n in self.spec['nodes']:
+            h = self.conv[n['name']](torch.cat([maps[k] for k in n['inputs']], 1))
+            if n['name'] in self.bn:
+                h = self.bn[n['name']](h)
+            h = F.relu(h)
+            maps[n['name']] = post_op(h, n['post'])
+        y = maps[self.spec['nodes'][-1]['name']]
+        if self.unshuffle:
+            y = F.pixel_shuffle(y, 2)
+        return y[..., :hh, :ww]
+
+
+def post_op(h, post):
+    """The host side of a node, in float: (B, COUT, h, w) -> the map it stores."""
+    if post == 'maxout':
+        c = h.shape[1]//2
+        return torch.maximum(h[:, :c], h[:, c:])
+    if post == 'shuffle2':
+        return F.pixel_shuffle(h, 2)
+    return h
 
 
 # --------------------------------------------- the board's arithmetic in float ---
@@ -168,7 +310,18 @@ def fold_bn(conv, bn):
 
 
 def float_layers(net):
-    """[(weight (cout,cin,3,3), bias (cout,))] of the plain conv+ReLU network."""
+    """[(weight (cout,cin,kh,kw), bias (cout,))] per node of the plain conv+ReLU network."""
+    if isinstance(net, FoldedQ):
+        return [(w.double(), b.double()) for w, b in net.layers()]
+    if isinstance(net, GraphDenoiser):
+        L = []
+        for n in net.spec['nodes']:
+            conv = net.conv[n['name']]
+            if n['name'] in net.bn:
+                L.append(fold_bn(conv, net.bn[n['name']]))
+            else:
+                L.append((conv.weight.detach().double(), conv.bias.detach().double()))
+        return L
     L = [(net.first.weight.detach().double(), net.first.bias.detach().double())]
     L += [fold_bn(c, b) for c, b in zip(net.mid, net.bn)]
     w, b = net.last.weight.detach().double(), net.last.bias.detach().double()
@@ -189,41 +342,46 @@ def grad_scale(x, g):
 
 
 class FoldedQ(nn.Module):
-    """A trained Denoiser with BatchNorm folded, computed the way the board does.
+    """A trained model with BatchNorm folded, computed the way the board does.
 
     Every rule of quantize_denoise.py is reproduced in float with the straight-
     through estimator, so training this module (quantization-aware training)
     trains the integer model the board will run:
-      * weights INT8, one symmetric scale max|w|/127 per output channel, taken
-        from the current weights on every forward pass;
-      * bias rounded to the accumulator's unit a_in * w_scale;
+      * weights INT8, one symmetric scale max|w|/127 per output channel (per
+        group of four on a shuffle2 node), taken from the current weights on
+        every forward pass;
+      * bias rounded to the accumulator's unit a_main * w_scale;
       * activations 7-bit unsigned, clip(round(x/a), 0, 127)*a, one LEARNABLE
-        scale a per layer input (LSQ gradient); image inputs keep 1/127;
-      * the last layer's image taps carry the scale ratio folded into their
-        weights before weight quantization, as quantize() does;
-      * maxout after requantization (the max of two codes is the code of the
-        max, requantization being monotone);
+        scale a per node output (LSQ gradient); the image keeps 1/127;
+      * a node reading several maps carries the other maps' scale ratios in
+        their taps' weights before weight quantization, as quantize() does;
+      * the post-op after requantization (max and placement commute with it);
       * the output pixel rounded to 8 bits.
     With quant=False it is the plain folded float network. residual models
     are not supported."""
-    def __init__(self, layers, a_scale, channels, skip, unshuffle, dilation, maxout):
+    def __init__(self, spec, layers, a_out):
         super().__init__()
+        assert not spec['residual']
+        self.spec = spec
         self.W = nn.ParameterList(nn.Parameter(torch.as_tensor(w).clone().float()) for w, _ in layers)
         self.b = nn.ParameterList(nn.Parameter(torch.as_tensor(b).clone().float()) for _, b in layers)
-        assert len(a_scale) == len(layers), 'one input scale per layer'
-        # a_scale[0] is the image's 1/127 and is fixed; a_scale[i] is layer i's input scale.
-        self.a = nn.ParameterList(nn.Parameter(torch.tensor(float(v))) for v in a_scale[1:])
-        self.channels, self.skip, self.unshuffle = channels, skip, unshuffle
-        self.dilation, self.maxout = [int(d) for d in dilation], bool(maxout)
-        self.img_ch = 4 if unshuffle else 1
+        nodes = spec['nodes']
+        assert len(layers) == len(nodes) and len(a_out) == len(nodes)-1, 'one scale per node but the last'
+        self.a = nn.ParameterList(nn.Parameter(torch.tensor(float(v))) for v in a_out)
+        self.index = {n['name']: i for i, n in enumerate(nodes)}
+        self.ch = map_channels(spec)
         self.quant = True
-        self.record = None          # [[tensors]] per layer: each layer's feature input (calibration)
+        self.record = None          # [[tensors]] per node: its output map (calibration)
 
     def scales(self):
-        return [1.0/QMAX_A] + [v.item() for v in self.a]
+        """Output scale per node but the last."""
+        return [v.item() for v in self.a]
 
     def layers(self):
         return [(w.detach().clone(), b.detach().clone()) for w, b in zip(self.W, self.b)]
+
+    def map_scale(self, name):
+        return 1.0/QMAX_A if name == 'image' else self.a[self.index[name]]
 
     def fq_act(self, x, a):
         if not self.quant:
@@ -231,53 +389,56 @@ class FoldedQ(nn.Module):
         a = grad_scale(a.clamp_min(1e-8), 1.0/math.sqrt(x[0].numel()*QMAX_A))
         return round_ste((x/a).clamp(0, QMAX_A))*a
 
-    def fq_weight(self, W, b, a_in, n_img=0):
+    def fq_weight(self, W, b, blocks, group=1):
+        """blocks: (channels, scale) of each input map, the first the main one."""
+        a_main = blocks[0][1]
         if not self.quant:
             return W, b
-        cout, cin = W.shape[:2]
-        Wk = W
-        if n_img:
-            # The image taps carry the scale ratio before quantization (quantize()).
-            r = (1.0/QMAX_A)/a_in
-            Wk = torch.cat([W[:, :cin-n_img], W[:, cin-n_img:]*r], 1)
+        cout = W.shape[0]
+        parts, start = [], 0
+        for k, (n, a) in enumerate(blocks):
+            parts.append(W[:, start:start+n] if k == 0 else W[:, start:start+n]*(a/a_main))
+            start += n
+        Wk = torch.cat(parts, 1)
         s = Wk.reshape(cout, -1).abs().amax(1).clamp_min(1e-12)/QMAX_W
+        if group > 1:
+            s = s.reshape(-1, group).amax(1).repeat_interleave(group)
         s4 = s.reshape(-1, 1, 1, 1)
         Wq = round_ste(Wk/s4).clamp(QMIN_W, QMAX_W)*s4
-        if n_img:
-            Wq = torch.cat([Wq[:, :cin-n_img], Wq[:, cin-n_img:]/r], 1)
-        unit = a_in*s
-        return Wq, round_ste(b/unit)*unit
+        parts, start = [], 0
+        for k, (n, a) in enumerate(blocks):
+            parts.append(Wq[:, start:start+n] if k == 0 else Wq[:, start:start+n]/(a/a_main))
+            start += n
+        unit = a_main*s
+        return torch.cat(parts, 1), round_ste(b/unit)*unit
 
     def forward(self, x):
-        if self.unshuffle:
-            hh, ww = x.shape[-2:]
-            x = F.pad(x, (0, ww % 2, 0, hh % 2), mode='replicate')
+        hh, ww = x.shape[-2:]
+        m = self.spec['pad_to']
+        if m > 1:
+            x = F.pad(x, (0, (-ww) % m, 0, (-hh) % m), mode='replicate')
+        if self.spec['unshuffle']:
             x = F.pixel_unshuffle(x, 2)
-        h, nl, c = x, len(self.W), self.channels
-        for i in range(nl):
-            a_in = 1.0/QMAX_A if i == 0 else self.a[i-1]
-            if self.record is not None and i > 0:
-                self.record[i].append(h.detach())
-            last = i == nl-1
-            if last and self.skip:
-                Wq, bq = self.fq_weight(self.W[i], self.b[i], a_in, self.img_ch)
-                h = torch.cat([h, x], 1)
-            else:
-                Wq, bq = self.fq_weight(self.W[i], self.b[i], a_in)
-            d = self.dilation[i]
-            acc = F.relu(F.conv2d(h, Wq, bq, padding=d, dilation=d))
-            if not last:
-                h = self.fq_act(acc, self.a[i])             # layer i+1's input scale
-                if self.maxout:
-                    h = torch.maximum(h[:, :c], h[:, c:])
+        maps, nodes = {'image': x}, self.spec['nodes']
+        for i, n in enumerate(nodes):
+            blocks = [(self.ch[k], self.map_scale(k)) for k in n['inputs']]
+            Wq, bq = self.fq_weight(self.W[i], self.b[i], blocks, 4 if n['post'] == 'shuffle2' else 1)
+            inp = torch.cat([maps[k] for k in n['inputs']], 1)
+            acc = F.relu(F.conv2d(inp, Wq, bq, stride=n['stride'], padding=node_padding(n),
+                                  dilation=n['dilation']))
+            if i < len(nodes)-1:
+                h = post_op(self.fq_act(acc, self.a[i]), n['post'])
+                maps[n['name']] = h
+                if self.record is not None:
+                    self.record[i].append(h.detach())
             else:
                 y = round_ste(acc.clamp(0, 1)*255)/255 if self.quant else acc
-        if self.unshuffle:
-            y = F.pixel_shuffle(y, 2)[..., :hh, :ww]
-        return y
+        if self.spec['unshuffle']:
+            y = F.pixel_shuffle(y, 2)
+        return y[..., :hh, :ww]
 
 
-def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=1.0):
+def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=None):
     """Cycles one output pixel costs the board core (P=16, T=4), dense mode.
 
     scripts/cifar_budget.py's per-window model, which reproduces every measured
@@ -285,9 +446,16 @@ def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=1.0):
     per window low (289 measured for 288), more on very short windows (32 for
     K=27). Dense mode is the upper bound: sparse mode only shortens the issue
     term, and where the feed floor K dominates it changes nothing.
+
+    Each shape is (name, K, COUT) or (name, K, COUT, windows per pixel); the
+    keyword, when given, overrides the latter for every layer.
     """
-    return windows_per_pixel*sum(per_window(k, cout, p, t, dense_per_group(k, t))
-                                 for _, k, cout in shapes)
+    tot = 0.0
+    for s in shapes:
+        _, k, cout = s[:3]
+        wpp = windows_per_pixel if windows_per_pixel is not None else (s[3] if len(s) > 3 else 1.0)
+        tot += wpp*per_window(k, cout, p, t, dense_per_group(k, t))
+    return tot
 
 
 class Patches:
@@ -350,6 +518,11 @@ def main():
                     help='hidden layers compute 2C maps and keep the larger of each pair')
     ap.add_argument('--dilation', default=None,
                     help='comma separated dilation per layer, e.g. 1,2,3,4,3,2,1 (default all 1)')
+    ap.add_argument('--arch', choices=['chain', 'unet'], default='chain')
+    ap.add_argument('--unet', default='64,64,3,11,2,32',
+                    help='unet: c1,c2,enc,body,dec,up_ch (see unet_spec); --maxout applies to '
+                         'level 1, --maxout-l2 to the body; --dilation lists every 3x3 node')
+    ap.add_argument('--maxout-l2', action='store_true', help='unet: maxout on the body nodes')
     ap.add_argument('--patch', type=int, default=40, help='training patch size (even)')
     ap.add_argument('--sigma', type=float, default=25)
     ap.add_argument('--epochs', type=int, default=40)
@@ -377,19 +550,29 @@ def main():
 
     dev = ('cuda' if torch.cuda.is_available() else 'cpu') if args.device == 'auto' else args.device
     dil = [int(v) for v in args.dilation.split(',')] if args.dilation else None
-    net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual,
-                   args.unshuffle, dil, args.maxout).to(dev)
+    if args.arch == 'unet':
+        c1, c2, enc, body, dec, up_ch = [int(v) for v in args.unet.split(',')]
+        spec = unet_spec(c1, c2, enc, body, dec, up_ch, dil, args.maxout, args.maxout_l2)
+        net = GraphDenoiser(spec).to(dev)
+        name = args.name or (f'unet_c{c1}_{c2}_e{enc}b{body}d{dec}_u{up_ch}' +
+                             ('_dil' if max(spec['unet']['dilation']) > 1 else '') +
+                             ('_mo' if args.maxout else '') + ('_mo2' if args.maxout_l2 else ''))
+    else:
+        net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual,
+                       args.unshuffle, dil, args.maxout).to(dev)
+        name = args.name or (f'dn_d{args.depth}_c{args.channels}' + ('_us' if net.unshuffle else '') +
+                             ('_dil' if max(net.dilation) > 1 else '') + ('_mo' if net.maxout else '') +
+                             ('_res' if net.residual else ('' if net.skip else '_noskip')))
     print(f'device: {dev}')
     shapes = net.layer_shapes()
-    for n, k, c in shapes:
+    for n, k, c, _ in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
-    name = args.name or (f'dn_d{args.depth}_c{args.channels}' + ('_us' if net.unshuffle else '') +
-                         ('_dil' if max(net.dilation) > 1 else '') + ('_mo' if net.maxout else '') +
-                         ('_res' if net.residual else ('' if net.skip else '_noskip')))
-    cpp = board_cycles_per_pixel(shapes, windows_per_pixel=net.windows_per_pixel())
+    cpp = board_cycles_per_pixel(shapes)
+    rf = net.receptive_field()
     print(f'{name}: {sum(p.numel() for p in net.parameters()):,} parameters, '
-          f'layers {[(k, c) for _, k, c in shapes]}, dilation {net.dilation}, '
-          f'receptive field {net.receptive_field()}x{net.receptive_field()}')
+          f'layers {[(nm, k, c) for nm, k, c, _ in shapes]}, '
+          + (f'dilation {net.dilation}, receptive field {rf}x{rf}' if rf else
+             f'dilation {net.spec["unet"]["dilation"]}'))
     print(f'board cost {cpp:.0f} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
 
     train_imgs = load_set('Train400')
@@ -461,10 +644,12 @@ def main():
         t12 = evaluate(net, tests)
         rec = dict(epoch=ep, loss=tot/args.patches, set12_psnr=t12, lr=opt.param_groups[0]['lr'],
                    seconds=round(time.time()-t0, 1))
-        ckpt = dict(state=net.state_dict(), depth=args.depth, channels=args.channels,
-                    skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
-                    dilation=net.dilation, maxout=net.maxout, sigma=args.sigma, epoch=ep,
-                    set12_psnr=t12)
+        ckpt = dict(state=net.state_dict(), arch=args.arch, graph=net.graph(), depth=args.depth,
+                    channels=args.channels, sigma=args.sigma, epoch=ep, set12_psnr=t12,
+                    **(dict(skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
+                            dilation=net.dilation, maxout=net.maxout) if args.arch == 'chain'
+                       else dict(skip=True, residual=False, unshuffle=True, maxout=args.maxout,
+                                 dilation=net.spec['unet']['dilation'], unet=net.spec['unet'])))
         if val is None:
             sched.step()
             torch.save(ckpt, HERE/f'{name}.pt')

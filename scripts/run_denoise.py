@@ -36,12 +36,26 @@ sys.path.insert(0, str(ROOT/'scripts'))
 sys.path.insert(0, str(ROOT/'denoise'))
 import run_cifar  # noqa: E402
 from run_cifar import board_results, im2col, oracle, requant, run_board, write_board_files  # noqa: E402
-from common import (QMAX_A, load_set, pad_even, psnr, shuffle2, test_noise, to_image,  # noqa: E402
+from common import (QMAX_A, load_set, pad_mult, psnr, shuffle2, shuffle2c, test_noise, to_image,  # noqa: E402
                     unshuffle2)
 
 
 def load_layers(export):
+    """The manifest and its layers (nodes), with their integer weights.
+
+    A manifest written before the graph form is a chain: every layer reads the
+    one before it (the last also the image when skip), 3x3, stride 1, and a
+    maxout model keeps the larger of each pair after every hidden layer."""
     man = json.loads((export/'manifest.json').read_text())
+    n = len(man['layers'])
+    if not man.get('graph'):
+        unsh = man.get('unshuffle', False)
+        man['pad_to'], man['img_ch'] = (2, 4) if unsh else (1, 1)
+        for i, L in enumerate(man['layers']):
+            L['inputs'] = ([f'conv{i}'] if i else ['image']) + (
+                ['image'] if i == n-1 and man['input_channel_appended_to_last_layer'] else [])
+            L.update(kh=3, kw=3, stride=1, dilation=L.get('dilation', 1), wpp=0.25 if unsh else 1.0,
+                     post='maxout' if man.get('maxout') and i < n-1 else 'none')
     out = []
     for L in man['layers']:
         blob = np.frombuffer((export/L['config']).read_bytes(), '<i4')
@@ -49,6 +63,13 @@ def load_layers(export):
         out.append(dict(L, wq=blob[:c*k].reshape(c, k).astype(np.int8),
                         bq=blob[c*k:].astype(np.int32), cfg=export/L['config']))
     return man, out
+
+
+def node_geometry(L, h, w):
+    """Padding and output size of node L on an h x w map."""
+    pad = L['dilation']*(L['kh']//2) if L['kh'] % 2 else 0
+    d, s = L['dilation'], L['stride']
+    return pad, (h + 2*pad - d*(L['kh']-1) - 1)//s + 1, (w + 2*pad - d*(L['kw']-1) - 1)//s + 1
 
 
 def run_layer(L, x, args, tag):
@@ -88,34 +109,35 @@ def run_layer(L, x, args, tag):
 def denoise(q_in, man, layers, args, tag, start=1):
     """7-bit noisy image (H, W) -> 8-bit denoised image, per-layer records.
 
-    Each layer's input is saved to <out>/<tag>_act<N>.npy before the layer runs,
-    so a layer that fails on the board can be retried alone (start=N) instead of
-    paying for every layer before it again.
+    The maps a node may still read are saved to <out>/<tag>_maps<N>.npz before
+    node N runs, so a node that fails on the board can be retried alone
+    (start=N) instead of paying for every node before it again.
     """
     H, W = q_in.shape
     unshuffled = man.get('unshuffle', False)
-    # An unshuffled model runs on the four 2x2 phases of the even-padded image.
-    base = (unshuffle2(pad_even(q_in)) if unshuffled else q_in[None]).astype(np.uint8)
-    h, w = base.shape[1:]
-    q = base[None]                                        # (1, C, h, w)
+    # An unshuffled model runs on the four 2x2 phases of the padded image.
+    img = pad_mult(q_in, man.get('pad_to', 2 if unshuffled else 1))
+    base = (unshuffle2(img) if unshuffled else img[None]).astype(np.uint8)
+    maps = {'image': base}                                # name -> (C, h, w) codes
     save = getattr(args, 'out', None)
     if start > 1:
-        src = args.out/f'{tag}_act{start}.npy'
+        src = args.out/f'{tag}_maps{start}.npz'
         if not src.exists():
             raise SystemExit(f'{src} is not there, so layer {start} has nothing to resume '
                              f'from. Run from layer 1.')
-        q = np.load(src)
+        maps = dict(np.load(src))
         print(f'  resuming at {layers[start-1]["name"]} from {src}')
     recs = []
     for i, L in enumerate(layers):
         if i+1 < start:
             continue
         if save is not None and not args.emulate:
-            np.save(args.out/f'{tag}_act{i+1}.npy', q)
-        if i == len(layers)-1 and man['input_channel_appended_to_last_layer']:
-            q = np.concatenate([q, base[None]], 1)
-        # A dilated layer's windows take taps d pixels apart; the core is not told.
-        x = im2col(q, dilation=L.get('dilation', 1))
+            np.savez(args.out/f'{tag}_maps{i+1}.npz', **maps)
+        q = np.concatenate([maps[k] for k in L['inputs']], 0)
+        pad, oh, ow = node_geometry(L, *q.shape[1:])
+        # The window's shape (dilation, stride, kernel) is the host's business;
+        # the core sees K values.
+        x = im2col(q[None], kh=L['kh'], kw=L['kw'], pad=pad, dilation=L['dilation'], stride=L['stride'])
         if x.shape[1] != L['K']:
             raise SystemExit(f'{L["name"]}: windows are {x.shape[1]} taps, weights {L["K"]}')
         t0 = time.time()
@@ -124,7 +146,7 @@ def denoise(q_in, man, layers, args, tag, start=1):
         except SystemExit as e:
             raise SystemExit(f'{e}\n\nRetry from this layer with\n'
                              f'  --images {tag}.png --start-layer {i+1}\n'
-                             f'which reads {args.out}/{tag}_act{i+1}.npy and skips the '
+                             f'which reads {args.out}/{tag}_maps{i+1}.npz and skips the '
                              f'{i} layer(s) that already passed.')
         info.update(name=L['name'], K=L['K'], COUT=L['COUT'], windows=int(x.shape[0]),
                     nonzero_fraction=float((x != 0).mean()), host_seconds=round(time.time()-t0, 1))
@@ -135,17 +157,19 @@ def denoise(q_in, man, layers, args, tag, start=1):
                     f'in {info["runs"]} run(s), 0 mismatches')
         print(msg, flush=True)
         if i < len(layers)-1:
-            q = requant(acc, np.asarray(L['requant'])).reshape(1, h, w, L['COUT']).transpose(0, 3, 1, 2)
-            if man.get('maxout', False):
-                # maxout: the core computed 2C maps; channel c goes on as the larger
-                # of maps c and c+C (after requantization, which is monotonic).
+            r = requant(acc, np.asarray(L['requant'])).reshape(oh, ow, L['COUT']).transpose(2, 0, 1)
+            if L['post'] == 'maxout':
+                # The core computed 2C maps; channel c goes on as the larger of
+                # maps c and c+C (after requantization, which is monotonic).
                 c = L['COUT']//2
-                q = np.maximum(q[:, :c], q[:, c:])
-            q = np.ascontiguousarray(q)
+                r = np.maximum(r[:c], r[c:])
+            elif L['post'] == 'shuffle2':
+                r = shuffle2c(r)                  # 4C codes placed one level up
+            maps[L['name']] = np.ascontiguousarray(r)
         else:
-            # (H*W, COUT) -> (COUT, H, W), then the same host arithmetic the
+            # (N, COUT) -> (COUT, oh, ow), then the same host arithmetic the
             # quantizer scored: one clean channel, or the residual sign pair.
-            acc_maps = acc.T.reshape(L['COUT'], h, w)
+            acc_maps = acc.T.reshape(L['COUT'], oh, ow)
             if unshuffled:
                 out = shuffle2(to_image(acc_maps, base, L['to_pixel'], False), H, W)
             else:
