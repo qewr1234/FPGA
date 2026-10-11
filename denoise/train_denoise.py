@@ -470,8 +470,11 @@ class Patches:
             h, w = im.shape
             for s in scales:
                 hs, ws = int(h*s), int(w*s)
+                if hs < patch or ws < patch:
+                    continue            # a 128 px patch does not fit a 180 px image at 0.7
                 pil = Image.fromarray(np.uint8(np.rint(im*255))).resize((ws, hs), Image.BICUBIC)
                 self.pyr.append(np.asarray(pil, np.float32)/255.0)
+        assert self.pyr, f'no training image is {patch} px or larger at any scale'
 
     def sample(self, n, rng):
         out = np.empty((n, 1, self.patch, self.patch), np.float32)
