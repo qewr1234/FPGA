@@ -58,6 +58,7 @@ Two ways to decide how long to train:
 """
 import argparse
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -74,6 +75,7 @@ sys.path.insert(0, str(HERE.parent/'scripts'))
 from cifar_budget import dense_per_group, per_window  # noqa: E402
 
 K_MAX, COUT_MAX = 1152, 128      # what the board build provides
+QMIN_W, QMAX_W = -128, 127       # INT8 weights
 
 
 class Denoiser(nn.Module):
@@ -156,6 +158,123 @@ class Denoiser(nn.Module):
     def receptive_field(self):
         """Width in input pixels that one output pixel depends on."""
         return (1 + 2*sum(self.dilation))*(2 if self.unshuffle else 1)
+
+
+# --------------------------------------------- the board's arithmetic in float ---
+def fold_bn(conv, bn):
+    w = conv.weight.detach().double()
+    s = bn.weight.detach().double()/torch.sqrt(bn.running_var.detach().double() + bn.eps)
+    return w*s.reshape(-1, 1, 1, 1), bn.bias.detach().double() - bn.running_mean.detach().double()*s
+
+
+def float_layers(net):
+    """[(weight (cout,cin,3,3), bias (cout,))] of the plain conv+ReLU network."""
+    L = [(net.first.weight.detach().double(), net.first.bias.detach().double())]
+    L += [fold_bn(c, b) for c, b in zip(net.mid, net.bn)]
+    w, b = net.last.weight.detach().double(), net.last.bias.detach().double()
+    if getattr(net, 'residual', False):
+        w, b = torch.cat([w, -w]), torch.cat([b, -b])       # the sign pair
+    L.append((w, b))
+    return L
+
+
+def round_ste(x):
+    """round() going forward, the identity going backward."""
+    return x + (x.round() - x).detach()
+
+
+def grad_scale(x, g):
+    """x, with its gradient multiplied by g (LSQ, Esser et al. 2020)."""
+    return (x - x*g).detach() + x*g
+
+
+class FoldedQ(nn.Module):
+    """A trained Denoiser with BatchNorm folded, computed the way the board does.
+
+    Every rule of quantize_denoise.py is reproduced in float with the straight-
+    through estimator, so training this module (quantization-aware training)
+    trains the integer model the board will run:
+      * weights INT8, one symmetric scale max|w|/127 per output channel, taken
+        from the current weights on every forward pass;
+      * bias rounded to the accumulator's unit a_in * w_scale;
+      * activations 7-bit unsigned, clip(round(x/a), 0, 127)*a, one LEARNABLE
+        scale a per layer input (LSQ gradient); image inputs keep 1/127;
+      * the last layer's image taps carry the scale ratio folded into their
+        weights before weight quantization, as quantize() does;
+      * maxout after requantization (the max of two codes is the code of the
+        max, requantization being monotone);
+      * the output pixel rounded to 8 bits.
+    With quant=False it is the plain folded float network. residual models
+    are not supported."""
+    def __init__(self, layers, a_scale, channels, skip, unshuffle, dilation, maxout):
+        super().__init__()
+        self.W = nn.ParameterList(nn.Parameter(torch.as_tensor(w).clone().float()) for w, _ in layers)
+        self.b = nn.ParameterList(nn.Parameter(torch.as_tensor(b).clone().float()) for _, b in layers)
+        assert len(a_scale) == len(layers), 'one input scale per layer'
+        # a_scale[0] is the image's 1/127 and is fixed; a_scale[i] is layer i's input scale.
+        self.a = nn.ParameterList(nn.Parameter(torch.tensor(float(v))) for v in a_scale[1:])
+        self.channels, self.skip, self.unshuffle = channels, skip, unshuffle
+        self.dilation, self.maxout = [int(d) for d in dilation], bool(maxout)
+        self.img_ch = 4 if unshuffle else 1
+        self.quant = True
+        self.record = None          # [[tensors]] per layer: each layer's feature input (calibration)
+
+    def scales(self):
+        return [1.0/QMAX_A] + [v.item() for v in self.a]
+
+    def layers(self):
+        return [(w.detach().clone(), b.detach().clone()) for w, b in zip(self.W, self.b)]
+
+    def fq_act(self, x, a):
+        if not self.quant:
+            return x
+        a = grad_scale(a.clamp_min(1e-8), 1.0/math.sqrt(x[0].numel()*QMAX_A))
+        return round_ste((x/a).clamp(0, QMAX_A))*a
+
+    def fq_weight(self, W, b, a_in, n_img=0):
+        if not self.quant:
+            return W, b
+        cout, cin = W.shape[:2]
+        Wk = W
+        if n_img:
+            # The image taps carry the scale ratio before quantization (quantize()).
+            r = (1.0/QMAX_A)/a_in
+            Wk = torch.cat([W[:, :cin-n_img], W[:, cin-n_img:]*r], 1)
+        s = Wk.reshape(cout, -1).abs().amax(1).clamp_min(1e-12)/QMAX_W
+        s4 = s.reshape(-1, 1, 1, 1)
+        Wq = round_ste(Wk/s4).clamp(QMIN_W, QMAX_W)*s4
+        if n_img:
+            Wq = torch.cat([Wq[:, :cin-n_img], Wq[:, cin-n_img:]/r], 1)
+        unit = a_in*s
+        return Wq, round_ste(b/unit)*unit
+
+    def forward(self, x):
+        if self.unshuffle:
+            hh, ww = x.shape[-2:]
+            x = F.pad(x, (0, ww % 2, 0, hh % 2), mode='replicate')
+            x = F.pixel_unshuffle(x, 2)
+        h, nl, c = x, len(self.W), self.channels
+        for i in range(nl):
+            a_in = 1.0/QMAX_A if i == 0 else self.a[i-1]
+            if self.record is not None and i > 0:
+                self.record[i].append(h.detach())
+            last = i == nl-1
+            if last and self.skip:
+                Wq, bq = self.fq_weight(self.W[i], self.b[i], a_in, self.img_ch)
+                h = torch.cat([h, x], 1)
+            else:
+                Wq, bq = self.fq_weight(self.W[i], self.b[i], a_in)
+            d = self.dilation[i]
+            acc = F.relu(F.conv2d(h, Wq, bq, padding=d, dilation=d))
+            if not last:
+                h = self.fq_act(acc, self.a[i])             # layer i+1's input scale
+                if self.maxout:
+                    h = torch.maximum(h[:, :c], h[:, c:])
+            else:
+                y = round_ste(acc.clamp(0, 1)*255)/255 if self.quant else acc
+        if self.unshuffle:
+            y = F.pixel_shuffle(y, 2)[..., :hh, :ww]
+        return y
 
 
 def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=1.0):

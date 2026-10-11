@@ -43,26 +43,7 @@ import torch.nn.functional as F
 
 from common import (HERE, QMAX_A, load_set, pad_even, psnr, shuffle2, test_noise, to_image,
                     unshuffle2)
-from train_denoise import Denoiser, board_cycles_per_pixel
-
-QMIN_W, QMAX_W = -128, 127
-
-
-def fold_bn(conv, bn):
-    w = conv.weight.detach().double()
-    s = bn.weight.detach().double()/torch.sqrt(bn.running_var.detach().double() + bn.eps)
-    return w*s.reshape(-1, 1, 1, 1), bn.bias.detach().double() - bn.running_mean.detach().double()*s
-
-
-def float_layers(net):
-    """[(weight (cout,cin,3,3), bias (cout,))] of the plain conv+ReLU network."""
-    L = [(net.first.weight.detach().double(), net.first.bias.detach().double())]
-    L += [fold_bn(c, b) for c, b in zip(net.mid, net.bn)]
-    w, b = net.last.weight.detach().double(), net.last.bias.detach().double()
-    if getattr(net, 'residual', False):
-        w, b = torch.cat([w, -w]), torch.cat([b, -b])       # the sign pair
-    L.append((w, b))
-    return L
+from train_denoise import QMAX_W, QMIN_W, Denoiser, FoldedQ, board_cycles_per_pixel, float_layers
 
 
 def tap_order(w):
@@ -200,9 +181,15 @@ def main():
     unshuffle = ck.get('unshuffle', False)
     dil = ck.get('dilation') or [1]*ck['depth']        # older checkpoints: plain 3x3
     maxout = ck.get('maxout', False)
-    net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle, dil, maxout)
+    folded = ck.get('folded', False)       # qat_denoise.py: BN folded, scales learned
+    if folded:
+        net = FoldedQ(ck['layers'], ck['a_scale'], ck['channels'], ck['skip'], unshuffle, dil, maxout)
+        net.quant = False
+    else:
+        net = Denoiser(ck['depth'], ck['channels'], ck['skip'], residual, unshuffle, dil, maxout)
+        net.load_state_dict(ck['state'])
     n_img = 4 if unshuffle else 1
-    net.load_state_dict(ck['state']); net.eval()
+    net.eval()
     name = args.ckpt.stem
     out_dir = args.out or HERE/'export'/name
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -211,84 +198,88 @@ def main():
           f'residual={residual}, dilation {dil}, maxout={maxout}, '
           f'sigma {sigma}, float Set12 {ck["set12_psnr"]:.2f} dB at training end')
 
-    FL = float_layers(net)
+    FL = [(w.double(), b.double()) for w, b in net.layers()] if folded else float_layers(net)
     nl = len(FL)
 
-    # ---- activation ranges, on the folded float network, from TRAINING images ----
     rng = np.random.default_rng(7)
     from common import add_noise
     calib = [add_noise(c, sigma, rng) for _, c in load_set('Train400')[::max(1, 400//args.calib)]]
-    # A random sample of each layer's input values (all of them would not fit in
-    # memory), plus the exact maximum, which is what percentile 100 uses.
-    samples = [[] for _ in range(nl)]
-    peak = [0.0]*nl
-    with torch.no_grad():
-        for x in calib:
-            x0 = (torch.from_numpy(unshuffle2(pad_even(x))).double()[None] if unshuffle
-                  else torch.from_numpy(x).double()[None, None])
-            h = x0
-            for i, (w, b) in enumerate(FL):
-                v = h[0, :ck['channels']].reshape(-1).numpy()   # features only, not the image
-                peak[i] = max(peak[i], float(v.max()))
-                samples[i].append(rng.choice(v, size=min(20000, v.size), replace=False))
-                if i == nl-1 and ck['skip']:
-                    h = torch.cat([h, x0], 1)
-                h = F.relu(F.conv2d(h, w, b, padding=dil[i], dilation=dil[i]))
-                if maxout and i < nl-1:
-                    h = torch.maximum(h[:, :ck['channels']], h[:, ck['channels']:])
-    pooled = [np.concatenate(v) for v in samples]
-
-    def scales(pcts):
-        """Input scales for one percentile per layer (layer 1's input is the 7-bit image)."""
-        a = [1.0/QMAX_A]
-        for i in range(1, nl):
-            p = pcts[i]
-            a.append((peak[i] if p >= 100 else float(np.percentile(pooled[i], p)))/QMAX_A)
-        return a
-
-    # ---- choose the range percentile on VALIDATION images, never on the tests ----
-    # Train400[5::10] -- 40 training images disjoint from the calibration ones.
-    # They were seen in training, which flatters every candidate equally; what
-    # is compared here is how much each range loses to quantization.
-    #
-    # One value for every layer is not enough when layers differ: on the
-    # unshuffled 64-channel model the PSNR fell from 28.5 to 16 dB between
-    # percentile 99.95 and 99.995, a step the old five-value grid jumped over.
-    # So the grid is finer, and after the best common value each layer in turn
-    # takes the grid value that is best with the others held (one sweep of
-    # coordinate ascent), still scored on the validation images only.
-    # 99 and 98 were added when a maxout model chose 99.5, the lowest value then
-    # offered, on three layers.
-    GRID = (100.0, 99.999, 99.995, 99.99, 99.98, 99.97, 99.95, 99.9, 99.5, 99.0, 98.0)
-    search = []
-    if args.percentile == 'auto':
-        vrng = np.random.default_rng(11)
-        val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
-
-        def score(pcts):
-            return int_psnr(IntModel(quantize(FL, scales(pcts), ck['skip'], n_img),
-                                     ck['skip'], residual, unshuffle, dil, maxout), val)
-        tried = {}
-        for g in GRID:
-            tried[g] = score([g]*nl)
-            print(f'  range percentile {g:<7} validation PSNR {tried[g]:.3f} dB')
-        g = max(tried, key=tried.get)
-        pcts, best = [g]*nl, tried[g]
-        print(f'  -> percentile {g} for every layer')
-        if not args.global_only:
-            for i in range(1, nl):
-                for cand in GRID:
-                    if cand == pcts[i]:
-                        continue
-                    trial = pcts[:i] + [cand] + pcts[i+1:]
-                    v = score(trial)
-                    if v > best:
-                        pcts, best = trial, v
-                search.append(dict(layer=f'conv{i+1}', percentile=pcts[i], validation_psnr=best))
-                print(f'  conv{i+1} input: percentile {pcts[i]:<7} validation PSNR {best:.3f} dB')
+    if folded:
+        # The scales were trained with the weights (qat_denoise.py); no search.
+        a_scale, pcts, tried, search = list(ck['a_scale']), ['qat']*nl, {}, []
     else:
-        pcts, tried = [float(args.percentile)]*nl, {}
-    a_scale = scales(pcts)
+        # ---- activation ranges, on the folded float network, from TRAINING images ----
+        # A random sample of each layer's input values (all of them would not fit in
+        # memory), plus the exact maximum, which is what percentile 100 uses.
+        samples = [[] for _ in range(nl)]
+        peak = [0.0]*nl
+        with torch.no_grad():
+            for x in calib:
+                x0 = (torch.from_numpy(unshuffle2(pad_even(x))).double()[None] if unshuffle
+                      else torch.from_numpy(x).double()[None, None])
+                h = x0
+                for i, (w, b) in enumerate(FL):
+                    v = h[0, :ck['channels']].reshape(-1).numpy()   # features only, not the image
+                    peak[i] = max(peak[i], float(v.max()))
+                    samples[i].append(rng.choice(v, size=min(20000, v.size), replace=False))
+                    if i == nl-1 and ck['skip']:
+                        h = torch.cat([h, x0], 1)
+                    h = F.relu(F.conv2d(h, w, b, padding=dil[i], dilation=dil[i]))
+                    if maxout and i < nl-1:
+                        h = torch.maximum(h[:, :ck['channels']], h[:, ck['channels']:])
+        pooled = [np.concatenate(v) for v in samples]
+
+        def scales(pcts):
+            """Input scales for one percentile per layer (layer 1's input is the 7-bit image)."""
+            a = [1.0/QMAX_A]
+            for i in range(1, nl):
+                p = pcts[i]
+                a.append((peak[i] if p >= 100 else float(np.percentile(pooled[i], p)))/QMAX_A)
+            return a
+
+        # ---- choose the range percentile on VALIDATION images, never on the tests ----
+        # Train400[5::10] -- 40 training images disjoint from the calibration ones.
+        # They were seen in training, which flatters every candidate equally; what
+        # is compared here is how much each range loses to quantization.
+        #
+        # One value for every layer is not enough when layers differ: on the
+        # unshuffled 64-channel model the PSNR fell from 28.5 to 16 dB between
+        # percentile 99.95 and 99.995, a step the old five-value grid jumped over.
+        # So the grid is finer, and after the best common value each layer in turn
+        # takes the grid value that is best with the others held (one sweep of
+        # coordinate ascent), still scored on the validation images only.
+        # 99 and 98 were added when a maxout model chose 99.5, the lowest value then
+        # offered, on three layers.
+        GRID = (100.0, 99.999, 99.995, 99.99, 99.98, 99.97, 99.95, 99.9, 99.5, 99.0, 98.0)
+        search = []
+        if args.percentile == 'auto':
+            vrng = np.random.default_rng(11)
+            val = [(n, c, add_noise(c, sigma, vrng)) for n, c in load_set('Train400')[5::10]]
+
+            def score(pcts):
+                return int_psnr(IntModel(quantize(FL, scales(pcts), ck['skip'], n_img),
+                                         ck['skip'], residual, unshuffle, dil, maxout), val)
+            tried = {}
+            for g in GRID:
+                tried[g] = score([g]*nl)
+                print(f'  range percentile {g:<7} validation PSNR {tried[g]:.3f} dB')
+            g = max(tried, key=tried.get)
+            pcts, best = [g]*nl, tried[g]
+            print(f'  -> percentile {g} for every layer')
+            if not args.global_only:
+                for i in range(1, nl):
+                    for cand in GRID:
+                        if cand == pcts[i]:
+                            continue
+                        trial = pcts[:i] + [cand] + pcts[i+1:]
+                        v = score(trial)
+                        if v > best:
+                            pcts, best = trial, v
+                    search.append(dict(layer=f'conv{i+1}', percentile=pcts[i], validation_psnr=best))
+                    print(f'  conv{i+1} input: percentile {pcts[i]:<7} validation PSNR {best:.3f} dB')
+        else:
+            pcts, tried = [float(args.percentile)]*nl, {}
+        a_scale = scales(pcts)
     layers = quantize(FL, a_scale, ck['skip'], n_img)
     for L in layers:
         blob = np.concatenate([L['wq'].reshape(-1).astype('<i4'), L['bq'].astype('<i4')])
@@ -338,6 +329,7 @@ def main():
         percentile_by_layer=pcts[1:],      # layer 1's input is the image, fixed at 1/127
         validation_psnr_by_percentile={str(k): v for k, v in tried.items()},
         per_layer_search=search,
+        qat=folded,
         layers=[dict(name=L['name'], K=L['K'], COUT=L['COUT'], dilation=dil[i],
                      a_scale_in=L['a_scale_in'],
                      w_scale=[float(v) for v in L['w_scale']],
