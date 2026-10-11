@@ -14,3 +14,4 @@ denoise/*_last.pt
 denoise/*_es_train.json
 denoise/qat_*_train.json
 denoise/*_qat_train.json
+denoise/scr_*_train.json
