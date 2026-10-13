@@ -1,0 +1,154 @@
+{
+  "emulated": false,
+  "model": "dn_d10_c64_us_es_qat",
+  "set": "Set12",
+  "sigma": 25,
+  "mode_seq": 1,
+  "note": "transcribed from the console output of the run (report.json not kept); wall-clock fields omitted",
+  "images": [
+    {
+      "image": "05.png",
+      "width": 256,
+      "height": 256,
+      "psnr_noisy": 20.227063370118692,
+      "psnr_denoised": 30.06,
+      "start_layer": 1,
+      "layers": [
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1048620,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453755,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv2",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453735,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv3",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453739,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv4",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453767,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv5",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453743,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv6",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453727,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv7",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453727,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv8",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 9453739,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv9",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 10043445,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv10",
+          "K": 612,
+          "COUT": 4,
+          "windows": 16384
+        }
+      ],
+      "cycles": 86721997
+    }
+  ],
+  "mean_psnr_noisy": 20.227063370118692,
+  "mean_psnr_denoised": 30.06,
+  "mismatches": 0
+}
