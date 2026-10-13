@@ -45,7 +45,8 @@ import torch.nn.functional as F
 from common import (HERE, QMAX_A, add_noise, load_set, pad_mult, psnr, shuffle2, shuffle2c, test_noise,
                     to_image, unshuffle2)
 from train_denoise import (QMAX_W, QMIN_W, Denoiser, FoldedQ, GraphDenoiser, board_cycles_per_pixel,
-                           float_layers, graph_shapes, map_channels, node_padding, post_op)
+                           board_cycles_per_pixel_measured, float_layers, graph_shapes, map_channels,
+                           node_padding, post_op)
 
 
 def tap_order(w):
@@ -370,6 +371,7 @@ def main():
               f'({np.mean(it)-np.mean(fl):+.2f})')
 
     cpp = board_cycles_per_pixel(graph_shapes(spec))
+    cpm = board_cycles_per_pixel_measured(graph_shapes(spec))
     (out_dir/'manifest.json').write_text(json.dumps(dict(
         note='activations unsigned 0..127; weights INT8 per output channel; tap order (ky, kx, cin); '
              'a node reads the concatenation of its input maps and the host applies its post-op to '
@@ -393,10 +395,11 @@ def main():
         unshuffle=unshuffle,
         maxout=maxout,
         unet=spec.get('unet'),
-        board_cycles_per_pixel=cpp), indent=2), encoding='utf-8')
+        board_cycles_per_pixel=cpp,
+        board_cycles_per_pixel_measured_model=cpm), indent=2), encoding='utf-8')
     (out_dir/'int_eval.json').write_text(json.dumps(res, indent=2), encoding='utf-8')
-    print(f'board cost {cpp:.0f} cycles/pixel (model, dense): 256x256 {cpp*65536/50e6:.2f} s, '
-          f'512x512 {cpp*262144/50e6:.2f} s at 50 MHz')
+    print(f'board cost {cpp:.0f} cycles/pixel (model, dense; {cpm:.0f} with the measured corrections): '
+          f'256x256 {cpm*65536/50e6:.2f} s, 512x512 {cpm*262144/50e6:.2f} s at 50 MHz')
     print(f'wrote {out_dir}')
 
 

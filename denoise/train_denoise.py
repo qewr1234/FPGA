@@ -458,6 +458,18 @@ def board_cycles_per_pixel(shapes, p=16, t=4, windows_per_pixel=None):
     return tot
 
 
+def board_cycles_per_pixel_measured(shapes, p=16, t=4):
+    """The per-window model with the two corrections every board run showed:
+    one cycle more per window on a feed-bound layer (289 for K=288, 577 for
+    576, 613 for 612), and never fewer cycles than COUT, because the core
+    emits one output channel per cycle (64 for K=36/COUT=64; 32 for the
+    CIFAR K=27/COUT=32). It reproduces the 10-layer denoisers' measured totals
+    within 0.002%. A compute-bound layer (COUT > 64) has not been measured in
+    dense mode, so its +1 is assumed."""
+    return sum((s[3] if len(s) > 3 else 1.0)*max(per_window(s[1], s[2], p, t, dense_per_group(s[1], t)) + 1, s[2])
+               for s in shapes)
+
+
 class Patches:
     """DnCNN's patch source: square crops of the training images at 4 scales.
 
@@ -571,12 +583,14 @@ def main():
     for n, k, c, _ in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
     cpp = board_cycles_per_pixel(shapes)
+    cpm = board_cycles_per_pixel_measured(shapes)
     rf = net.receptive_field()
     print(f'{name}: {sum(p.numel() for p in net.parameters()):,} parameters, '
           f'layers {[(nm, k, c) for nm, k, c, _ in shapes]}, '
           + (f'dilation {net.dilation}, receptive field {rf}x{rf}' if rf else
              f'dilation {net.spec["unet"]["dilation"]}'))
-    print(f'board cost {cpp:.0f} cycles/pixel -> 256x256 at 50 MHz: {cpp*65536/50e6:.2f} s')
+    print(f'board cost {cpp:.0f} cycles/pixel (model; {cpm:.0f} with the measured corrections) '
+          f'-> 256x256 at 50 MHz: {cpm*65536/50e6:.2f} s')
 
     train_imgs = load_set('Train400')
     val = None

@@ -5,10 +5,11 @@
 
 Reads each export's manifest.json and int_eval.json, so every number is the
 one the quantizer measured (integer = what the board computes). Cycles per
-pixel are the cycle model's (dense mode); parameters are the INT8 weights
-the board loads. The last columns count the images on which the integer
-model beats BM3D re-measured under the same clipped 7-bit input
-(denoise/baselines.json).
+pixel are the cycle model's with the measured corrections where the export
+records them (train_denoise.board_cycles_per_pixel_measured), else the plain
+model's; parameters are the INT8 weights the board loads. The last columns
+count the images on which the integer model beats BM3D re-measured under the
+same clipped 7-bit input (denoise/baselines.json).
 """
 import json
 import sys
@@ -36,7 +37,8 @@ def row(export, bm3d):
         tags.append('qat')
     if any(L.get('dilation', 1) > 1 for L in man['layers']):
         tags.append('dil')
-    return dict(name=man['model'], cycles=man['board_cycles_per_pixel'], params=params,
+    return dict(name=man['model'], cycles=man.get('board_cycles_per_pixel_measured_model', man['board_cycles_per_pixel']),
+                params=params,
                 tags=' '.join(tags), set12_f=ev['Set12']['float'], set12_i=ev['Set12']['integer'],
                 bsd_f=ev['BSD68']['float'], bsd_i=ev['BSD68']['integer'],
                 w12=wins['Set12'], w68=wins['BSD68'])
