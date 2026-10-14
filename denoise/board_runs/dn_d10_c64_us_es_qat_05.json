@@ -4,20 +4,20 @@
   "set": "Set12",
   "sigma": 25,
   "mode_seq": 1,
-  "note": "transcribed from the console output of the run (report.json not kept); wall-clock fields omitted",
   "images": [
     {
       "image": "05.png",
       "width": 256,
       "height": 256,
       "psnr_noisy": 20.227063370118692,
-      "psnr_denoised": 30.06,
+      "psnr_denoised": 30.058906860796153,
       "start_layer": 1,
       "layers": [
         {
           "emulated": false,
           "runs": 1,
           "cycles": 1048620,
+          "wall_seconds": 47.6,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -25,12 +25,15 @@
           "name": "conv1",
           "K": 36,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.9812130398220487,
+          "host_seconds": 47.7
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453755,
+          "wall_seconds": 61.4,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -38,12 +41,15 @@
           "name": "conv2",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.5485634273952908,
+          "host_seconds": 64.5
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453735,
+          "wall_seconds": 66.4,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -51,12 +57,15 @@
           "name": "conv3",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.475381957160102,
+          "host_seconds": 75.4
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453739,
+          "wall_seconds": 60.9,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -64,12 +73,15 @@
           "name": "conv4",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.4695124096340603,
+          "host_seconds": 67.4
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453767,
+          "wall_seconds": 64.7,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -77,12 +89,15 @@
           "name": "conv5",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.48618348439534503,
+          "host_seconds": 77.0
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453743,
+          "wall_seconds": 64.7,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -90,12 +105,15 @@
           "name": "conv6",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.44152990976969403,
+          "host_seconds": 76.9
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453727,
+          "wall_seconds": 64.4,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -103,12 +121,15 @@
           "name": "conv7",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.4413207372029622,
+          "host_seconds": 74.6
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453727,
+          "wall_seconds": 63.3,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -116,12 +137,15 @@
           "name": "conv8",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.3563245137532552,
+          "host_seconds": 77.6
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 9453739,
+          "wall_seconds": 65.1,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -129,12 +153,15 @@
           "name": "conv9",
           "K": 576,
           "COUT": 64,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.37616655561659074,
+          "host_seconds": 79.5
         },
         {
           "emulated": false,
           "runs": 1,
           "cycles": 10043445,
+          "wall_seconds": 41.4,
           "mismatches": 0,
           "fclk_mhz": [
             50.0
@@ -142,13 +169,15 @@
           "name": "conv10",
           "K": 612,
           "COUT": 4,
-          "windows": 16384
+          "windows": 16384,
+          "nonzero_fraction": 0.44432845770143997,
+          "host_seconds": 42.2
         }
       ],
       "cycles": 86721997
     }
   ],
   "mean_psnr_noisy": 20.227063370118692,
-  "mean_psnr_denoised": 30.06,
+  "mean_psnr_denoised": 30.058906860796153,
   "mismatches": 0
 }
