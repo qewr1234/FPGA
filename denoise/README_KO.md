@@ -69,7 +69,7 @@
 
 사이클 수는 클럭과 무관하다(100 MHz 실행이 50 MHz와 동일). 절대 처리량은 50 MHz·곱셈기 64개로 약 5.7 GOPS.
 
-비교 그림: `figures/05_dn_d10_c64_us_es_qat_board.pdf` (B+QAT, 30.06 dB). `make_figure.py --model dn_d10_c64_us_es_qat --board build/denoise_run_b_qat`로 만든다.
+비교 그림: `figures/05_dn_d10_c64_us_es_qat_board.pdf` (B+QAT, 30.06 dB). `make_figure.py --model dn_d10_c64_us_es_qat --board build/denoise_run_b_qat`로 만든다. 사이클 대 PSNR 산점도(논문 그림 2): `python denoise/plot_psnr_cycles.py` → `figures/psnr_vs_cycles.pdf`.
 
 ## 실행 순서
 
