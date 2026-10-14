@@ -1,0 +1,135 @@
+{
+  "emulated": false,
+  "model": "dn_d7_c32_es",
+  "set": "Set12",
+  "sigma": 25,
+  "mode_seq": 1,
+  "images": [
+    {
+      "image": "05.png",
+      "width": 256,
+      "height": 256,
+      "psnr_noisy": 20.227063370118692,
+      "psnr_denoised": 29.82990043469384,
+      "start_layer": 1,
+      "layers": [
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 2097167,
+          "wall_seconds": 55.3,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv1",
+          "K": 9,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.9863705105251737,
+          "host_seconds": 55.3
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 18939967,
+          "wall_seconds": 115.5,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.5500968297322592,
+          "host_seconds": 129.1
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 18939965,
+          "wall_seconds": 114.3,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.5133724742465549,
+          "host_seconds": 125.7
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 18939965,
+          "wall_seconds": 115.9,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.5311228964063857,
+          "host_seconds": 129.1
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 18939961,
+          "wall_seconds": 112.8,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.5311449898613824,
+          "host_seconds": 123.9
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 18939963,
+          "wall_seconds": 117.1,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "nonzero_fraction": 0.4664921760559082,
+          "host_seconds": 131.0
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 19529755,
+          "wall_seconds": 70.3,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "name": "conv7",
+          "K": 297,
+          "COUT": 1,
+          "windows": 65536,
+          "nonzero_fraction": 0.55405932082873,
+          "host_seconds": 70.9
+        }
+      ],
+      "cycles": 116326743
+    }
+  ],
+  "mean_psnr_noisy": 20.227063370118692,
+  "mean_psnr_denoised": 29.82990043469384,
+  "mismatches": 0
+}
