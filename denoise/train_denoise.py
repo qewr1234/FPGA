@@ -91,10 +91,15 @@ class Denoiser(nn.Module):
     The float model below is therefore the plain linear-output DnCNN; nothing
     about the split needs training."""
     def __init__(self, depth=7, channels=32, skip=True, residual=False, unshuffle=False,
-                 dilation=None, maxout=False):
+                 dilation=None, maxout=False, combine=None):
         super().__init__()
-        self.maxout = bool(maxout)
-        m = 2 if self.maxout else 1          # maps computed per channel kept
+        # How the two candidate maps of a hidden channel are combined on the host:
+        # 'none' (one map, plain ReLU), 'maxout' (the larger), or 'avg' (their
+        # mean: the control for maxout with the same parameters and core cost).
+        self.combine = combine or ('maxout' if maxout else 'none')
+        assert self.combine in ('none', 'maxout', 'avg'), self.combine
+        self.maxout = self.combine == 'maxout'
+        m = 2 if self.combine != 'none' else 1   # maps computed per channel kept
         self.dilation = [int(d) for d in (dilation or [1]*depth)]
         assert len(self.dilation) == depth and min(self.dilation) >= 1, \
             f'need {depth} dilations >= 1, got {self.dilation}'
@@ -135,17 +140,15 @@ class Denoiser(nn.Module):
         return y
 
     def pick(self, h):
-        """maxout: channel i of the next layer's input is the larger of maps i and i+C."""
-        if not self.maxout:
-            return h
-        c = self.channels
-        return torch.maximum(h[:, :c], h[:, c:])
+        """maxout: channel i of the next layer's input is the larger of maps i and i+C;
+        avg: their mean."""
+        return post_op(h, self.combine)
 
     def graph(self):
         """The chain as a graph (see graph_shapes): every layer reads the one
         before it, the last also the image when skip."""
-        c, g, m = self.channels, self.img_ch, 2 if self.maxout else 1
-        wpp, post = self.windows_per_pixel(), 'maxout' if self.maxout else 'none'
+        c, g, m = self.channels, self.img_ch, 2 if self.combine != 'none' else 1
+        wpp, post = self.windows_per_pixel(), self.combine
         nodes = [node('conv1', ['image'], m*c, self.dilation[0], post=post, wpp=wpp, bias=True)]
         for i in range(self.depth-2):
             nodes.append(node(f'conv{i+2}', [f'conv{i+1}'], m*c, self.dilation[i+1], post=post, wpp=wpp))
@@ -196,7 +199,7 @@ def map_channels(spec):
     """Channels of every map: the image, and each node's output after its post-op."""
     ch = {'image': spec['img_ch']}
     for n in spec['nodes']:
-        ch[n['name']] = n['cout']//{'none': 1, 'maxout': 2, 'shuffle2': 4}[n['post']]
+        ch[n['name']] = n['cout']//{'none': 1, 'maxout': 2, 'avg': 2, 'shuffle2': 4}[n['post']]
     return ch
 
 
@@ -297,9 +300,19 @@ def post_op(h, post):
     if post == 'maxout':
         c = h.shape[1]//2
         return torch.maximum(h[:, :c], h[:, c:])
+    if post == 'avg':
+        # The control for maxout: the same two maps, combined by their mean.
+        # On the board's codes the host computes (a + b + 1) >> 1; see FoldedQ.
+        c = h.shape[1]//2
+        return (h[:, :c] + h[:, c:])/2
     if post == 'shuffle2':
         return F.pixel_shuffle(h, 2)
     return h
+
+
+def floor_ste(x):
+    """floor() going forward, the identity going backward."""
+    return x + (x.floor() - x).detach()
 
 
 # --------------------------------------------- the board's arithmetic in float ---
@@ -427,10 +440,20 @@ class FoldedQ(nn.Module):
             acc = F.relu(F.conv2d(inp, Wq, bq, stride=n['stride'], padding=node_padding(n),
                                   dilation=n['dilation']))
             if i < len(nodes)-1:
-                h = post_op(self.fq_act(acc, self.a[i]), n['post'])
+                pre = self.fq_act(acc, self.a[i])
+                if n['post'] == 'avg' and self.quant:
+                    # the host's (a + b + 1) >> 1 on the two codes. The codes are
+                    # recovered as exact integers first: (q*s)/s is not always q in
+                    # float, and an odd sum sits exactly on the rounding boundary.
+                    c, s = pre.shape[1]//2, self.a[i]
+                    q = round_ste(pre/s)
+                    h = floor_ste((q[:, :c] + q[:, c:] + 1)/2)*s
+                else:
+                    h = post_op(pre, n['post'])
                 maps[n['name']] = h
                 if self.record is not None:
-                    self.record[i].append(h.detach())
+                    # ranges of the codes the core emits: before the mean (see quantize_denoise.float_run)
+                    self.record[i].append((pre if n['post'] == 'avg' else h).detach())
             else:
                 y = round_ste(acc.clamp(0, 1)*255)/255 if self.quant else acc
         if self.spec['unshuffle']:
@@ -464,7 +487,7 @@ def board_cycles_per_pixel_measured(shapes, p=16, t=4):
     576, 613 for 612), and never fewer cycles than COUT, because the core
     emits one output channel per cycle (64 for K=36/COUT=64; 32 for the
     CIFAR K=27/COUT=32). It reproduces the 10-layer denoisers' measured totals
-    within 0.002%. A compute-bound layer (COUT > 64) has not been measured in
+    within 0.003% (0.0024% on the maxout network). A compute-bound layer (COUT > 64) has not been measured in
     dense mode, so its +1 is assumed."""
     return sum((s[3] if len(s) > 3 else 1.0)*max(per_window(s[1], s[2], p, t, dense_per_group(s[1], t)) + 1, s[2])
                for s in shapes)
@@ -531,6 +554,9 @@ def main():
                     help='FFDNet-style: run on the four 2x2 phases at half resolution')
     ap.add_argument('--maxout', action='store_true',
                     help='hidden layers compute 2C maps and keep the larger of each pair')
+    ap.add_argument('--avgout', action='store_true',
+                    help='the control for --maxout: hidden layers compute 2C maps and keep the mean '
+                         'of each pair (same parameters, same core cost, no max nonlinearity)')
     ap.add_argument('--dilation', default=None,
                     help='comma separated dilation per layer, e.g. 1,2,3,4,3,2,1 (default all 1)')
     ap.add_argument('--arch', choices=['chain', 'unet'], default='chain')
@@ -573,10 +599,12 @@ def main():
                              ('_dil' if max(spec['unet']['dilation']) > 1 else '') +
                              ('_mo' if args.maxout else '') + ('_mo2' if args.maxout_l2 else ''))
     else:
+        assert not (args.maxout and args.avgout), '--maxout and --avgout are alternatives'
         net = Denoiser(args.depth, args.channels, not args.no_skip, args.residual,
-                       args.unshuffle, dil, args.maxout).to(dev)
+                       args.unshuffle, dil, args.maxout, combine='avg' if args.avgout else None).to(dev)
         name = args.name or (f'dn_d{args.depth}_c{args.channels}' + ('_us' if net.unshuffle else '') +
-                             ('_dil' if max(net.dilation) > 1 else '') + ('_mo' if net.maxout else '') +
+                             ('_dil' if max(net.dilation) > 1 else '') +
+                             {'maxout': '_mo', 'avg': '_avg', 'none': ''}[net.combine] +
                              ('_res' if net.residual else ('' if net.skip else '_noskip')))
     print(f'device: {dev}')
     shapes = net.layer_shapes()
@@ -664,7 +692,7 @@ def main():
         ckpt = dict(state=net.state_dict(), arch=args.arch, graph=net.graph(), depth=args.depth,
                     channels=args.channels, sigma=args.sigma, epoch=ep, set12_psnr=t12,
                     **(dict(skip=net.skip, residual=net.residual, unshuffle=net.unshuffle,
-                            dilation=net.dilation, maxout=net.maxout) if args.arch == 'chain'
+                            dilation=net.dilation, maxout=net.maxout, combine=net.combine) if args.arch == 'chain'
                        else dict(skip=True, residual=False, unshuffle=True, maxout=args.maxout,
                                  dilation=net.spec['unet']['dilation'], unet=net.spec['unet'])))
         if val is None:

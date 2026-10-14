@@ -91,6 +91,10 @@ def post_int(q, post):
         # is the max of the two real values, requantized.
         c = q.shape[0]//2
         return np.maximum(q[:c], q[c:])
+    if post == 'avg':
+        # The maxout control: the mean of the two codes, rounded half up.
+        c = q.shape[0]//2
+        return (q[:c].astype(np.int64) + q[c:].astype(np.int64) + 1) >> 1
     if post == 'shuffle2':
         return shuffle2c(q)
     return q
@@ -186,10 +190,16 @@ def float_run(FL, spec, x, record=None):
         h = torch.cat([maps[k] for k in n['inputs']], 1)
         h = F.relu(F.conv2d(h, w, b, stride=n['stride'], padding=node_padding(n), dilation=n['dilation']))
         if i < len(nodes)-1:
+            pre = h
             h = post_op(h, n['post'])
             maps[n['name']] = h
             if record is not None:
-                record[i].append(h[0])
+                # The scale applies to the core's output codes, which are clamped
+                # before the host combines them. For maxout the combined map has
+                # the same upper tail, and recording it keeps older exports
+                # bit-exact; for the mean the pair is wider than the result, so
+                # the range is taken before the combination.
+                record[i].append((pre if n['post'] == 'avg' else h)[0])
     return h
 
 
@@ -208,7 +218,8 @@ def load_model(ck):
     dil = ck.get('dilation') or [1]*ck['depth']        # older checkpoints: plain 3x3
     if ck.get('folded'):
         spec = ck['graph'] if 'graph' in ck else Denoiser(
-            ck['depth'], ck['channels'], ck['skip'], False, unshuffle, dil, ck.get('maxout', False)).graph()
+            ck['depth'], ck['channels'], ck['skip'], False, unshuffle, dil, ck.get('maxout', False),
+            combine=ck.get('combine')).graph()
         a_out = ck['a_out'] if 'a_out' in ck else ck['a_scale'][1:]
         net = FoldedQ(spec, ck['layers'], a_out)
         net.quant = False
@@ -218,7 +229,7 @@ def load_model(ck):
         net.load_state_dict(ck['state'])
     else:
         net = Denoiser(ck['depth'], ck['channels'], ck['skip'], ck.get('residual', False), unshuffle, dil,
-                       ck.get('maxout', False))
+                       ck.get('maxout', False), combine=ck.get('combine'))
         net.load_state_dict(ck['state'])
         spec = net.graph()
     net.eval()

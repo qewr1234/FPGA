@@ -87,7 +87,19 @@ python denoise/bm3d_protocol.py all                  # 클리핑 조건이 BM3D�
 python denoise/dncnn_s_protocol.py <cszn/DnCNN model.pth>   # 공개 DnCNN-S를 같은 입력으로 (약 5분)
 ```
 
-화질 모델은 `--channels 64`에 `--maxout` 없이 같은 순서입니다. 7층 망은 `--depth 7 --channels 32 --patches 32768`(unshuffle 없음).
+화질 모델은 `--channels 64`에 `--maxout` 없이 같은 순서입니다.
+
+**maxout 대조 실험 (같은 학습 예산).** 기존 B-32 ReLU는 epoch 26에 검증 PSNR이 무너진 뒤 회복하지 못해 epoch 40에 조기 종료됐고(최고 epoch 25, 갱신 4,000회), maxout은 갱신 17,760회에서 최고였다. 그래서 세 망을 조기 종료 없이 같은 120 epoch(갱신 19,200회)으로 다시 학습한다. `--avgout`은 같은 64 출력을 재양자화 뒤에 평균으로 합친다(파라미터·코어 비용이 maxout과 같고 max 비선형만 없다; 범위는 합치기 전 값으로 보정).
+
+```
+set F=--unshuffle --depth 10 --channels 32 --patch 50 --patches 20480 --epochs 120 --schedule plateau --stop-patience 1000 --min-lr 0 --threads 5
+python denoise/train_denoise.py %F% --name dn_d10_c32_us_fx
+python denoise/train_denoise.py %F% --avgout --name dn_d10_c32_us_avg_fx
+python denoise/train_denoise.py %F% --maxout --name dn_d10_c32_us_mo_fx
+REM 각 X에 대해: python denoise/quantize_denoise.py --ckpt denoise/X.pt
+REM              python denoise/qat_denoise.py --ckpt denoise/X.pt --epochs 15
+REM              python denoise/quantize_denoise.py --ckpt denoise/X_qat.pt
+``` 7층 망은 `--depth 7 --channels 32 --patches 32768`(unshuffle 없음).
 
 스크립트가 하는 일:
 - `train_denoise.py`: 망은 노드 그래프입니다(`node`, `unet_spec`). 각 노드는 코어 한 번(창 kh×kw, stride, dilation, COUT)이고, 입력 맵 여러 개를 이어 붙일 수 있으며, 후처리(maxout, pixel shuffle)는 PC 몫입니다. 사이클 모델과 보정 모델을 출력합니다.

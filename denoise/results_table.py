@@ -52,6 +52,8 @@ def row(export, bm3d):
         tags.append('unet')
     if man.get('maxout'):
         tags.append('maxout')
+    if any(L.get('post') == 'avg' for L in man['layers']):
+        tags.append('avg')
     if man.get('qat'):
         tags.append('qat')
     if any(L.get('dilation', 1) > 1 for L in man['layers']):
