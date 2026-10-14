@@ -53,38 +53,51 @@ QMAX_A = 127
 
 
 # ----------------------------------------------------------------- windows ---
-def im2col(q, kh=3, kw=3, pad=1):
+def im2col(q, kh=3, kw=3, pad=None, dilation=1, stride=1):
     """(B, C, H, W) activations -> (B*H*W, K) windows in tap order (ky, kx, cin).
 
     Tap index is (ky*kw + kx)*C + c, which is the order quantize_cifar.py lays
     the weights out in and the order export_featuremap.py proved against the
     VGG config.bin. Output positions run row-major within an image, images in
     order, which is the order the core emits results in.
+
+    dilation d takes tap (ky, kx) from d*ky, d*kx pixels away (a dilated
+    convolution); the padding defaults to what keeps the size for an odd
+    kernel, d*(kh//2), and to 0 for an even one; stride s takes one window
+    every s pixels (a 2x2 stride-2 window is the denoiser's downsampling). The
+    core never sees the difference: a window is K values either way.
     """
+    if pad is None:
+        pad = dilation*(kh//2) if kh % 2 else 0
     b, c, h, w = q.shape
+    d, s = dilation, stride
+    oh, ow = (h + 2*pad - d*(kh-1) - 1)//s + 1, (w + 2*pad - d*(kw-1) - 1)//s + 1
     padded = np.zeros((b, c, h+2*pad, w+2*pad), q.dtype)
     padded[:, :, pad:pad+h, pad:pad+w] = q
-    cols = np.stack([padded[:, :, ky:ky+h, kx:kx+w]
+    cols = np.stack([padded[:, :, d*ky:d*ky+s*oh:s, d*kx:d*kx+s*ow:s]
                      for ky in range(kh) for kx in range(kw)], axis=1)
-    # (B, ky*kx, C, H, W) -> (B, H, W, ky*kx, C) -> (B*H*W, K)
-    return cols.transpose(0, 3, 4, 1, 2).reshape(b*h*w, kh*kw*c)
+    # (B, ky*kx, C, oh, ow) -> (B, oh, ow, ky*kx, C) -> (B*oh*ow, K)
+    return cols.transpose(0, 3, 4, 1, 2).reshape(b*oh*ow, kh*kw*c)
 
 
-def im2col_reference(q, kh=3, kw=3, pad=1):
+def im2col_reference(q, kh=3, kw=3, pad=None, dilation=1, stride=1):
     """The same thing written as explicit loops, for the self test.
 
     Deliberately not sharing a line with im2col: two implementations that agree
     is evidence, one implementation compared with itself is not.
     """
+    if pad is None:
+        pad = dilation*(kh//2) if kh % 2 else 0
     b, c, h, w = q.shape
-    out = np.zeros((b*h*w, kh*kw*c), q.dtype)
+    oh, ow = (h + 2*pad - dilation*(kh-1) - 1)//stride + 1, (w + 2*pad - dilation*(kw-1) - 1)//stride + 1
+    out = np.zeros((b*oh*ow, kh*kw*c), q.dtype)
     for bi in range(b):
-        for oy in range(h):
-            for ox in range(w):
-                row = out[(bi*h + oy)*w + ox]
+        for oy in range(oh):
+            for ox in range(ow):
+                row = out[(bi*oh + oy)*ow + ox]
                 for ky in range(kh):
                     for kx in range(kw):
-                        iy, ix = oy + ky - pad, ox + kx - pad
+                        iy, ix = oy*stride + dilation*ky - pad, ox*stride + dilation*kx - pad
                         if 0 <= iy < h and 0 <= ix < w:
                             base = (ky*kw + kx)*c
                             row[base:base+c] = q[bi, :, iy, ix]
@@ -242,6 +255,15 @@ def selftest():
         a, r = im2col(q), im2col_reference(q)
         assert a.shape == (b*h*h, 9*c) and np.array_equal(a, r), (b, c, h)
         print(f'  ({b}, {c}, {h}, {h}) -> {a.shape}  identical')
+    for d in (2, 3, 4):                         # dilated windows (the denoiser)
+        q = rng.integers(0, 128, (2, 4, 9, 9), dtype=np.uint8)
+        a, r = im2col(q, dilation=d), im2col_reference(q, dilation=d)
+        assert np.array_equal(a, r), d
+        print(f'  (2, 4, 9, 9) dilation {d} -> {a.shape}  identical')
+    q = rng.integers(0, 128, (2, 5, 8, 6), dtype=np.uint8)       # 2x2 stride 2 (the U-Net's down)
+    a, r = im2col(q, kh=2, kw=2, stride=2), im2col_reference(q, kh=2, kw=2, stride=2)
+    assert a.shape == (2*4*3, 4*5) and np.array_equal(a, r)
+    print(f'  (2, 5, 8, 6) 2x2 stride 2 -> {a.shape}  identical')
 
     print('\nim2col places the taps where the weights expect them:')
     # A weight vector that is 1 at exactly one tap picks out exactly one input

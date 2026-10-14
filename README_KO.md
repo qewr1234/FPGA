@@ -9,6 +9,9 @@
 | **v3** | `rtl/overlapped_window_mac.sv` | 창 간 중첩: 다음 창 입력 수신과 현재 창 계산을 겹침 |
 | **v4** | `rtl/banked_window_mac.sv` | v3 + T개 tap bank에서 cycle당 T개 tuple 발행 (P×T 곱셈기) |
 
+UVM 검증 환경은 `sim/uvm/`에 있습니다(랜덤 자극, 참조 모델 스코어보드, 커버리지, AXI 프로토콜 SVA, 뮤턴트 검사).
+Vivado가 있는 PC에서는 `python scripts/run_uvm.py --sim xsim`로 돌립니다. 설명은 `sim/uvm/README_KO.md`, 결과는 `sim/uvm/RESULTS_UVM_KO.md`에 있습니다.
+
 ## v3: 창 간 중첩
 
 v3(`overlapped_window_mac.sv`)는 v2의 예약 메커니즘을 **창 사이**로 확장합니다.

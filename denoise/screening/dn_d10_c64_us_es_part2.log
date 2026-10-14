@@ -1,0 +1,18 @@
+dn_d10_c64_us_es: 300,756 parameters, layers [(36, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (612, 4)]
+board cost 1314 cycles/pixel -> 256x256 at 50 MHz: 1.72 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d10_c64_us_es at epoch 45 (from_best), best validation 28.248 dB at epoch 44, lr 5.0e-04
+epoch  45/300  loss 0.001692  val 28.131 dB (best 28.248 @ 44)  lr 5.0e-04  Set12 29.57 dB (test, not used)      194s
+epoch  46/300  loss 0.001628  val 28.222 dB (best 28.248 @ 44)  lr 5.0e-04  Set12 29.67 dB (test, not used)      362s
+epoch  47/300  loss 0.001626  val 28.256 dB (best 28.256 @ 47)  lr 5.0e-04  Set12 29.73 dB (test, not used)      530s
+dn_d10_c64_us_es: 300,756 parameters, layers [(36, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (612, 4)]
+board cost 1314 cycles/pixel -> 256x256 at 50 MHz: 1.72 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d10_c64_us_es at epoch 48 (exact), best validation 28.256 dB at epoch 47, lr 5.0e-04
+epoch  48/300  loss 0.001623  val 28.236 dB (best 28.256 @ 47)  lr 5.0e-04  Set12 29.62 dB (test, not used)      172s
+epoch  49/300  loss 0.001621  val 28.275 dB (best 28.275 @ 49)  lr 5.0e-04  Set12 29.67 dB (test, not used)      335s
+dn_d10_c64_us_es: 300,756 parameters, layers [(36, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (576, 64), (612, 4)]
+board cost 1314 cycles/pixel -> 256x256 at 50 MHz: 1.72 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d10_c64_us_es at epoch 50 (exact), best validation 28.275 dB at epoch 49, lr 5.0e-04
+epoch  50/300  loss 0.001606  val 28.304 dB (best 28.304 @ 50)  lr 5.0e-04  Set12 29.75 dB (test, not used)      165s

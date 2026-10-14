@@ -1,0 +1,18 @@
+dn_d7_c32_es: 47,018 parameters, layers [(9, 32), (288, 32), (288, 32), (288, 32), (288, 32), (288, 32), (297, 1)]
+board cost 1746 cycles/pixel -> 256x256 at 50 MHz: 2.29 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d7_c32_es at epoch 46 (from_best), best validation 28.308 dB at epoch 45, lr 1.0e-03
+epoch  46/300  loss 0.001626  val 28.291 dB (best 28.308 @ 45)  lr 1.0e-03  Set12 29.71 dB (test, not used)      193s
+epoch  47/300  loss 0.001605  val 28.314 dB (best 28.314 @ 47)  lr 1.0e-03  Set12 29.70 dB (test, not used)      358s
+epoch  48/300  loss 0.001614  val 28.326 dB (best 28.326 @ 48)  lr 1.0e-03  Set12 29.71 dB (test, not used)      524s
+dn_d7_c32_es: 47,018 parameters, layers [(9, 32), (288, 32), (288, 32), (288, 32), (288, 32), (288, 32), (297, 1)]
+board cost 1746 cycles/pixel -> 256x256 at 50 MHz: 2.29 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d7_c32_es at epoch 49 (exact), best validation 28.326 dB at epoch 48, lr 1.0e-03
+epoch  49/300  loss 0.001595  val 28.324 dB (best 28.326 @ 48)  lr 1.0e-03  Set12 29.74 dB (test, not used)      168s
+epoch  50/300  loss 0.001609  val 28.315 dB (best 28.326 @ 48)  lr 1.0e-03  Set12 29.72 dB (test, not used)      328s
+dn_d7_c32_es: 47,018 parameters, layers [(9, 32), (288, 32), (288, 32), (288, 32), (288, 32), (288, 32), (297, 1)]
+board cost 1746 cycles/pixel -> 256x256 at 50 MHz: 2.29 s
+validation: 20 training images held out, 380 left to train on
+resuming dn_d7_c32_es at epoch 51 (exact), best validation 28.326 dB at epoch 48, lr 1.0e-03
+epoch  51/300  loss 0.001600  val 28.279 dB (best 28.326 @ 48)  lr 1.0e-03  Set12 29.73 dB (test, not used)      157s

@@ -23,6 +23,12 @@ set RST_COUNT 0
 set PHYS 0
 set SLCR_LOCKED 1
 set LVLSHFT 0
+# FPGA_RST_CTRL, writable once SLCR is unlocked. The board boots with the PL
+# out of reset.
+set FPGARST 0
+# Whether the last fpga -file found the PL quiesced (resets asserted, PL-to-PS
+# shifters off). FAULT=plglitch hangs the HP port when it did not.
+set PL_QUIET 1
 
 # A boot image that reached the point of enabling the MMU: every debugger read is
 # translated and the PL is not in the tables. "mmusctlr" also exposes SCTLR under
@@ -79,7 +85,8 @@ proc ps_read {addr} {
             set CLKCTRL [expr {$::FAULT in {slowclock clkstuck} ? 0x00400800 : 0x00100A00}]
         }
         set clkctrl $CLKCTRL
-        array set v [list 0xF800000C 0 0xF800010C 7 0xF8000170 $clkctrl 0xF8000240 0 \
+        global FPGARST
+        array set v [list 0xF800000C 0 0xF800010C 7 0xF8000170 $clkctrl 0xF8000240 $FPGARST \
                      0xF8000900 0xF 0xF8006000 0x81 0xF8006054 0x7 0xF800700C 0x4 \
                      0xF8007014 0x4000 0xF8000100 0x0001A000 0xF8000104 0x00020000 \
                      0xF8000108 0x0001E000]
@@ -179,6 +186,9 @@ proc dma_run_mm2s {bytes} {
     global D CORE CFG_MODE ARMED PENDING_RX MEM FAULT NWIN COUT EXPECT_CYCLES
     layout_geom
     set words [expr {$bytes / 4}]
+    # The board's failure: the channel runs, reports no error, and moves nothing.
+    global PL_QUIET
+    if {$FAULT eq "plglitch" && !$PL_QUIET} { return }
     if {$CFG_MODE} {
         set n $words
         if {$FAULT eq "cfgshort"} { set n [expr {$words - 7}] }
@@ -269,6 +279,11 @@ proc mwr {args} {
     if {$addr == 0xF8000900} {
         global SLCR_LOCKED LVLSHFT
         if {!$SLCR_LOCKED} { set LVLSHFT $val }
+        return
+    }
+    if {$addr == 0xF8000240} {
+        global SLCR_LOCKED FPGARST
+        if {!$SLCR_LOCKED} { set FPGARST $val }
         return
     }
     if {$addr == 0xF8000170} {
@@ -374,7 +389,11 @@ proc rst {args} {
 }
 proc stop {args} { }
 proc configparams {args} { }
-proc fpga {args} { puts "  \[stub\] fpga [lindex $args 1]" }
+proc fpga {args} {
+    global FPGARST LVLSHFT PL_QUIET
+    set PL_QUIET [expr {($FPGARST & 0xF) == 0xF && ($LVLSHFT & 0x5) == 0}]
+    puts "  \[stub\] fpga [lindex $args 1]"
+}
 proc loadhw {args} { puts "  \[stub\] loadhw" }
 # loadhw normally defines these. The "nops7*" cases leave them undefined, which is
 # what a real install did, so the run script has to recover them itself.

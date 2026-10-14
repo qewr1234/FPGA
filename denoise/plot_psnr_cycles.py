@@ -1,0 +1,108 @@
+"""PSNR against core cycles per pixel for every exported denoiser (the paper's iso-cycle figure).
+
+    python denoise/plot_psnr_cycles.py          # writes denoise/figures/psnr_vs_cycles.{pdf,png}
+
+Points are the integer (board-arithmetic) Set12 PSNRs from denoise/export/*/int_eval.json
+at the corrected cycle model's cost (board-measured models marked), with BM3D under the
+paper's input and on unclipped noise as horizontal lines, and the public DnCNN-S on the
+same input at its modelled cost. Second panel: BSD68.
+"""
+import json
+import sys
+from pathlib import Path
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from results_table import model_cycles, board_cycles  # noqa: E402
+
+# the three validated categorical slots (all-pairs safe), plus neutral ink for references
+BLUE, ORANGE, AQUA, INK, MUTED = '#2a78d6', '#eb6834', '#1baf7a', '#0b0b0b', '#52514e'
+
+MODELS = [  # name, label, family, marker
+    ('dn_d7_c32_es', 'A: 7층×32', 'A', 'o'),
+    ('dn_d10_c64_us_es', 'B', 'B', 's'),
+    ('dn_d10_c64_us_es_qat', 'B+QAT', 'B', 's'),
+    ('dn_d10_c32_us_es', 'B-32 ReLU', 'R', '^'),
+    ('dn_d10_c32_us_es_qat', 'B-32 ReLU+QAT', 'R', '^'),
+    ('dn_d10_c32_us_mo_es', 'B-32 maxout', 'M', 'D'),
+    ('dn_d10_c32_us_mo_es_qat', 'B-32 maxout+QAT', 'M', 'D'),
+]
+COLOR = {'A': INK, 'B': BLUE, 'R': AQUA, 'M': ORANGE}
+LABEL_DX = {  # per-panel, per-point label offsets (points), chosen by looking at the render; None = no label
+    'Set12': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
+              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, 2),
+              'dn_d10_c32_us_mo_es': (6, -9), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+    'BSD68': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
+              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, -9),
+              'dn_d10_c32_us_mo_es': (6, 3), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+}
+LABEL_TEXT = {'dn_d10_c64_us_es_qat': 'B, B+QAT'}  # the two B points sit on top of each other
+
+
+def main():
+    for f in ('NanumGothic', 'NanumBarunGothic', 'Malgun Gothic'):
+        if any(f == x.name for x in font_manager.fontManager.ttflist):
+            plt.rcParams['font.family'] = f
+            break
+    plt.rcParams.update({'font.size': 8, 'axes.titlesize': 8, 'axes.labelsize': 8, 'legend.fontsize': 7,
+                         'xtick.labelsize': 7, 'ytick.labelsize': 7, 'axes.edgecolor': MUTED, 'axes.linewidth': 0.6})
+    bm = json.loads((HERE/'baselines.json').read_text())['sets']
+    bmp = json.loads((HERE/'bm3d_protocol.json').read_text())['sets']
+    dn = json.loads((HERE/'dncnn_s_protocol.json').read_text())['sets']
+    dn_cycles = 9296  # cycle model for 17 x 64 x 3x3 on this core (denoise/results_table.py conventions)
+
+    fig, axes = plt.subplots(1, 2, figsize=(6.9, 2.5), dpi=200)
+    for ax, s in zip(axes, ('Set12', 'BSD68')):
+        xs = []
+        for name, label, fam, mk in MODELS:
+            man = json.loads((HERE/'export'/name/'manifest.json').read_text())
+            ev = json.loads((HERE/'export'/name/'int_eval.json').read_text())
+            x = board_cycles(name) or model_cycles(man)
+            y = ev[s]['integer']
+            filled = board_cycles(name) is not None
+            ax.plot(x, y, mk, ms=5.5, mfc=COLOR[fam] if filled else 'white', mec=COLOR[fam], mew=1.2, zorder=3)
+            if LABEL_DX[s][name] is not None:
+                dx, dy = LABEL_DX[s][name]
+                ax.annotate(LABEL_TEXT.get(name, label), (x, y), xytext=(dx, dy), textcoords='offset points',
+                            fontsize=6.5, color=INK, zorder=4)
+            xs.append(x)
+        ax.plot(dn_cycles, dn[s]['clip7']['mean'], 'o', ms=5.5, mfc='white', mec=MUTED, mew=1.2, zorder=3)
+        ax.annotate('DnCNN-S (float, 같은 입력)', (dn_cycles, dn[s]['clip7']['mean']), xytext=(-6, 4),
+                    textcoords='offset points', fontsize=6.5, color=INK, ha='right')
+        for y, txt, ls, dy in ((bm[s]['bm3d']['mean'], 'BM3D, 클리핑 7비트 입력', '-', -8),
+                               (bmp[s]['raw_sigma25']['mean'], 'BM3D, 클리핑 없음', '--', 2)):
+            ax.axhline(y, color=MUTED, lw=0.8, ls=ls, zorder=1)
+            ax.annotate(txt, (13500, y), xytext=(0, dy), textcoords='offset points', fontsize=6.5, color=MUTED, ha='right')
+        ax.set_xscale('log')
+        ax.set_xlim(480, 14000)
+        ax.set_xticks([500, 1000, 2000, 5000, 10000])
+        ax.set_xticklabels(['500', '1k', '2k', '5k', '10k'])
+        ax.set_xlabel('코어 사이클 / 픽셀 (로그)')
+        ax.set_ylabel(f'{s} PSNR (dB), 정수')
+        ax.grid(True, which='major', color='#e6e5e1', lw=0.5, zorder=0)
+        for sp in ('top', 'right'):
+            ax.spines[sp].set_visible(False)
+    axes[0].set_ylim(28.9, 30.6)
+    axes[1].set_ylim(28.1, 29.4)
+    # legend by family (identity is also in the direct labels; filled = board-measured cost)
+    from matplotlib.lines import Line2D
+    handles = [Line2D([], [], marker='s', color=BLUE, ls='', ms=5, label='space-to-depth, 10층×64'),
+               Line2D([], [], marker='D', color=ORANGE, ls='', ms=5, label='10층×32, maxout'),
+               Line2D([], [], marker='^', color=AQUA, ls='', ms=5, label='10층×32, ReLU'),
+               Line2D([], [], marker='o', color=INK, ls='', ms=5, label='7층×32 (기준)'),
+               Line2D([], [], marker='o', color=MUTED, mfc='white', ls='', ms=5, label='속 빈 점 = 사이클 모델값')]
+    fig.legend(handles=handles, loc='lower center', ncol=5, frameon=False, handletextpad=0.3, columnspacing=1.2,
+               bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout(w_pad=1.5, rect=(0, 0.07, 1, 1))
+    out = HERE/'figures'/'psnr_vs_cycles'
+    fig.savefig(out.with_suffix('.pdf')); fig.savefig(out.with_suffix('.png'))
+    print('wrote', out.with_suffix('.pdf'), out.with_suffix('.png'))
+
+
+if __name__ == '__main__':
+    main()

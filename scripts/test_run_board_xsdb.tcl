@@ -39,6 +39,7 @@ set cases {
     {build ignores RUN_K}       {0 fixedgeom   "ignores RUN_K/RUN_COUT"}
     {PL clock, 100 MHz}         {0 none        "PL runs at 100.00 MHz"}
     {PL clock, preset gave 31}  {0 slowclock   "PL runs at 31.25 MHz"}
+    {PL glitches while configured} {0 plglitch  "RESULT: PASS"}
 }
 
 # Setting the PL clock is its own group: the cases above must keep running with
