@@ -15,7 +15,10 @@ Every output is rebuilt from the seed-0 noise the PSNR tables use, and each
 image's PSNR is checked against the stored value before its SSIM is kept: the
 integer models run through the board driver's host emulation
 (scripts/run_denoise.py, the arithmetic the board reproduces bit for bit) and
-must match int_eval.json to 1e-6 dB; BM3D must match baselines.json (clipped
+must match int_eval.json to 1e-5 dB (exports written before the quantizer and
+the driver shared common.to_image can differ at a rounding tie of the final
+float step from accumulator to pixel, about 1e-6 dB; the largest gap is
+recorded per model); BM3D must match baselines.json (clipped
 7-bit input) and bm3d_protocol.json (unclipped) to 1e-3 dB; DnCNN-S must match
 dncnn_s_protocol.json to 1e-3 dB.
 """
@@ -74,7 +77,7 @@ def one_model(name):
     man, layers = run_denoise.load_layers(export)
     ev = json.loads((export/'int_eval.json').read_text())
     args = SimpleNamespace(emulate=True, out=None)
-    out = {}
+    out, dev = {}, 0.0
     for set_name in SETS:
         per_s, per_p = {}, {}
         for n, clean, noisy in test_noise(load_set(set_name), man['sigma'], seed=0):
@@ -82,11 +85,12 @@ def one_model(name):
             with contextlib.redirect_stdout(io.StringIO()):     # the driver prints every layer
                 img, _ = run_denoise.denoise(q_in, man, layers, args, Path(n).stem)
             p = psnr(clean, img.astype(np.float32)/255)
-            if abs(p - ev[set_name]['per_image'][n]) > 1e-6:
+            dev = max(dev, abs(p - ev[set_name]['per_image'][n]))
+            if abs(p - ev[set_name]['per_image'][n]) > 1e-5:
                 raise SystemExit(f'{name} {n}: {p:.6f} dB here, {ev[set_name]["per_image"][n]:.6f} in int_eval.json')
             per_s[n], per_p[n] = ssim(clean, img), p
         out[set_name] = (per_s, per_p)
-    return name, out
+    return name, out, dev
 
 
 def _bm3d(x):
@@ -142,16 +146,20 @@ def main():
     ap.add_argument('--no-bm3d', action='store_true')
     ap.add_argument('--no-dncnn', action='store_true')
     ap.add_argument('--procs', type=int, default=4)
+    ap.add_argument('--skip-done', action='store_true', help='leave out models already in the file')
     args = ap.parse_args()
     res = json.loads(OUT.read_text()) if OUT.exists() else {}
     res.update(sigma=SIGMA, seed=0,
                ssim='Wang et al. 2004: 11x11 Gaussian window, sigma 1.5, K1 0.01, K2 0.03, range 255, 8-bit images')
     res.setdefault('sets', {})
     names = args.models.split(',') if args.models else [m for m in MODELS if (HERE/'export'/m/'manifest.json').exists()]
+    if args.skip_done:
+        names = [m for m in names if m not in res['sets'].get('BSD68', {})]
     with Pool(args.procs) as pool:
-        for name, out in pool.imap_unordered(one_model, names):
+        for name, out, dev in pool.imap_unordered(one_model, names):
             for set_name, (per_s, per_p) in out.items():
                 record(res, set_name, name, per_s, per_p)
+            res.setdefault('max_psnr_gap_vs_int_eval_db', {})[name] = dev
             print(f'{name:<26} SSIM Set12 {res["sets"]["Set12"][name]["ssim"]:.4f}  '
                   f'BSD68 {res["sets"]["BSD68"][name]["ssim"]:.4f}', flush=True)
             OUT.write_text(json.dumps(res, indent=2))
