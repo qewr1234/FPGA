@@ -223,6 +223,8 @@ def main():
     ap.add_argument('--authors', default='(저자 이름)')
     ap.add_argument('--affil', default='(학과), (대학교)', help='one line; use ; to split lines')
     ap.add_argument('--email', default='')
+    ap.add_argument('--col-fig-cm', type=float, default=8.4, help='width of one-column figures')
+    ap.add_argument('--wide-fig-cm', type=float, default=15.0, help='width of two-column figures')
     ap.add_argument('--ack', default='본 연구는 과학기술정보통신부 및 정보통신기획평가원의 "SW중심대학사업" 지원을 받아 수행되었습니다.')
     ap.add_argument('--east-asia-font', default='Malgun Gothic')
     args = ap.parse_args()
@@ -367,7 +369,7 @@ def main():
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
                 open_wide()
-            p.add_run().add_picture(str(img), width=Cm(15.0 if wide else 8.4))
+            p.add_run().add_picture(str(img), width=Cm(args.wide_fig_cm if wide else args.col_fig_cm))
             place(p._p)
             c = make_paragraph(doc, 'figure caption'); no_numbering(c); add_runs(c, cap); place(c._p)
             continue
