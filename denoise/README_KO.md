@@ -137,6 +137,8 @@ REM 시드 2·3: 같은 F에 --seed N, 이름 끝에 _sN (예: dn_d10_c32_us_mo_
 REM python denoise/train_denoise.py %F% --maxout --seed 2 --name dn_d10_c32_us_mo_fx_s2 && python denoise/quantize_denoise.py --ckpt denoise/dn_d10_c32_us_mo_fx_s2.pt && python denoise/qat_denoise.py --ckpt denoise/dn_d10_c32_us_mo_fx_s2.pt --epochs 15 --threads 5 && python denoise/quantize_denoise.py --ckpt denoise/dn_d10_c32_us_mo_fx_s2_qat.pt
 ``` 7층 망은 `--depth 7 --channels 32 --patches 32768`(unshuffle 없음).
 
+**시드 2·3은 GPU PC에서 (2026-10-16, 결과를 보기 전에 정함).** 옛 PC의 시드 2·3 실행이 중간에 끊겨, 시드 2·3의 모든 학습(ReLU, maxout, 평균 결합)과 45채널 망을 GPU가 있는 다른 PC에서 처음부터 다시 돌린다. 같은 시드의 망들이 같은 장치에서 학습되게 하려는 것이며, 옛 PC에서 끊기거나 끝난 시드 2·3 실행은 결과와 상관없이 쓰지 않는다. 시드 1은 CPU에서 학습했다. GPU에서는 `train_denoise.py`가 TF32를 끄고 cuDNN의 결정적 합성곱 알고리즘을 쓰며(CPU와 같은 fp32 연산), 장치·GPU·torch 버전을 `_train.json`의 `hardware`에 남긴다. 가중치 초기값과 패치·잡음은 시드만으로 정해지므로 장치가 달라도 같고, 다른 것은 부동소수점 연산 순서뿐이다(확인: 다른 CPU에서 다시 돌린 시드 1 maxout의 epoch 1 학습 손실이 0.012599로 원래 0.012602와 같았고, 검증 PSNR은 연산 순서 차이로 23.896 대 23.794 dB였다). 시드 2의 epoch 1 학습 손실(CPU): ReLU 0.009686, maxout 0.012657, 평균 결합 0.010170. QAT와 양자화는 어느 PC에서든 CPU로 돈다. 평균 결합 시드 1의 QAT는 체크포인트(`dn_d10_c32_us_avg_fx.pt`)가 있는 옛 PC에서 한다.
+
 스크립트가 하는 일:
 - `train_denoise.py`: 망은 노드 그래프입니다(`node`, `unet_spec`). 각 노드는 코어 한 번(창 kh×kw, stride, dilation, COUT)이고, 입력 맵 여러 개를 이어 붙일 수 있으며, 후처리(maxout, pixel shuffle)는 PC 몫입니다. 사이클 모델과 보정 모델을 출력합니다.
 - `qat_denoise.py`: 보드의 정수 연산(INT8 가중치, 7비트 활성값, 바이어스 단위, skip 스케일 접기, 재양자화 뒤 maxout, 8비트 출력)을 float 안에서 straight-through로 재현한 `FoldedQ`를 미세조정합니다. 활성값 스케일은 학습 변수(LSQ). 검증은 양자화를 켠 채로 하므로 남는 모델이 보드 모델입니다.
