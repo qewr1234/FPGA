@@ -4,7 +4,8 @@
     python denoise/plot_psnr_cycles.py --en     # English labels: psnr_vs_cycles_en.{pdf,png}
 
 Points are the integer (board-arithmetic) Set12 PSNRs from denoise/export/*/int_eval.json
-at the corrected cycle model's cost (board-measured models marked), with BM3D under the
+at the corrected cycle model's cost (board-measured models marked); the B-32 points are
+the fixed-budget (120 epochs, seed 1) networks, with BM3D under the
 paper's input and on unclipped noise as horizontal lines, and the public DnCNN-S on the
 same input at its modelled cost. Second panel: BSD68.
 """
@@ -28,19 +29,19 @@ MODELS = [  # name, label, family, marker
     ('dn_d7_c32_es', 'A: 7층×32', 'A', 'o'),
     ('dn_d10_c64_us_es', 'B', 'B', 's'),
     ('dn_d10_c64_us_es_qat', 'B+QAT', 'B', 's'),
-    ('dn_d10_c32_us_es', 'B-32 ReLU', 'R', '^'),
-    ('dn_d10_c32_us_es_qat', 'B-32 ReLU+QAT', 'R', '^'),
-    ('dn_d10_c32_us_mo_es', 'B-32 maxout', 'M', 'D'),
-    ('dn_d10_c32_us_mo_es_qat', 'B-32 maxout+QAT', 'M', 'D'),
+    ('dn_d10_c32_us_fx', 'B-32 ReLU', 'R', '^'),          # B-32: fixed 120 epochs, seed 1
+    ('dn_d10_c32_us_fx_qat', 'B-32 ReLU+QAT', 'R', '^'),
+    ('dn_d10_c32_us_mo_fx', 'B-32 maxout', 'M', 'D'),
+    ('dn_d10_c32_us_mo_fx_qat', 'B-32 maxout+QAT', 'M', 'D'),
 ]
 COLOR = {'A': INK, 'B': BLUE, 'R': AQUA, 'M': ORANGE}
 LABEL_DX = {  # per-panel, per-point label offsets (points), chosen by looking at the render; None = no label
     'Set12': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
-              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, 2),
-              'dn_d10_c32_us_mo_es': (6, -9), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+              'dn_d10_c32_us_fx': (6, -9), 'dn_d10_c32_us_fx_qat': (6, 2),
+              'dn_d10_c32_us_mo_fx': (6, -9), 'dn_d10_c32_us_mo_fx_qat': (6, 3)},
     'BSD68': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
-              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, -9),
-              'dn_d10_c32_us_mo_es': (6, 3), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+              'dn_d10_c32_us_fx': (6, -9), 'dn_d10_c32_us_fx_qat': (6, 2),
+              'dn_d10_c32_us_mo_fx': (6, 2), 'dn_d10_c32_us_mo_fx_qat': (6, 3)},
 }
 LABEL_TEXT = {'dn_d10_c64_us_es_qat': 'B, B+QAT'}  # the two B points sit on top of each other
 
