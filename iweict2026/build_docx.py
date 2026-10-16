@@ -20,6 +20,7 @@ Markdown conventions the converter understands:
   **Lead.** text                    -> Body Text with a bold lead-in
   ![..](path) + *caption*           -> picture + figure caption
   *표 I. caption* + | table |       -> table head + table
+  |------|---| separator row        -> column widths in those proportions (all equal: the defaults)
   - bullets                         -> Body Text paragraphs without indent (the template's bullet list style)
   > blockquote (draft memo)          -> dropped
   *( ... )* italic-only lines        -> dropped (translation notes)
@@ -111,6 +112,11 @@ def set_cell_borders(tbl):
         tblPr.append(borders)
 
 
+class Rows(list):
+    """A table's rows; rel_widths is set when the separator row's dash counts differ (|----|--|: 2:1)."""
+    rel_widths = None
+
+
 def make_table(doc, rows, widths_cm):
     ncol = len(rows[0])
     tbl = doc.add_table(rows=len(rows), cols=ncol)
@@ -183,11 +189,13 @@ def parse_markdown(md):
                 cap = lines[j].strip('*'); j += 1
             yield 'figure', (m.group(1), cap); i = j; continue
         if ln.startswith('|'):
-            rows = []
+            rows = Rows()
             while i < len(lines) and lines[i].startswith('|'):
                 cells = [c.strip() for c in lines[i].strip().strip('|').split('|')]
                 if not all(re.fullmatch(r':?-+:?', c) for c in cells):
                     rows.append(cells)
+                elif len({c.count('-') for c in cells}) > 1:
+                    rows.rel_widths = [c.count('-') for c in cells]
                 i += 1
             yield 'table', rows; continue
         if ln.startswith('*') and ln.endswith('*') and not ln.startswith('**'):
@@ -382,6 +390,8 @@ def main():
             total = 17.0 if wide else 8.4
             first = 0.30 if ncol >= 7 else (0.34 if ncol == 6 else 0.30)
             widths = [total * first] + [total * (1 - first) / (ncol - 1)] * (ncol - 1)
+            if getattr(rows, 'rel_widths', None):
+                widths = [total * w / sum(rows.rel_widths) for w in rows.rel_widths]
             if wide:
                 open_wide()
             h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head); place(h._p)

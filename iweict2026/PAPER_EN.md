@@ -65,39 +65,39 @@ The RTL was verified in a UVM [21] environment (protocol agents, a predicting sc
 
 ## V. Results
 
-**Setup.** Set12 and BSD68 [22] at σ = 25, with the same noise for every method, clipped and quantized to 7 bits. This input is the CNNs' training distribution but not BM3D's: on unclipped noise BM3D gains 0.03 / 0.26 dB (Set12 / BSD68), and tuning its σ changes it by under 0.1 dB, so Table I lists both. As a CNN reference on the same input we evaluate the public DnCNN-S weights [1] (float, trained on unclipped noise). Integer PSNR is that of the integer model, which the board reproduces bit for bit; with one training seed, differences under 0.1 dB are not interpreted.
+**Setup.** Set12 and BSD68 [22] at σ = 25, with the same noise for every method, clipped and quantized to 7 bits. This input is the CNNs' training distribution but not BM3D's: on unclipped noise BM3D gains 0.03 / 0.26 dB (Set12 / BSD68), and tuning its σ changes it by under 0.1 dB, so Table I lists both. As a CNN reference on the same input we evaluate the public DnCNN-S weights [1] (float, trained on unclipped noise). SSIM [23] ranks our integer models as PSNR does. Integer PSNR is that of the integer model, which the board reproduces bit for bit; with one training seed, differences under 0.1 dB are not interpreted.
 
-*Table I. Mean PSNR (dB) and core cost. Cycles are the corrected model; "board" marks networks whose cycles were measured. B-32 rows train for a fixed 120 epochs (seed 1).*
+*Table I. Mean PSNR (dB), SSIM of the 8-bit output and core cost. Cycles are the corrected model; "board" marks networks whose cycles were measured. B-32 rows train for a fixed 120 epochs (seed 1).*
 
-| Model | Cycles/px | Util. | Params | Set12 float / int | BSD68 float / int |
-|---|---|---|---|---|---|
-| BM3D [2], clipped input | — | — | — | 29.95 | 28.37 |
-| BM3D, unclipped | — | — | — | 29.98 | 28.62 |
-| DnCNN-S [1], same input | 9.3k | — | 556k | 30.35 | 28.89 |
-| A: 7 × 32 | 1,775 board | 41% | 47k | 29.87 / 29.83 | 28.83 / 28.80 |
-| **B + QAT: s2d, 10 × 64** | 1,323 board | 88% | 300k | 30.13 / **30.12** | 29.01 / **29.02** |
-| **B-32 + maxout + QAT** | 675 board | 87% | 152k | 30.00 / **30.00** | 28.95 / **28.94** |
-| B-32 ReLU + QAT | 669 board | 45% | 76k | 29.58 / 29.62 | 28.66 / 28.68 |
-| B-32 averaging + QAT [AVG] | 675 | 87% | 152k | — | — |
+| Model | Cycles/px | Util. | Params | Set12 float / int | BSD68 float / int | SSIM Set12 / BSD68 |
+|---------------------------------------------|-------------------|------------|---------------|-------------------------|-------------------------|-----------------------------|
+| BM3D [2], clipped input | — | — | — | 29.95 | 28.37 | 0.850 / 0.799 |
+| BM3D, unclipped | — | — | — | 29.98 | 28.62 | 0.851 / 0.804 |
+| DnCNN-S [1], same input | 9.3k | — | 556k | 30.35 | 28.89 | 0.859 / 0.822 |
+| A: 7 × 32 | 1,775 board | 41% | 47k | 29.87 / 29.83 | 28.83 / 28.80 | 0.842 / 0.809 |
+| **B + QAT: s2d, 10 × 64** | 1,323 board | 88% | 300k | 30.13 / **30.12** | 29.01 / **29.02** | **0.855** / **0.821** |
+| **B-32 + maxout + QAT** | 675 board | 87% | 152k | 30.00 / **30.00** | 28.95 / **28.94** | **0.851** / **0.817** |
+| B-32 ReLU + QAT | 669 board | 45% | 76k | 29.58 / 29.62 | 28.66 / 28.68 | 0.840 / 0.807 |
+| B-32 averaging + QAT [AVG] | 675 | 87% | 152k | — | — | — |
 
 ![Fig. 2](../denoise/figures/psnr_vs_cycles_en.png)
 
-*Fig. 2. Integer PSNR against core cycles per pixel (left Set12, right BSD68). Filled markers are board-measured cycles; B-32 points are seed 1. At about 670 cycles maxout lies above ReLU, and with QAT above A, while ReLU lies below A; B lies above and to the left of A.*
+*Fig. 2. Integer PSNR against core cycles per pixel (left Set12, right BSD68). Filled markers are board-measured cycles; B-32 points are seed 1.*
 
 **Quality model.** B + QAT reaches 30.12 / 29.02 dB: +0.17 / +0.66 dB over BM3D on the same input, +0.14 / +0.40 dB over unclipped BM3D, and +0.29 / +0.22 dB over A on all 80 images, in 1.34× fewer cycles.
 
-**Speed model.** B-32 + maxout + QAT needs 2.63× fewer cycles than A and scores 30.00 / 28.94 dB, +0.17 / +0.14 dB above A: level with BM3D on Set12 (9/12 images) and +0.57 dB on BSD68 (+0.32 dB unclipped).
+**Speed model.** B-32 + maxout + QAT needs 2.63× fewer cycles than A and scores 30.00 / 28.94 dB, +0.17 / +0.14 dB above A: level with BM3D on Set12 in PSNR (9/12 images) and SSIM, and +0.57 dB on BSD68 (+0.32 dB unclipped).
 
-**Free channels against ReLU, and max against mean.** At the same budget, the maxout network scores +0.37 / +0.26 dB above the ReLU network on all 80 images for 1.01× the board cycles (seed 1; image-paired standard error 0.04 / 0.02 dB, so the training run is the uncertainty). The averaging control matched maxout (validation +0.02 dB in float [AVG]), so in this seed the max adds nothing beyond the extra outputs. The ReLU run collapsed once, at epoch 26, and its validation-driven schedule halved the rate four times while it recovered; before that the three networks were level, so seeds 2 and 3 decide whether the gap holds and how large it is [SEEDS].
+**Free channels against ReLU, and max against mean.** At the same budget, the maxout network scores +0.37 / +0.26 dB (SSIM +0.011 / +0.011) above the ReLU network on all 80 images for 1.01× the board cycles (seed 1; image-paired standard error 0.04 / 0.02 dB, so the training run is the uncertainty). The averaging control matched maxout (validation +0.02 dB in float [AVG]), so in this seed the max adds nothing beyond the extra outputs. The ReLU run collapsed once, at epoch 26, and its validation-driven schedule halved the rate four times while it recovered; before that the three networks were level, so seeds 2 and 3 decide whether the gap holds and how large it is [SEEDS].
 
-**Quantization and the same-input reference.** QAT brought every integer model within 0.04 dB of its float model; the maxout network had lost 0.16 / 0.14 dB before it. On the same input DnCNN-S (556k, float) is 0.2 dB above our 300k integer model on Set12; its BSD68 deficit reflects training on unclipped noise.
+**Quantization and the same-input reference.** QAT brought every integer model within 0.04 dB of its float model (maxout had lost 0.16 / 0.14 dB). On the same input DnCNN-S (556k, float) beats our 300k integer model by 0.2 dB on Set12 and in SSIM on both sets (by 0.001 on BSD68); its BSD68 PSNR deficit reflects training on unclipped noise.
 
-**Board.** The maxout layers (K = 288, 64 outputs) took 289 cycles per window, exactly as the 32-output layers of A and of the ReLU network: doubling the outputs cost nothing on the board, and the whole network took 1.01× the ReLU network's cycles (Table II). Absolute throughput is low: 6.4 GOPS at most at 50 MHz and 0.9–2.3 s of core time per 256×256 image, against 30–38 ms for float PyTorch on a 4-core PC CPU. The JTAG test harness dominates wall-clock time, and the on-chip ARM was not compared; this paper concerns choosing networks for a given core.
+**Board.** The maxout layers (K = 288, 64 outputs) took 289 cycles per window, exactly as the 32-output layers of A and of the ReLU network: doubling the outputs cost nothing on the board (Table II). Absolute throughput is low: 6.4 GOPS at most at 50 MHz and 0.9–2.3 s of core time per 256×256 image, against 30–38 ms for float PyTorch on a 4-core PC CPU. The JTAG test harness dominates wall-clock time, and the on-chip ARM was not compared; this paper concerns choosing networks for a given core.
 
-*Table II. Board runs (Set12 05.png, 256×256, 50 MHz, no mismatch in any layer). Cycles per window: model → board; B-32 networks with QAT; three earlier versions also matched. Core time: 2.33, 1.73, 0.89 and 0.88 s.*
+*Table II. Board runs (Set12 05.png, 256×256, 50 MHz, no mismatch in any layer). Cycles per window: model → board; B-32 networks with QAT; three earlier versions also matched.*
 
 | Model | Hidden K / COUT | Cycles/window | PSNR |
-|---|---|---|---|
+|---------------------|----------------------------|----------------------|-------------|
 | A | 288 / 32 | 288 → 289 | 29.83 |
 | B + QAT | 576 / 64 | 576 → 577 | 30.06 |
 | B-32 maxout | 288 / **64** | 288 → **289** | 29.94 |
@@ -105,7 +105,7 @@ The RTL was verified in a UVM [21] environment (protocol agents, a predicting sc
 
 ## VI. Conclusion
 
-On a 64-multiplier integer core, a cycle model that matches the board showed that the bottleneck is the input port, not the multipliers, and two choices that look wasteful by FLOP count paid off: space-to-depth fitted a 6.4× larger network into 25% fewer cycles, and doubling the hidden outputs and pooling them in pairs doubled the parameters for 1% more cycles and denoised better, by max and, in one seed, by mean alike [SEEDS] [AVG]. These rules belong to an input structure fed by host-built windows, but the test behind them should carry over: by the cycle model about P·T/w output channels are free, so pooling 64 outputs would again be free on a core of this organization with 256 multipliers fed four values per cycle, and would not be on this core at two. EfficientNet-X [5], HALP [12] and DRACO [13], whose fastest network depends on the array size, apply the same logic on TPUs, GPUs and systolic arrays. Whether P·T/w holds for other input structures is still a prediction; we will measure wider ports and line buffers on the board next. Pooling is free in cycles only: in sparse mode it issued 3.0× the ReLU network's nonzero multiplications. Energy, end-to-end time without the test harness, other noise levels, color images and SSIM are not reported. Code, models, per-image PSNR and board logs are in the repository.
+On a 64-multiplier integer core, a cycle model that matches the board showed that the bottleneck is the input port, not the multipliers, and two choices that look wasteful by FLOP count paid off: space-to-depth fitted a 6.4× larger network into 25% fewer cycles, and doubling the hidden outputs and pooling them in pairs doubled the parameters for 1% more cycles and denoised better, by max and, in one seed, by mean alike [SEEDS] [AVG]. These rules belong to an input structure fed by host-built windows, but the test behind them should carry over: by the cycle model about P·T/w output channels are free, so pooling 64 outputs would again be free on a core of this organization with 256 multipliers fed four values per cycle, and would not be on this core at two. EfficientNet-X [5], HALP [12] and DRACO [13], whose fastest network depends on the array size, apply the same logic on TPUs, GPUs and systolic arrays. Whether P·T/w holds for other input structures is a prediction, to be measured next on wider ports and line buffers. Pooling is free in cycles only: in sparse mode it issued 3.0× the ReLU network's nonzero multiplications. Energy, end-to-end time without the test harness, other noise levels and color images are not reported. Code, models, per-image PSNR and board logs are in the repository.
 
 **Acknowledgment.** This study was conducted with the support of the Ministry of Science and ICT and the Institute for Information & Communications Technology Planning & Evaluation (IITP) under the 'SW-oriented University Program.'
 
@@ -154,3 +154,5 @@ On a 64-multiplier integer core, a cycle model that matches the board showed tha
 [21] *IEEE Standard for Universal Verification Methodology Language Reference Manual*, IEEE Std 1800.2-2020.
 
 [22] D. Martin, C. Fowlkes, D. Tal, and J. Malik, "A database of human segmented natural images and its application to evaluating segmentation algorithms and measuring ecological statistics," in *Proc. ICCV*, 2001.
+
+[23] Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, "Image quality assessment: From error visibility to structural similarity," *IEEE Trans. Image Process.*, vol. 13, no. 4, pp. 600–612, 2004.
