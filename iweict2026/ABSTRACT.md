@@ -38,4 +38,4 @@ Efficient neural networks are usually designed to minimize multiplications, but 
 | 289 사이클/창, 675·668.5·1,323·1,775 사이클/px, 0 mismatches, 일곱 모델 | `denoise/board_runs/*_05.json` (B-32 ReLU는 `dn_d10_c32_us_fx_qat_05.json`) |
 | 1.7% (보정 전) / 0.003% (보정 후), 41% 활용률 | `train_denoise.board_cycles_per_pixel` 대 `_measured` 대 `board_runs/` |
 | 6.4배 파라미터 (300k / 47k), 1.6배 곱셈, 25% 적은 사이클 (1,323 / 1,775) | `denoise/README_KO.md` 표 |
-| 라인 버퍼 예측 (maxout 289 대 ReLU 145 사이클/창, A 833 대 B 1,208 사이클/px) | dense 사이클 모델, 새 값은 창당 C_in개 (README "병목의 출처") |
+| 라인 버퍼 예측 (maxout 289 대 ReLU 145 사이클/창, A 833 대 B 1,209 사이클/px) | dense 사이클 모델, 새 값은 창당 C_in개 (README "병목의 출처") |
