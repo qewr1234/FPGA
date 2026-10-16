@@ -2,7 +2,7 @@
 
 제출 폼(Microsoft Forms)에 넣는 항목: 논문 제목, 저자, 소속, 초록. 논문 본문(4쪽, IEEE 템플릿)은 별도 업로드. 웹사이트 기준 초록 10월 16일, 최종본 10월 23일(2026-10-15 확인; 저자가 받은 안내로는 초록이 10월 19일로 연장).
 
-2026-10-16 판: 라인 버퍼 예측 문장을 정확하게 고쳤다. 두 선택의 이점이 "모두 사라진다"가 아니라, maxout은 더는 공짜가 아니고(ReLU의 약 2배 사이클) 망 B는 기준 망보다 느려진다(B-32 maxout은 라인 버퍼에서도 A보다 빠르다고 예측된다). 길이를 맞추려고 K 구절을 줄였다. 같은 예산(120 epoch + QAT 15 epoch)의 ReLU·maxout 결과는 정수 +0.38 / +0.26 dB(Set12 / BSD68, 한 시드)지만, 이 시드에서 ReLU 망이 epoch 26에 무너졌고 plateau 규칙이 회복 중에 학습률을 먼저 낮췄다(무너지기 전에는 두 망의 검증 PSNR이 같았다). 그래서 시드 2·3이 나오기 전에는 숫자를 초록에 넣지 않는다. 판단 규칙(결과를 보기 전에 정함): 모든 maxout 시드가 모든 ReLU 시드보다 두 테스트셋에서 높으면 (a), 아니면 (c). 시드 결과 전에 제출해야 하면 (c). 이전 판의 +0.54 / +0.35 dB는 ReLU 망이 갱신 0.4만에서 조기 종료된 비교라 쓰지 않는다.
+2026-10-16 판: 라인 버퍼 예측 문장을 정확하게 고쳤다. 두 선택의 이점이 "모두 사라진다"가 아니라, maxout은 더는 공짜가 아니고(ReLU의 약 2배 사이클) 망 B는 기준 망보다 느려진다(B-32 maxout은 라인 버퍼에서도 A보다 빠르다고 예측된다). 길이를 맞추려고 K 구절을 줄였다. 같은 예산(120 epoch + QAT 15 epoch)의 ReLU·maxout 결과는 정수 +0.37 / +0.26 dB(Set12 / BSD68, 한 시드)지만, 이 시드에서 ReLU 망이 epoch 26에 무너졌고 plateau 규칙이 회복 중에 학습률을 먼저 낮췄다(무너지기 전에는 두 망의 검증 PSNR이 같았다). 그래서 시드 2·3이 나오기 전에는 숫자를 초록에 넣지 않는다. 판단 규칙(결과를 보기 전에 정함): 모든 maxout 시드가 모든 ReLU 시드보다 두 테스트셋에서 높으면 (a), 아니면 (c). 시드 결과 전에 제출해야 하면 (c). 이전 판의 +0.54 / +0.35 dB는 ReLU 망이 갱신 0.4만에서 조기 종료된 비교라 쓰지 않는다.
 
 ## Title
 
@@ -14,7 +14,7 @@ Efficient neural networks are usually designed to minimize multiplications, but 
 
 **[MAXOUT]** 자리에 아래 셋 중 하나를 넣는다(`PAPER_EN.md` 초록에는 지금 옛 문장 "and for 1% more cycles the maxout network denoises better than the ReLU network of the same width"가 들어 있다).
 
-- (a) 시드가 모두 같은 방향이면: "and at the same training budget the maxout network scores +X / +Y dB above the ReLU network of the same width (mean of three seeds) for 1% more cycles" 뒤에, 평균 결합과의 차이가 0.1 dB 미만이면 ", as does averaging each pair instead: the gain comes from the free channels, not from the max"를 붙인다(시드 1의 float·검증 값은 평균 결합이 maxout과 같거나 0.02 dB 높았다). 두 테스트셋 모두 0.1 dB 이상 maxout이 높으면 ", and +Z / +W dB above a control that averages the same pairs"를 붙인다.
+- (a) 시드가 모두 같은 방향이면: "and at the same training budget the maxout network scores +X / +Y dB above the ReLU network of the same width (mean of three seeds) for 1% more cycles" 뒤에, 평균 결합과의 차이가 0.1 dB 미만이면 ", as does averaging each pair instead: the gain comes from the free channels, not from the max"를 붙인다(시드 1에서 평균 결합은 maxout보다 검증 +0.02, float Set12 +0.03 dB 높았다). 두 테스트셋 모두 0.1 dB 이상 maxout이 높으면 ", and +Z / +W dB above a control that averages the same pairs"를 붙인다.
 - (b) 숫자 없이 방향만: "and at the same training budget the maxout network denoises better than the ReLU network of the same width (three seeds) for 1% more cycles"
 - (c) 시드가 엇갈리거나 결과 전에 제출하면: 이 절을 지우고 문장을 "..., as a 32-output ReLU layer did."로 끝낸다.
 

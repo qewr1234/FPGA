@@ -6,7 +6,7 @@
 >
 > - 2026-10-15. Condensed from `PAPER_KO.md`; every number is from the committed files listed there. [MAXOUT] marks the sentences and table rows that the fixed-budget re-run (ReLU, averaging control, maxout; 120 epochs + 15 QAT epochs each) will fill.
 > - 2026-10-16. Seed-1 fixed-budget result (integer, after QAT): ReLU 29.62 / 28.68, maxout 30.00 / 28.94 (logs, 2 decimals). Not filled in yet: the seed-1 ReLU run collapsed at epoch 26 and the plateau rule halved its rate four times during the recovery, so seeds 2 and 3 decide (rule in `ABSTRACT.md`). The line-buffer sentences now say what the model predicts (maxout stops being free; B becomes slower than A).
-> - 2026-10-16, later. The speed model is now the fixed-budget `dn_d10_c32_us_mo_fx_qat` (board run 0 mismatches, 44,254,293 cycles), the arm of the controlled comparison; the B-32 ReLU + QAT network was also run on the board (43,811,412 cycles, 668.5 per pixel against 668.5 modelled). Seven models are now verified on the board. The ReLU and averaging rows stay [MAXOUT] until seeds 2 and 3.
+> - 2026-10-16, later. The speed model is now the fixed-budget `dn_d10_c32_us_mo_fx_qat` (board run 0 mismatches, 44,254,293 cycles), the arm of the controlled comparison; the B-32 ReLU + QAT network was also run on the board (43,811,412 cycles, 668.5 per pixel against 668.5 modelled). Seven models are now verified on the board. The ReLU row shows seed 1 (as Fig. 2 does); the averaging row waits for its QAT; seeds 2 and 3 will turn the B-32 rows into means.
 > - Build into the workshop template: `python iweict2026/build_docx.py --tpl iweict2026/template_word.docx --src iweict2026/PAPER_EN.md --out iweict2026/PAPER_EN.docx --lang en --ack "<English acknowledgment>"`.
 > - The board-output figure (Korean draft, Fig. 3) is left out for space.
 
@@ -40,7 +40,7 @@ Space-to-depth [12], [5], maxout [13]–[15] and quantization-aware training [16
 
   C = max( K, ⌈COUT/P⌉ · ⌈K/T⌉ ).   (1)
 
-When K dominates, the core is input-bound and up to P·T = 64 output channels cost nothing: at K = 288, COUT = 32 and 64 both take 288 cycles. On the baseline network the board showed one cycle more per window and at least COUT cycles per window (outputs leave one per cycle). With these two corrections, (1) predicted the total cycles of three networks designed afterwards within 0.003% (Table II), against 0.7–1.6% without them. Equation (1) is the dense-mode bound. All board runs used the sparse mode, which skips multiplications by zero activations and so shortens only the compute term; input-bound layers take the same cycles in both modes.
+When K dominates, the core is input-bound and up to P·T = 64 output channels cost nothing: at K = 288, COUT = 32 and 64 both take 288 cycles. On the baseline network the board showed one cycle more per window and at least COUT cycles per window (outputs leave one per cycle). With these two corrections, (1) predicted the total cycles of three networks designed afterwards within 0.003% (Table II), against 0.4–1.4% without them. Equation (1) is the dense-mode bound. All board runs used the sparse mode, which skips multiplications by zero activations and so shortens only the compute term; input-bound layers take the same cycles in both modes.
 
 **Where the bottleneck comes from.** One value per cycle is a choice of the AXI-Stream wrapper, which unpacks four 7-bit values per 32-bit beat, made to reuse the CIFAR-10 bitstream unchanged. With w values per cycle, about P·T/w output channels come free (64, 32 and 16 for w = 1, 2, 4). Host-built windows have the same effect. With on-chip line buffers [7], a window brings only its new column of C_in values; by the dense model a hidden layer with K = 288 then costs 145 cycles at COUT = 32 and 289 at COUT = 64, maxout doubles the cost, and the baseline (833 cycles/pixel) becomes faster than network B (1,208). These are predictions, not measurements. The rules below therefore hold for this input structure; what carries over is choosing networks by the measured bottleneck. The host's share is small but not zero: im2col, requantization and maxout take 0.07–0.13 s per 256×256 image on a 4-core PC, 5–9% of the 50 MHz core time.
 
@@ -76,12 +76,12 @@ The RTL was verified in a UVM [19] environment (AXI4-Lite and AXI4-Stream agents
 | A: 7 × 32 | 1,775 board | 41% | 47k | 29.87 / 29.83 | 28.83 / 28.80 |
 | **B + QAT: s2d, 10 × 64** | 1,323 board | 88% | 300k | 30.13 / **30.12** | 29.01 / **29.02** |
 | **B-32 + maxout + QAT** | 675 board | 87% | 152k | 30.00 / **30.00** | 28.95 / **28.94** |
-| B-32 ReLU + QAT [MAXOUT] | 669 board | 45% | 76k | — | — |
+| B-32 ReLU + QAT | 669 board | 45% | 76k | 29.58 / 29.62 | 28.66 / 28.68 |
 | B-32 averaging + QAT [MAXOUT] | 675 | 87% | 152k | — | — |
 
 ![Fig. 2](../denoise/figures/psnr_vs_cycles_en.png)
 
-*Fig. 2. Integer PSNR against core cycles per pixel (left Set12, right BSD68). Filled markers are board-measured cycles. At about 670 cycles maxout lies above ReLU, and B lies above and to the left of A.*
+*Fig. 2. Integer PSNR against core cycles per pixel (left Set12, right BSD68). Filled markers are board-measured cycles; B-32 points are seed 1. At about 670 cycles maxout lies above ReLU, and B lies above and to the left of A.*
 
 **Quality model.** B + QAT reaches 30.12 / 29.02 dB: +0.17 / +0.66 dB over BM3D on the same input (better on 10/12 and 68/68 images), +0.14 / +0.40 dB over unclipped BM3D, and +0.29 / +0.22 dB over A on all 80 images, in 1.34× fewer cycles.
 
