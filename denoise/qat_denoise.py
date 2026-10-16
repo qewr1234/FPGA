@@ -135,7 +135,8 @@ def main():
         return dict(folded=True, graph=spec, layers=model.layers(), a_out=model.scales(),
                     arch=ck.get('arch', 'chain'), unet=ck.get('unet'),
                     depth=ck['depth'], channels=ck['channels'], skip=ck['skip'], residual=False,
-                    unshuffle=unshuffle, dilation=dil, maxout=maxout, sigma=sigma, epoch=ep,
+                    unshuffle=unshuffle, dilation=dil, maxout=maxout,
+                    combine=ck.get('combine', 'maxout' if maxout else 'none'), sigma=sigma, epoch=ep,
                     set12_psnr=set12, val_psnr=v,
                     qat=dict(source=str(args.ckpt), epochs=args.epochs, lr=args.lr, patch=patch))
 

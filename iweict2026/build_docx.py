@@ -116,6 +116,8 @@ def make_table(doc, rows, widths_cm):
     tbl = doc.add_table(rows=len(rows), cols=ncol)
     tbl.autofit = False
     set_cell_borders(tbl)
+    for j, w in enumerate(widths_cm):
+        tbl.columns[j].width = Cm(w)          # the grid widths, which LibreOffice and Word lay out by
     for i, row in enumerate(rows):
         for j, cell_text in enumerate(row):
             cell = tbl.cell(i, j)
@@ -202,7 +204,7 @@ def parse_markdown(md):
             yield 'equation', ln.strip(); i += 1; continue
         if re.match(r'\[\d+\] ', ln):
             yield 'ref', re.sub(r'^\[\d+\] ', '', ln).strip(); i += 1; continue
-        if ln.startswith('(') and '저자' in ln:
+        if ln.startswith('(') and ('저자' in ln or 'Author' in ln):
             yield 'authors', ln; i += 1; continue
         # paragraph: join wrapped lines
         buf = [ln.strip()]
@@ -297,6 +299,20 @@ def main():
     def place(el):
         sb_body.addprevious(el)
 
+    # Wide figures and tables go in a one-column section. Consecutive wide items
+    # share one section, so no empty two-column strip is left between them.
+    wide_state = {'open': False}
+
+    def open_wide():
+        if not wide_state['open']:
+            place(section_break(doc, 2, 360)._p)        # ends the two-column text before it
+            wide_state['open'] = True
+
+    def close_wide():
+        if wide_state['open']:
+            place(section_break(doc, 1, 720)._p)        # ends the one-column wide section
+            wide_state['open'] = False
+
     in_refs = False
     in_abstract = False
     abstract_done = False
@@ -305,6 +321,10 @@ def main():
     for kind, payload in blocks:
         if kind in ('title', 'authors'):
             continue
+        is_wide = (kind == 'figure' and any(k in payload[0] for k in ('psnr_vs_cycles', 'board'))) or \
+                  (kind == 'table' and len(payload[0]) >= 6) or kind == 'tablehead'
+        if not is_wide:
+            close_wide()
         if kind == 'h1':
             text = payload
             if text in ('초록', 'Abstract'):
@@ -346,12 +366,10 @@ def main():
             p = doc.add_paragraph(); p.alignment = 1; p.paragraph_format.first_line_indent = Cm(0)
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
-                place(section_break(doc, 2, 360)._p)
-            p.add_run().add_picture(str(img), width=Cm(17.0 if wide else 8.4))
+                open_wide()
+            p.add_run().add_picture(str(img), width=Cm(15.0 if wide else 8.4))
             place(p._p)
             c = make_paragraph(doc, 'figure caption'); no_numbering(c); add_runs(c, cap); place(c._p)
-            if wide:
-                place(section_break(doc, 1, 720)._p)
             continue
         if kind == 'tablehead':
             pending_head = payload; continue
@@ -360,15 +378,14 @@ def main():
             ncol = len(rows[0])
             wide = ncol >= 6
             total = 17.0 if wide else 8.4
-            first = 0.28 if ncol >= 8 else 0.24
+            first = 0.30 if ncol >= 7 else (0.34 if ncol == 6 else 0.30)
             widths = [total * first] + [total * (1 - first) / (ncol - 1)] * (ncol - 1)
             if wide:
-                place(section_break(doc, 2, 360)._p)
+                open_wide()
             h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head); place(h._p)
             tbl = make_table(doc, rows, widths); place(tbl._tbl)
-            if wide:
-                place(section_break(doc, 1, 720)._p)
             continue
+    close_wide()
     doc.save(str(out))
     print('wrote', out)
 

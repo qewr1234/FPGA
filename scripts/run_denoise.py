@@ -163,6 +163,10 @@ def denoise(q_in, man, layers, args, tag, start=1):
                 # maps c and c+C (after requantization, which is monotonic).
                 c = L['COUT']//2
                 r = np.maximum(r[:c], r[c:])
+            elif L['post'] == 'avg':
+                # The maxout control: the mean of each pair, rounded half up.
+                c = L['COUT']//2
+                r = ((r[:c].astype(np.int64) + r[c:].astype(np.int64) + 1) >> 1).astype(r.dtype)
             elif L['post'] == 'shuffle2':
                 r = shuffle2c(r)                  # 4C codes placed one level up
             maps[L['name']] = np.ascontiguousarray(r)

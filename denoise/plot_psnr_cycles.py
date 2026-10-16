@@ -1,9 +1,11 @@
 """PSNR against core cycles per pixel for every exported denoiser (the paper's iso-cycle figure).
 
     python denoise/plot_psnr_cycles.py          # writes denoise/figures/psnr_vs_cycles.{pdf,png}
+    python denoise/plot_psnr_cycles.py --en     # English labels: psnr_vs_cycles_en.{pdf,png}
 
 Points are the integer (board-arithmetic) Set12 PSNRs from denoise/export/*/int_eval.json
-at the corrected cycle model's cost (board-measured models marked), with BM3D under the
+at the corrected cycle model's cost (board-measured models marked); the B-32 points are
+the fixed-budget (120 epochs, seed 1) networks, with BM3D under the
 paper's input and on unclipped noise as horizontal lines, and the public DnCNN-S on the
 same input at its modelled cost. Second panel: BSD68.
 """
@@ -27,24 +29,38 @@ MODELS = [  # name, label, family, marker
     ('dn_d7_c32_es', 'A: 7층×32', 'A', 'o'),
     ('dn_d10_c64_us_es', 'B', 'B', 's'),
     ('dn_d10_c64_us_es_qat', 'B+QAT', 'B', 's'),
-    ('dn_d10_c32_us_es', 'B-32 ReLU', 'R', '^'),
-    ('dn_d10_c32_us_es_qat', 'B-32 ReLU+QAT', 'R', '^'),
-    ('dn_d10_c32_us_mo_es', 'B-32 maxout', 'M', 'D'),
-    ('dn_d10_c32_us_mo_es_qat', 'B-32 maxout+QAT', 'M', 'D'),
+    ('dn_d10_c32_us_fx', 'B-32 ReLU', 'R', '^'),          # B-32: fixed 120 epochs, seed 1
+    ('dn_d10_c32_us_fx_qat', 'B-32 ReLU+QAT', 'R', '^'),
+    ('dn_d10_c32_us_mo_fx', 'B-32 maxout', 'M', 'D'),
+    ('dn_d10_c32_us_mo_fx_qat', 'B-32 maxout+QAT', 'M', 'D'),
 ]
 COLOR = {'A': INK, 'B': BLUE, 'R': AQUA, 'M': ORANGE}
 LABEL_DX = {  # per-panel, per-point label offsets (points), chosen by looking at the render; None = no label
     'Set12': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
-              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, 2),
-              'dn_d10_c32_us_mo_es': (6, -9), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+              'dn_d10_c32_us_fx': (6, -9), 'dn_d10_c32_us_fx_qat': (6, 2),
+              'dn_d10_c32_us_mo_fx': (6, -9), 'dn_d10_c32_us_mo_fx_qat': (6, 3)},
     'BSD68': {'dn_d7_c32_es': (6, -3), 'dn_d10_c64_us_es': None, 'dn_d10_c64_us_es_qat': (6, 2),
-              'dn_d10_c32_us_es': (6, -9), 'dn_d10_c32_us_es_qat': (6, -9),
-              'dn_d10_c32_us_mo_es': (6, 3), 'dn_d10_c32_us_mo_es_qat': (6, 3)},
+              'dn_d10_c32_us_fx': (6, -9), 'dn_d10_c32_us_fx_qat': (6, 2),
+              'dn_d10_c32_us_mo_fx': (6, 2), 'dn_d10_c32_us_mo_fx_qat': (6, 3)},
 }
 LABEL_TEXT = {'dn_d10_c64_us_es_qat': 'B, B+QAT'}  # the two B points sit on top of each other
 
 
+TEXT = {
+    'ko': dict(dncnn='DnCNN-S\n(float, 같은 입력)', bm_clip='BM3D, 클리핑 7비트 입력', bm_raw='BM3D, 클리핑 없음',
+               xlabel='코어 사이클 / 픽셀 (로그)', ylabel='{} PSNR (dB), 정수', a='A: 7층×32',
+               leg=['space-to-depth, 10층×64', '10층×32, maxout', '10층×32, ReLU', '7층×32 (기준)', '속 빈 점 = 사이클 모델값'],
+               suffix=''),
+    'en': dict(dncnn='DnCNN-S\n(float, same input)', bm_clip='BM3D, clipped 7-bit input', bm_raw='BM3D, unclipped',
+               xlabel='core cycles / pixel (log)', ylabel='{} PSNR (dB), integer', a='A: 7×32',
+               leg=['space-to-depth, 10×64', '10×32, maxout', '10×32, ReLU', '7×32 (baseline)', 'hollow = cycle model'],
+               suffix='_en'),
+}
+
+
 def main():
+    lang = 'en' if '--en' in sys.argv else 'ko'
+    T = TEXT[lang]
     for f in ('NanumGothic', 'NanumBarunGothic', 'Malgun Gothic'):
         if any(f == x.name for x in font_manager.fontManager.ttflist):
             plt.rcParams['font.family'] = f
@@ -68,22 +84,22 @@ def main():
             ax.plot(x, y, mk, ms=5.5, mfc=COLOR[fam] if filled else 'white', mec=COLOR[fam], mew=1.2, zorder=3)
             if LABEL_DX[s][name] is not None:
                 dx, dy = LABEL_DX[s][name]
-                ax.annotate(LABEL_TEXT.get(name, label), (x, y), xytext=(dx, dy), textcoords='offset points',
+                ax.annotate(LABEL_TEXT.get(name, T['a'] if name == 'dn_d7_c32_es' else label), (x, y), xytext=(dx, dy), textcoords='offset points',
                             fontsize=6.5, color=INK, zorder=4)
             xs.append(x)
         ax.plot(dn_cycles, dn[s]['clip7']['mean'], 'o', ms=5.5, mfc='white', mec=MUTED, mew=1.2, zorder=3)
-        ax.annotate('DnCNN-S (float, 같은 입력)', (dn_cycles, dn[s]['clip7']['mean']), xytext=(-6, 4),
+        ax.annotate(T['dncnn'], (dn_cycles, dn[s]['clip7']['mean']), xytext=(-6, 2),
                     textcoords='offset points', fontsize=6.5, color=INK, ha='right')
-        for y, txt, ls, dy in ((bm[s]['bm3d']['mean'], 'BM3D, 클리핑 7비트 입력', '-', -8),
-                               (bmp[s]['raw_sigma25']['mean'], 'BM3D, 클리핑 없음', '--', 2)):
+        for y, txt, ls, dy in ((bm[s]['bm3d']['mean'], T['bm_clip'], '-', -8),
+                               (bmp[s]['raw_sigma25']['mean'], T['bm_raw'], '--', 2)):
             ax.axhline(y, color=MUTED, lw=0.8, ls=ls, zorder=1)
             ax.annotate(txt, (13500, y), xytext=(0, dy), textcoords='offset points', fontsize=6.5, color=MUTED, ha='right')
         ax.set_xscale('log')
         ax.set_xlim(480, 14000)
         ax.set_xticks([500, 1000, 2000, 5000, 10000])
         ax.set_xticklabels(['500', '1k', '2k', '5k', '10k'])
-        ax.set_xlabel('코어 사이클 / 픽셀 (로그)')
-        ax.set_ylabel(f'{s} PSNR (dB), 정수')
+        ax.set_xlabel(T['xlabel'])
+        ax.set_ylabel(T['ylabel'].format(s))
         ax.grid(True, which='major', color='#e6e5e1', lw=0.5, zorder=0)
         for sp in ('top', 'right'):
             ax.spines[sp].set_visible(False)
@@ -91,15 +107,16 @@ def main():
     axes[1].set_ylim(28.1, 29.4)
     # legend by family (identity is also in the direct labels; filled = board-measured cost)
     from matplotlib.lines import Line2D
-    handles = [Line2D([], [], marker='s', color=BLUE, ls='', ms=5, label='space-to-depth, 10층×64'),
-               Line2D([], [], marker='D', color=ORANGE, ls='', ms=5, label='10층×32, maxout'),
-               Line2D([], [], marker='^', color=AQUA, ls='', ms=5, label='10층×32, ReLU'),
-               Line2D([], [], marker='o', color=INK, ls='', ms=5, label='7층×32 (기준)'),
-               Line2D([], [], marker='o', color=MUTED, mfc='white', ls='', ms=5, label='속 빈 점 = 사이클 모델값')]
+    lg = T['leg']
+    handles = [Line2D([], [], marker='s', color=BLUE, ls='', ms=5, label=lg[0]),
+               Line2D([], [], marker='D', color=ORANGE, ls='', ms=5, label=lg[1]),
+               Line2D([], [], marker='^', color=AQUA, ls='', ms=5, label=lg[2]),
+               Line2D([], [], marker='o', color=INK, ls='', ms=5, label=lg[3]),
+               Line2D([], [], marker='o', color=MUTED, mfc='white', ls='', ms=5, label=lg[4])]
     fig.legend(handles=handles, loc='lower center', ncol=5, frameon=False, handletextpad=0.3, columnspacing=1.2,
                bbox_to_anchor=(0.5, -0.01))
     fig.tight_layout(w_pad=1.5, rect=(0, 0.07, 1, 1))
-    out = HERE/'figures'/'psnr_vs_cycles'
+    out = HERE/'figures'/('psnr_vs_cycles' + T['suffix'])
     fig.savefig(out.with_suffix('.pdf')); fig.savefig(out.with_suffix('.png'))
     print('wrote', out.with_suffix('.pdf'), out.with_suffix('.png'))
 

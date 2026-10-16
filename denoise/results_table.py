@@ -14,6 +14,7 @@ model beats BM3D re-measured under the same clipped 7-bit input
 (denoise/baselines.json).
 """
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -52,6 +53,8 @@ def row(export, bm3d):
         tags.append('unet')
     if man.get('maxout'):
         tags.append('maxout')
+    if any(L.get('post') == 'avg' for L in man['layers']):
+        tags.append('avg')
     if man.get('qat'):
         tags.append('qat')
     if any(L.get('dilation', 1) > 1 for L in man['layers']):
@@ -76,7 +79,7 @@ def main():
           '| > BM3D Set12 | > BM3D BSD68 |')
     print('|---|---:|---:|---|---|---|---|---|---|')
     for r in rows:
-        cyc = f'{r["cycles"]:,.0f}' + (f' ({r["board"]:,.0f})' if r['board'] else '')
+        cyc = f'{math.floor(r["cycles"] + 0.5):,}' + (f' ({math.floor(r["board"] + 0.5):,})' if r['board'] else '')
         print(f'| {r["name"]} | {cyc} | {r["params"]/1e3:.0f}k | {r["tags"]} '
               f'| {r["set12_f"]:.2f} / **{r["set12_i"]:.2f}** | {r["bsd_f"]:.2f} / **{r["bsd_i"]:.2f}** '
               f'| {r["set12_i"]-r["set12_f"]:+.2f} / {r["bsd_i"]-r["bsd_f"]:+.2f} '

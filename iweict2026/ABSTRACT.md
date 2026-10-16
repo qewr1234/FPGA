@@ -1,31 +1,45 @@
-# IWEICT 2026 — 제목·초록 제출용 (마감 10월 16일)
+# IWEICT 2026 — 제목·초록 제출용
 
-제출 폼(Microsoft Forms)에 넣는 항목: 논문 제목, 저자, 소속, 초록. 논문 본문(4쪽, IEEE 템플릿)은 10월 23일까지 별도 업로드.
+제출 폼(Microsoft Forms)에 넣는 항목: 논문 제목, 저자, 소속, 초록. 논문 본문(4쪽, IEEE 템플릿)은 별도 업로드. 웹사이트 기준 초록 10월 16일, 최종본 10월 23일(2026-10-15 확인; 저자가 받은 안내로는 초록이 10월 19일로 연장).
 
-심사 패널(6개 관점) 검증 뒤 고친 판: maxout 수치를 같은 학습·QAT 조건의 정수 쌍으로, 사이클 모델 정확도를 보정 전·후로, 보드 비트 일치를 실제 범위(모델당 Set12 한 장)로, BM3D를 클리핑 전·후 두 값으로 적었다. 2026-10-14: ReLU 모델에도 QAT 15 epoch을 돌려(정수 29.41 / 28.56 dB) maxout 수치를 QAT 대 QAT 정수 쌍 +0.54 / +0.35 dB로 바꿨다.
+2026-10-16 판: 라인 버퍼 예측 문장을 정확하게 고쳤다. 두 선택의 이점이 "모두 사라진다"가 아니라, maxout은 더는 공짜가 아니고(ReLU의 약 2배 사이클) 망 B는 기준 망보다 느려진다(B-32 maxout은 라인 버퍼에서도 A보다 빠르다고 예측된다). 길이를 맞추려고 K 구절을 줄였다. 같은 예산(120 epoch + QAT 15 epoch)의 ReLU·maxout 결과는 정수 +0.37 / +0.26 dB(Set12 / BSD68, 한 시드)지만, 이 시드에서 ReLU 망이 epoch 26에 무너졌고 plateau 규칙이 회복 중에 학습률을 먼저 낮췄다(무너지기 전에는 두 망의 검증 PSNR이 같았다). 그래서 시드 2·3이 나오기 전에는 숫자를 초록에 넣지 않는다. 판단 규칙(결과를 보기 전에 정함): 모든 maxout 시드가 모든 ReLU 시드보다 두 테스트셋에서 높으면 (a), 아니면 (c). 시드 결과 전에 제출해야 하면 (c). 이전 판의 +0.54 / +0.35 dB는 ReLU 망이 갱신 0.4만에서 조기 종료된 비교라 쓰지 않는다.
+
+2026-10-16 (이후) 판: 평균 결합 대조군이 maxout과 같아서(시드 1), maxout 문장을 "출력을 2배로 늘려 두 개씩 합치면 파라미터 2배를 사이클 1%로 얻고, 이득은 max가 아니라 공짜 용량에서 온다"로 바꿨다. 마지막 문장은 2값/사이클도 함께 적는다. 시드 2·3 결과에 따라 아래 [SEEDS] 규칙을 적용한다.
 
 ## Title
 
 Designing to the Bottleneck, Not the FLOPs: CNN Image Denoising on an Input-Bandwidth-Bound Small-FPGA Integer Accelerator
 
-## Abstract (English, 308 words)
+## Abstract (English)
 
-Efficient neural networks are usually designed to minimize multiplications, but on a small accelerator the run time may be set by something else. We denoise Gaussian noise (σ=25) on an integer CNN accelerator for a small FPGA (Zynq XC7Z020: 64 multipliers, one bitstream, 7-bit inputs, ReLU outputs) and show how the measured bottleneck changes the network design. A cycle model (within 1.7% at design time, within 0.003% after two corrections observed on earlier board runs) shows that this build is bound by its input port, which accepts one 7-bit value per cycle: a layer costs K cycles per window, where K is the number of input values, whatever the number of output channels up to the multiplier count (64). A 7-layer DnCNN-style baseline therefore uses 41% of the multipliers. Two choices that look wasteful by FLOP count follow. A 2×2 space-to-depth input lets a 10-layer, 64-channel network (6.4× the parameters, 1.6× the multiplications) run in 25% fewer cycles than the baseline, 0.3 dB higher. Maxout, which doubles a layer's multiplications, becomes extra output channels of every hidden layer: on the board a 64-output maxout layer took 289 cycles per window, the same as a 32-output ReLU layer, and for 1% more cycles per pixel (675 against 668) the maxout network scores +0.54 / +0.35 dB (Set12 / BSD68) above the ReLU network after the same quantization-aware training. That training, which reproduces the board's arithmetic, brought every integer model within 0.04 dB of its float model. The quality-first integer model reaches 30.12 / 29.02 dB, above BM3D on the same clipped 7-bit input (29.95 / 28.37 dB; 29.98 / 28.62 dB unclipped); the speed-first model needs 2.63× fewer core cycles than the baseline at 29.95 / 28.91 dB. One Set12 image per model ran end to end on the board, every layer matching the integer model bit for bit.
+Efficient neural networks are usually designed to minimize multiplications, but on a small accelerator the run time may be set by something else. We denoise Gaussian noise (σ=25) on our integer CNN accelerator for a Zynq XC7Z020 FPGA (64 multipliers, one bitstream, 7-bit inputs) and show how the measured bottleneck changes the network design. A cycle model, within 0.003% of the board after two corrections, shows that this build, which receives host-built windows one value per cycle, is bound by its input port: a window of K input values costs K cycles for up to 64 output channels. A 7-layer DnCNN-style baseline therefore uses 41% of the multipliers, and two choices that look wasteful by FLOP count pay off. A 2×2 space-to-depth input fits a 10-layer, 64-channel network (6.4× the parameters, 1.6× the multiplications) in 25% fewer cycles, 0.3 dB higher on Set12. Doubling a hidden layer's outputs and pooling them in pairs (maxout) puts the idle multipliers to work: on the board a 64-output layer took 289 cycles per window, as a 32-output layer did, so the network doubles its parameters for 1% more cycles. At the same training budget it denoises better than the ReLU network of the same width, and averaging the pairs instead does as well: the gain is the free capacity, not the max [SEEDS]. With quantization-aware training that reproduces the board's arithmetic, the quality-first integer model reaches 30.12 / 29.02 dB (Set12 / BSD68), above BM3D on the same clipped input (29.95 / 28.37 dB; 29.98 / 28.62 dB unclipped), and the speed-first model matches BM3D in 2.63× fewer cycles. Seven models were verified bit for bit on the board. With two input values per cycle or on-chip line buffers, the same model predicts that pooling stops being free and network B becomes slower than the baseline: the best network follows the bottleneck.
+
+**[SEEDS]** 시드 2·3이 나오면 초록의 두 번째 maxout 문장("At the same training budget it denoises better … not the max [SEEDS].")을 아래 셋 중 하나로 바꾼다.
+
+- (a) 모든 maxout 시드가 모든 ReLU 시드보다 두 테스트셋에서 높으면: "At the same training budget it scores +X / +Y dB above the ReLU network of the same width (mean of three seeds), and averaging the pairs instead does as well: the gain is the free capacity, not the max." 평균 결합이 maxout보다 두 테스트셋 모두 0.1 dB 이상 낮으면 뒷부분을 ", and +Z / +W dB above a control that averages the pairs"로 바꾼다.
+- (b) 방향은 같지만 숫자를 줄이고 싶으면: 지금 문장에서 [SEEDS]만 지우고 "(three seeds)"를 넣는다.
+- (c) 시드가 엇갈리거나 결과 전에 제출하면: 이 문장을 지우고 앞 문장 "…so the network doubles its parameters for 1% more cycles."로 끝낸다.
 
 **Keywords** — image denoising, CNN accelerator, FPGA, hardware-aware network design, maxout, quantization-aware training
 
 ## 초록 (한국어, 확인용)
 
-효율적인 신경망은 보통 곱셈 수를 최소화하도록 설계되지만, 소형 가속기에서는 실행 시간이 다른 것으로 정해질 수 있다. 본 연구는 소형 FPGA용 정수 CNN 가속기(Zynq XC7Z020: 곱셈기 64개, 단일 비트스트림, 7비트 입력, ReLU 출력)에서 가우시안 잡음(σ=25)을 제거하며, 측정된 병목이 망 설계를 어떻게 바꾸는지 보인다. 사이클 모델(설계 단계 1.7% 이내; 이전 보드 실행에서 관찰한 보정 두 개를 넣으면 세 망에서 0.003% 이내)은 이 구현이 사이클당 7비트 값 하나를 받는 입력 포트에 묶여 있음을 보인다. 즉 한 층의 비용은 창당 입력 값의 수 K 사이클이며, 출력 채널 수에는 곱셈기 수(P·T = 64)까지 무관하다. 그래서 기준이 되는 7층 DnCNN 형태의 망은 곱셈기의 41%만 쓴다. 연산량(FLOP) 기준으로는 낭비로 보이는 두 가지 선택을 했다. 2×2 space-to-depth 입력은 10층 64채널 망(파라미터 6.4배, 곱셈 1.6배)을 기준 망보다 25% 적은 사이클에 넣고, 0.3 dB 높다. 층의 곱셈을 2배로 만드는 maxout은 모든 은닉층의 추가 출력 채널로 구현했다. 보드에서 출력 64채널 maxout 층은 창당 289 사이클로 출력 32채널 ReLU 층과 같았고, 픽셀당 1% 많은 사이클(675 대 668)로 maxout 망은 같은 양자화 인지 학습을 거친 ReLU 망보다 +0.54 / +0.35 dB(Set12 / BSD68) 높다. 보드 연산을 재현한 그 학습은 모든 정수 모델을 float의 0.04 dB 안으로 가져왔다. 화질 우선 정수 모델은 30.12 / 29.02 dB로, 같은 클리핑 7비트 입력에서 측정한 BM3D(29.95 / 28.37 dB; 클리핑 없이 29.98 / 28.62 dB)보다 높다. 속도 우선 모델은 기준 망보다 2.63배 적은 코어 사이클로 29.95 / 28.91 dB다. 두 모델 모두 Set12 한 장을 보드에서 끝까지 실행했고, 모든 층이 정수 모델과 비트 단위로 일치했다.
+효율적인 신경망은 보통 곱셈 수를 최소화하도록 설계되지만, 소형 가속기에서는 실행 시간이 다른 것으로 정해질 수 있다. 본 연구는 직접 설계한 Zynq XC7Z020 FPGA용 정수 CNN 가속기(곱셈기 64개, 단일 비트스트림, 7비트 입력)에서 가우시안 잡음(σ=25)을 제거하며, 측정된 병목이 망 설계를 어떻게 바꾸는지 보인다. 보정 두 개를 넣은 사이클 모델은 보드와 0.003% 안에서 맞으며, PC가 만든 창을 사이클당 값 하나씩 받는 이 구현이 입력 포트에 묶여 있음을 보인다. 즉 입력 값 K개의 창은 K 사이클이 들고, 출력 채널은 64개까지 비용이 없다. 그래서 7층 DnCNN 형태의 기준 망은 곱셈기의 41%만 쓰고, 연산량(FLOP) 기준으로는 낭비로 보이는 두 선택이 이득이 된다. 2×2 space-to-depth 입력은 10층 64채널 망(파라미터 6.4배, 곱셈 1.6배)을 25% 적은 사이클에 넣고, Set12에서 0.3 dB 높다. 은닉층의 출력을 2배로 늘려 두 개씩 합치면(maxout) 놀고 있던 곱셈기를 쓸 수 있다. 보드에서 출력 64채널 층은 출력 32채널 층과 같은 창당 289 사이클이었고, 그래서 망은 파라미터가 2배가 되는 대신 사이클은 1%만 늘었다. 같은 학습 예산에서 이 망은 같은 폭의 ReLU 망보다 잡음을 더 잘 제거하며, 두 값을 평균으로 합쳐도 같다. 즉 이득은 max가 아니라 공짜 용량에서 온다 **[SEEDS]**. 보드 연산을 재현한 양자화 인지 학습으로 화질 우선 정수 모델은 30.12 / 29.02 dB(Set12 / BSD68)에 이르러 같은 클리핑 입력의 BM3D(29.95 / 28.37 dB; 클리핑 없이 29.98 / 28.62 dB)보다 높고, 속도 우선 모델은 2.63배 적은 사이클로 BM3D 수준이다. 일곱 모델을 보드에서 비트 단위로 검증했다. 입력이 사이클당 2값이거나 칩 안에 라인 버퍼를 두면, 같은 모델은 합치기가 더는 공짜가 아니고 망 B가 기준 망보다 느려진다고 예측한다. 최적 망은 병목을 따라간다.
+
+**[SEEDS]** (a) "같은 학습 예산에서 이 망은 같은 폭의 ReLU 망보다 +X / +Y dB 높고(시드 셋의 평균), 평균으로 합쳐도 같다. 즉 이득은 max가 아니라 공짜 용량에서 온다" (b) 지금 문장에 "(시드 셋)"을 넣는다 (c) 이 두 문장을 지우고 "…사이클은 1%만 늘었다."로 끝낸다.
 
 ## 수치의 출처
 
 | 수치 | 파일 |
 |---|---|
-| 30.12 / 29.02, 29.95 / 28.91 (정수 PSNR), QAT 전 손실 0.22·0.08·0.04 | `denoise/export/<model>/int_eval.json`; 표는 `python denoise/results_table.py` |
-| maxout 대 ReLU, QAT 대 QAT 정수 +0.54 / +0.35 | `dn_d10_c32_us_mo_es_qat` 29.95 / 28.91 대 `dn_d10_c32_us_es_qat` 29.41 / 28.56 (같은 학습·QAT 조건). 참고: float 쌍(QAT 전) +0.79 / +0.64, QAT 없는 정수 쌍 +0.64 / +0.35 |
+| 30.12 / 29.02, 30.00 / 28.94 (정수 PSNR; 속도 모델은 `dn_d10_c32_us_mo_fx_qat`), QAT 뒤 손실 0.04 dB 이내 | `denoise/export/<model>/int_eval.json`; 표는 `python denoise/results_table.py` |
+| maxout 대 ReLU, 대 평균 결합 (재실험) | `dn_d10_c32_us{_mo,,_avg}_fx[_sN]_qat`의 int_eval (같은 120 epoch + QAT 15 epoch, 시드 1·2·3) |
+| B 대 A +0.29 / +0.22 (정수, QAT) | `dn_d10_c64_us_es_qat` 대 `dn_d7_c32_es` |
 | BM3D 29.95 / 28.37, 클리핑 없이 29.98 / 28.62 | `denoise/baselines.json`, `denoise/bm3d_protocol.json` |
-| DnCNN-S 같은 입력 30.35 / 28.89 (표 I) | `denoise/dncnn_s_protocol.json` |
-| 289 사이클/창, 675·1,323·1,775 사이클/px, 0 mismatches | `denoise/board_runs/*_05.json` (B-32 ReLU의 668은 보정 모델, 보드 미실행) |
+| DnCNN-S 같은 입력 30.35 / 28.89 (본문 표 I) | `denoise/dncnn_s_protocol.json` |
+| 289 사이클/창, 675·668.5·1,323·1,775 사이클/px, 0 mismatches, 일곱 모델 | `denoise/board_runs/*_05.json` (B-32 ReLU는 `dn_d10_c32_us_fx_qat_05.json`) |
 | 1.7% (보정 전) / 0.003% (보정 후), 41% 활용률 | `train_denoise.board_cycles_per_pixel` 대 `_measured` 대 `board_runs/` |
-| 6.4배 파라미터 (301k / 47k), 1.6배 곱셈, 25% 적은 사이클 (1,323 / 1,775) | `denoise/README_KO.md` 표 |
+| 6.4배 파라미터 (300k / 47k), 1.6배 곱셈, 25% 적은 사이클 (1,323 / 1,775) | `denoise/README_KO.md` 표 |
+| 같은 파라미터의 ReLU 망(45채널) 934 사이클/px(+38%), sparse 모드의 0이 아닌 곱셈 3.0배 | `train_denoise.board_cycles_per_pixel_measured`(45채널 형상), `board_runs/dn_d10_c32_us_{fx,mo_fx}_qat_05.json`의 `nonzero_fraction` |
+| 2값/사이클 예측 (A 907, B 1,247, maxout 1.87배) | 같은 모델, 입력 항 ⌈K/2⌉ (`PAPER_KO.md` 표 III) |
+| 라인 버퍼 예측 (maxout 289 대 ReLU 145 사이클/창, A 833 대 B 1,209 사이클/px) | dense 사이클 모델, 새 값은 창당 C_in개 (README "병목의 출처") |
