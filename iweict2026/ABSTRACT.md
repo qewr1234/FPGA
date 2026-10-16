@@ -14,7 +14,7 @@ Efficient neural networks are usually designed to minimize multiplications, but 
 
 **[MAXOUT]** 자리에 아래 셋 중 하나를 넣는다(`PAPER_EN.md` 초록에는 지금 옛 문장 "and for 1% more cycles the maxout network denoises better than the ReLU network of the same width"가 들어 있다).
 
-- (a) 시드가 모두 같은 방향이면: "and at the same training budget the maxout network scores +X / +Y dB above the ReLU network of the same width (mean of three seeds) for 1% more cycles" (평균 결합 대조군과의 차이가 두 테스트셋 모두 0.1 dB 이상이면 ", and +Z / +W dB above a control that averages the same pairs"를 덧붙인다)
+- (a) 시드가 모두 같은 방향이면: "and at the same training budget the maxout network scores +X / +Y dB above the ReLU network of the same width (mean of three seeds) for 1% more cycles" 뒤에, 평균 결합과의 차이가 0.1 dB 미만이면 ", as does averaging each pair instead: the gain comes from the free channels, not from the max"를 붙인다(시드 1의 float·검증 값은 평균 결합이 maxout과 같거나 0.02 dB 높았다). 두 테스트셋 모두 0.1 dB 이상 maxout이 높으면 ", and +Z / +W dB above a control that averages the same pairs"를 붙인다.
 - (b) 숫자 없이 방향만: "and at the same training budget the maxout network denoises better than the ReLU network of the same width (three seeds) for 1% more cycles"
 - (c) 시드가 엇갈리거나 결과 전에 제출하면: 이 절을 지우고 문장을 "..., as a 32-output ReLU layer did."로 끝낸다.
 
