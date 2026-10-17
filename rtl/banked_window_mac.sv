@@ -125,19 +125,20 @@ module banked_window_mac #(
     // W = T: bank b takes lane b of the beat. Unused (and removed) when W = 1.
     wire [7*T-1:0] s_lanes=(W==1) ? s_data[6:0] : s_data;   // zero-extended when W = 1
     wire [T-1:0] st_w;                                 // bank b stores a tuple this beat
+    wire [T-1:0] at_max;                               // bank b holds load_max tuples
     wire [NBW-1:0] nb_inc [0:T-1];
     genvar lb;
     generate for(lb=0;lb<T;lb=lb+1) begin: wl
         assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]!=0);
+        assign at_max[lb]=(nb_load[lb]==load_max);
         assign nb_inc[lb]=nb_load[lb]+nb_one;
     end endgenerate
-    integer mb;
-    reg [NBW-1:0] max_wide;                            // load_max after this beat
-    always @* begin
-        max_wide=load_max;
-        for(mb=0;mb<T;mb=mb+1)
-            if(st_w[mb] && nb_inc[mb]>max_wide) max_wide=nb_inc[mb];
-    end
+    // load_max after this beat. load_max is always the largest nb_load (both
+    // clear at a start and move together), and a beat adds at most one tuple to
+    // a bank, so the maximum grows by one exactly when a bank already at it
+    // stores a tuple. The equalities compare registers only, which keeps a chain
+    // of T magnitude compares off the path from the input handshake.
+    wire [NBW-1:0] max_wide=(|(st_w & at_max)) ? load_max+nb_one : load_max;
     // Window length in beats. run_k should be a multiple of W (the wrapper makes
     // it one); rounding up keeps any other value from hanging the load.
     wire [NW-1:0] beats_eff=(W==1) ? k_eff : (k_eff+W-1)/W;

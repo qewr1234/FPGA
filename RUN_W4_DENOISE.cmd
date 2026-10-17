@@ -11,6 +11,7 @@ rem   set CNN_RUNTIME_GEOM=1
 rem   RUN_BUILD_ZED.cmd 3 16 4 100 4
 rem
 rem The smallest network runs first, so a problem shows up in minutes, not an hour.
+rem The PL clock is set to 50 MHz, the clock of every one-value-per-cycle board run.
 setlocal
 pushd "%~dp0"
 set "XSDB=%~1"
@@ -25,6 +26,7 @@ if "%W4BUILD%"=="" (
     echo   set CNN_COUT=128
     echo   set CNN_RUNTIME_GEOM=1
     echo   RUN_BUILD_ZED.cmd 3 16 4 100 4
+    pause
     popd
     exit /b 1
 )
@@ -33,10 +35,11 @@ echo xsdb:      %XSDB%
 for %%m in (dn_d10_c32_us_fx_qat dn_d10_c32_us_mo_fx_qat dn_d10_c64_us_es_qat dn_d7_c32_es) do (
     echo.
     echo ===== %%m =====
-    python scripts\run_denoise.py --model %%m --xsdb "%XSDB%" --build "%W4BUILD%" --w4 --images 05.png --out build\w4_%%m
+    python scripts\run_denoise.py --model %%m --xsdb "%XSDB%" --build "%W4BUILD%" --w4 --fclk 50 --images 05.png --out build\w4_%%m
     if errorlevel 1 (
         echo.
         echo STOPPED at %%m. The lines above say why.
+        pause
         popd
         exit /b 1
     )
@@ -49,5 +52,6 @@ echo Then send the results:
 echo   git add denoise/board_runs denoise/w4_measured.json
 echo   git commit -m "Board runs on the four-wide window port"
 echo   git push
+pause
 popd
 exit /b 0

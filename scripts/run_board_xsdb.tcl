@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-10-17 n (ID bit 9: four-wide window port needs K a multiple of 4)"
+set WM_SCRIPT_VERSION "2026-10-17 o (four-wide window port: K a multiple of 4, never picked by default)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -562,12 +562,16 @@ if {[info exists ::env(WM_BUILD)] && $::env(WM_BUILD) ne ""} {
 } else {
     set cands {}
     foreach d [glob -nocomplain -directory [file join $here build] zed_*] {
+        # A four-wide (CNN_W=4) bitstream is only ever run by name: every number
+        # measured so far is one activation per cycle, and a run that picks the
+        # newest build would otherwise land on it the day it is built.
+        if {[string match *_w4_* [file tail $d]]} continue
         set b [file join $d system_wrapper.bit]
         if {[file exists $b]} { lappend cands [list [file mtime $b] $d] }
     }
     if {[llength $cands] == 0} {
-        error "no build/zed_*/system_wrapper.bit under $here. Run RUN_BUILD_ZED.cmd first,\
-               or set ::env(WM_BUILD)."
+        error "no build/zed_*/system_wrapper.bit under $here (four-wide *_w4_* builds are\
+               only used by name). Run RUN_BUILD_ZED.cmd first, or set ::env(WM_BUILD)."
     }
     set build [lindex [lindex [lsort -index 0 -integer $cands] end] 1]
 }
@@ -992,7 +996,8 @@ if {!$has_runtime && ($WM_K != $built_k || $WM_COUT != $built_cout)} {
 if {$wm_wide && $WM_K % 4 != 0} {
     error "this bitstream takes four activations per cycle (ID [wm_hex $wm_core_id], bit 9)\
            and needs windows padded to a multiple of 4 taps, but this data is K=$WM_K.\
-           Export the layer with --w4, or run a bitstream built without CNN_W=4."
+           scripts/run_denoise.py --w4 pads them; otherwise run a bitstream built\
+           without CNN_W=4."
 }
 wm_wr $REG_RUN_K    $WM_K
 wm_wr $REG_RUN_COUT $WM_COUT
@@ -1150,6 +1155,10 @@ if {$bad != 0} {
     puts "RESULT: VALUES OK, MEASUREMENT DMA BOUND -- the core waited\
            [expr {$install + $outstall}] cycles for memory."
     puts "        CYCLES is not comparable with RESULTS_KO.md."
+} elseif {$wm_wide} {
+    puts "RESULT: PASS -- core bound, four activations per cycle. CYCLES is NOT"
+    puts "        comparable with verification/included_run/summary.json or any number"
+    puts "        measured on the one-activation-per-cycle build."
 } else {
     puts "RESULT: PASS -- core bound. CYCLES is comparable with total_cycles in"
     puts "        verification/included_run/summary.json for this configuration."

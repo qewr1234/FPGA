@@ -1,0 +1,244 @@
+{
+  "emulated": false,
+  "model": "dn_d10_c32_us_mo_fx_qat",
+  "set": "Set12",
+  "sigma": 25,
+  "mode_seq": 1,
+  "activations_per_cycle": 4,
+  "images": [
+    {
+      "image": "05.png",
+      "width": 256,
+      "height": 256,
+      "psnr_noisy": 20.227063370118692,
+      "psnr_denoised": 29.93615038832912,
+      "start_layer": 1,
+      "layers": [
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1048593,
+          "wall_seconds": 27.4,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 36,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.9812130398220487,
+          "host_seconds": 27.5
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 4293472,
+          "wall_seconds": 38.3,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv2",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.8350609673394097,
+          "host_seconds": 41.8
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3687376,
+          "wall_seconds": 38.2,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv3",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.7129838731553819,
+          "host_seconds": 41.6
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3681160,
+          "wall_seconds": 39.4,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv4",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.7098511589898003,
+          "host_seconds": 42.9
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3921508,
+          "wall_seconds": 38.9,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv5",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.7522898779975044,
+          "host_seconds": 42.4
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 4156656,
+          "wall_seconds": 38.8,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv6",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.7538153330485026,
+          "host_seconds": 42.2
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3929624,
+          "wall_seconds": 39.0,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv7",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.7187453375922309,
+          "host_seconds": 42.6
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3529984,
+          "wall_seconds": 38.5,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv8",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.673103756374783,
+          "host_seconds": 42.0
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 3390352,
+          "wall_seconds": 38.7,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv9",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "nonzero_fraction": 0.6360397338867188,
+          "host_seconds": 42.2
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1343529,
+          "wall_seconds": 22.2,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 324,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "nonzero_fraction": 0.7817230224609375,
+          "host_seconds": 22.5
+        }
+      ],
+      "cycles": 32982254
+    }
+  ],
+  "mean_psnr_noisy": 20.227063370118692,
+  "mean_psnr_denoised": 29.93615038832912,
+  "mismatches": 0
+}

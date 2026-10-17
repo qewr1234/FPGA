@@ -58,8 +58,8 @@ set runtime [env_or CNN_RUNTIME_GEOM 0]
 # Activations the core takes per cycle. 1 is the build every board number so far
 # was measured on. 4 hands the banked core a whole 32-bit beat per cycle; it then
 # needs every window padded to a multiple of 4 taps (run_denoise.py --w4), reads
-# ID bit 9, and is built into its own _w4 directory so it is never mistaken for
-# the other.
+# ID bit 9, and is built into its own _w4 directory, which run_board_xsdb.tcl
+# never picks on its own: it is run only by name (--build / WM_BUILD).
 set wide    [env_or CNN_W 1]
 if {$wide != 1 && !($wide == 4 && $impl == 3 && $banks == 4)} {
     error "CNN_W must be 1, or 4 with CNN_IMPL=3 and CNN_T=4"

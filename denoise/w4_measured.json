@@ -1,0 +1,565 @@
+{
+  "prediction": "denoise/w4_prediction.json",
+  "networks": {
+    "A": {
+      "model": "dn_d7_c32_es",
+      "core_id": [
+        "0x4d410303"
+      ],
+      "fclk_mhz": [
+        50.0
+      ],
+      "measured_total": 37520551,
+      "predicted_total": 37520214,
+      "gap": 337,
+      "gap_percent": 0.0008981825103662788,
+      "board_w1_total": 116326743,
+      "speedup_over_w1": 3.100347406945063,
+      "per_pixel": {
+        "measured": 572.5181732177734,
+        "predicted": 572.5130310058594,
+        "board_w1": 1775.0052337646484
+      },
+      "in_stall": 0,
+      "out_stall": 0,
+      "psnr_denoised": 29.82990043469384,
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 9,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 2097161,
+          "predicted": 2097152,
+          "gap": 9,
+          "board_w1": 2097167,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 6795944,
+          "predicted": 6795881,
+          "gap": 63,
+          "board_w1": 18939967,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 5741179,
+          "predicted": 5741118,
+          "gap": 61,
+          "board_w1": 18939965,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 6506849,
+          "predicted": 6506788,
+          "gap": 61,
+          "board_w1": 18939965,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 5868970,
+          "predicted": 5868913,
+          "gap": 57,
+          "board_w1": 18939961,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "measured": 5529685,
+          "predicted": 5529626,
+          "gap": 59,
+          "board_w1": 18939963,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv7",
+          "K": 297,
+          "COUT": 1,
+          "windows": 65536,
+          "measured": 4980763,
+          "predicted": 4980736,
+          "gap": 27,
+          "board_w1": 19529755,
+          "in_stall": 0,
+          "out_stall": 0
+        }
+      ]
+    },
+    "B + QAT": {
+      "model": "dn_d10_c64_us_es_qat",
+      "core_id": [
+        "0x4d410303"
+      ],
+      "fclk_mhz": [
+        50.0
+      ],
+      "measured_total": 44789776,
+      "predicted_total": 44788404,
+      "gap": 1372,
+      "gap_percent": 0.003063292900546311,
+      "board_w1_total": 86721997,
+      "speedup_over_w1": 1.9362007302738018,
+      "per_pixel": {
+        "measured": 683.437744140625,
+        "predicted": 683.4168090820312,
+        "board_w1": 1323.2726593017578
+      },
+      "in_stall": 0,
+      "out_stall": 0,
+      "psnr_denoised": 30.058906860796153,
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 1048593,
+          "predicted": 1048576,
+          "gap": 17,
+          "board_w1": 1048620,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv2",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 6460428,
+          "predicted": 6460264,
+          "gap": 164,
+          "board_w1": 9453755,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv3",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 5011304,
+          "predicted": 5011140,
+          "gap": 164,
+          "board_w1": 9453735,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv4",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 5402116,
+          "predicted": 5401952,
+          "gap": 164,
+          "board_w1": 9453739,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv5",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 5457980,
+          "predicted": 5457816,
+          "gap": 164,
+          "board_w1": 9453767,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv6",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 5212732,
+          "predicted": 5212568,
+          "gap": 164,
+          "board_w1": 9453743,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv7",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 5131752,
+          "predicted": 5131593,
+          "gap": 159,
+          "board_w1": 9453727,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv8",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 4228742,
+          "predicted": 4228583,
+          "gap": 159,
+          "board_w1": 9453727,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv9",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 4312940,
+          "predicted": 4312776,
+          "gap": 164,
+          "board_w1": 9453739,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv10",
+          "K": 612,
+          "COUT": 4,
+          "windows": 16384,
+          "measured": 2523189,
+          "predicted": 2523136,
+          "gap": 53,
+          "board_w1": 10043445,
+          "in_stall": 0,
+          "out_stall": 0
+        }
+      ]
+    },
+    "B-32 maxout + QAT": {
+      "model": "dn_d10_c32_us_mo_fx_qat",
+      "core_id": [
+        "0x4d410303"
+      ],
+      "fclk_mhz": [
+        50.0
+      ],
+      "measured_total": 32982254,
+      "predicted_total": 32981460,
+      "gap": 794,
+      "gap_percent": 0.0024074131345307335,
+      "board_w1_total": 44254293,
+      "speedup_over_w1": 1.3417607238122657,
+      "per_pixel": {
+        "measured": 503.2692565917969,
+        "predicted": 503.25714111328125,
+        "board_w1": 675.2669219970703
+      },
+      "in_stall": 0,
+      "out_stall": 0,
+      "psnr_denoised": 29.93615038832912,
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 1048593,
+          "predicted": 1048576,
+          "gap": 17,
+          "board_w1": 1048620,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 4293472,
+          "predicted": 4293380,
+          "gap": 92,
+          "board_w1": 4735119,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3687376,
+          "predicted": 3687284,
+          "gap": 92,
+          "board_w1": 4735099,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3681160,
+          "predicted": 3681068,
+          "gap": 92,
+          "board_w1": 4735103,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3921508,
+          "predicted": 3921416,
+          "gap": 92,
+          "board_w1": 4735095,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 4156656,
+          "predicted": 4156564,
+          "gap": 92,
+          "board_w1": 4735107,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3929624,
+          "predicted": 3929532,
+          "gap": 92,
+          "board_w1": 4735107,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3529984,
+          "predicted": 3529892,
+          "gap": 92,
+          "board_w1": 4735099,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "measured": 3390352,
+          "predicted": 3390260,
+          "gap": 92,
+          "board_w1": 4735103,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "measured": 1343529,
+          "predicted": 1343488,
+          "gap": 41,
+          "board_w1": 5324841,
+          "in_stall": 0,
+          "out_stall": 0
+        }
+      ]
+    },
+    "B-32 ReLU + QAT": {
+      "model": "dn_d10_c32_us_fx_qat",
+      "core_id": [
+        "0x4d410303"
+      ],
+      "fclk_mhz": [
+        50.0
+      ],
+      "measured_total": 13289042,
+      "predicted_total": 13288456,
+      "gap": 586,
+      "gap_percent": 0.004409842648385938,
+      "board_w1_total": 43811412,
+      "speedup_over_w1": 3.2968073996605622,
+      "per_pixel": {
+        "measured": 202.77468872070312,
+        "predicted": 202.7657470703125,
+        "board_w1": 668.5090942382812
+      },
+      "in_stall": 12,
+      "out_stall": 0,
+      "psnr_denoised": 29.536220128469942,
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 524305,
+          "predicted": 524288,
+          "gap": 17,
+          "board_w1": 606247,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1504752,
+          "predicted": 1504687,
+          "gap": 65,
+          "board_w1": 4735041,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1435005,
+          "predicted": 1434940,
+          "gap": 65,
+          "board_w1": 4735041,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1448350,
+          "predicted": 1448281,
+          "gap": 69,
+          "board_w1": 4735045,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1562948,
+          "predicted": 1562871,
+          "gap": 77,
+          "board_w1": 4735041,
+          "in_stall": 12,
+          "out_stall": 0
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1369221,
+          "predicted": 1369156,
+          "gap": 65,
+          "board_w1": 4735041,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1375441,
+          "predicted": 1375380,
+          "gap": 61,
+          "board_w1": 4735037,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1289021,
+          "predicted": 1288962,
+          "gap": 59,
+          "board_w1": 4735035,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "measured": 1436476,
+          "predicted": 1436403,
+          "gap": 73,
+          "board_w1": 4735049,
+          "in_stall": 0,
+          "out_stall": 0
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "measured": 1343523,
+          "predicted": 1343488,
+          "gap": 35,
+          "board_w1": 5324835,
+          "in_stall": 0,
+          "out_stall": 0
+        }
+      ]
+    }
+  },
+  "ratios": {
+    "B/A": {
+      "measured": 1.1937398254092804,
+      "predicted": 1.1937139804159966,
+      "board_w1": 0.7455035253587389
+    },
+    "maxout/ReLU": {
+      "measured": 2.4819135946744693,
+      "predicted": 2.4819632920483765,
+      "board_w1": 1.010108804527916
+    }
+  },
+  "claims": {
+    "B slower than A at W=4 (B/A > 1)": true,
+    "pooling not free at W=4 (maxout/ReLU > 1.5)": true
+  }
+}
