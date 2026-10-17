@@ -62,14 +62,23 @@ def verify_archive():
         if manifest_new["model"] != MODEL or len(manifest_new["layers"]) != 10:
             raise ValueError("Wrong candidate manifest")
         if CANDIDATE.exists():
-            # Never overwrite existing candidate: mismatch indicates a stale or modified export.
-            for item in required:
-                filename = item[len(prefix):]
+            # Accept the earlier CPU exporter when the actual model is identical:
+            # it may have different metadata formatting and no SHA256SUMS.txt.
+            for filename in ("manifest.json", "int_eval.json"):
                 on_disk = CANDIDATE / filename
-                if not on_disk.is_file() or on_disk.read_bytes() != arc.read(item):
-                    raise ValueError(f"Candidate directory exists but differs: {on_disk}. "
-                                     "Move the stale copy aside; never overwrite source.")
-            state = "already installed, byte-for-byte verified"
+                if not on_disk.is_file() or json.loads(on_disk.read_text(encoding="utf-8")) != json.loads(arc.read(prefix + filename)):
+                    raise ValueError(f"Existing candidate model differs: {on_disk}. "
+                                     "Move stale content aside; the original will not be overwritten.")
+            for index in range(1, 11):
+                filename = f"conv{index}_config.bin"
+                on_disk = CANDIDATE / filename
+                if not on_disk.is_file() or on_disk.read_bytes() != arc.read(prefix + filename):
+                    raise ValueError(f"Existing candidate weights differ: {on_disk}. "
+                                     "Move stale content aside; the original will not be overwritten.")
+            meta = CANDIDATE / "permutation_manifest.json"
+            if not meta.is_file() or json.loads(meta.read_text(encoding="utf-8")).get("orders") != expected["orders"]:
+                raise ValueError(f"Existing candidate permutation differs: {meta}")
+            state = "previous candidate verified equivalent to GitHub package"
         else:
             CANDIDATE.mkdir(parents=True, exist_ok=False)
             for item in sorted(required):
