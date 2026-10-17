@@ -45,6 +45,11 @@ BUILDS = {
     'v3':    dict(KMAX=48,   COUTMAX=20,  P=4,  DEPTH=2, T=1, IMPL=2, RUNTIME_GEOM=1),
     'fixed': dict(KMAX=24,   COUTMAX=9,   P=2,  DEPTH=2, T=2, IMPL=3, RUNTIME_GEOM=0),
     'board': dict(KMAX=1152, COUTMAX=128, P=16, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1),
+    # The four-wide window port (CNN_W=4): the board build with W=4, a small one
+    # for the random layers and the mutants, and a fixed-geometry one.
+    'small_w4': dict(KMAX=48,   COUTMAX=20,  P=4,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=4),
+    'fixed_w4': dict(KMAX=24,   COUTMAX=9,   P=2,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=0, W=4),
+    'board_w4': dict(KMAX=1152, COUTMAX=128, P=16, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=4),
 }
 # Which tests each build runs, and the layer count of wm_random_test on it.
 PLAN = {
@@ -52,6 +57,9 @@ PLAN = {
     'v3':    (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 150),
     'fixed': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 40),
     'board': (['wm_smoke_test', 'wm_reg_test', 'wm_cifar_shapes_test', 'wm_random_test'], 4),
+    'small_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 150),
+    'fixed_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 40),
+    'board_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_cifar_shapes_test', 'wm_random_test'], 4),
 }
 
 # Known bugs for --mutants: (name, file, original text, mutated text, what it breaks).
@@ -101,6 +109,31 @@ MUTANTS = [
      "wire store_input=take_input && (!mode || s_data!=0);",
      "wire store_input=take_input && (!mode || s_data>7'd1);",
      'sparse mode skips activations equal to 1 as if they were 0'),
+]
+
+# Bugs in the W=4 paths, run on the small_w4 build. The ones above touch the
+# W=1 load path or the shared logic and run on small.
+W4_MUTANTS = [
+    ('w4_lanes_swapped', 'rtl/window_mac_axis.sv',
+     "assign core_s_data = {beat[30:24], beat[22:16], beat[14:8], beat[6:0]};",
+     "assign core_s_data = {beat[30:24], beat[14:8], beat[22:16], beat[6:0]};",
+     'the second and third activation of every beat trade places'),
+    ('w4_sparse_drops_ones', 'rtl/banked_window_mac.sv',
+     "assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]!=0);",
+     "assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]>7'd1);",
+     'sparse mode skips activations equal to 1 in a four-wide beat'),
+    ('w4_lane3_not_in_max', 'rtl/banked_window_mac.sv',
+     "        for(mb=0;mb<T;mb=mb+1)\n            if(st_w[mb] && nb_inc[mb]>max_wide) max_wide=nb_inc[mb];",
+     "        for(mb=0;mb<T-1;mb=mb+1)\n            if(st_w[mb] && nb_inc[mb]>max_wide) max_wide=nb_inc[mb];",
+     'the group length ignores the last bank, so its extra tuples are never issued'),
+    ('w4_last_beat_uncounted', 'rtl/banked_window_mac.sv',
+     "win_nb[load_bank][b]<=st_w[b] ? nb_inc[b] : nb_load[b];",
+     "win_nb[load_bank][b]<=nb_load[b];",
+     'the tuples of the last beat of a window are masked out'),
+    ('w4_run_k_not_rounded', 'rtl/window_mac_axis.sv',
+     ": (s_axi_wdata[NWP-1:0]+32'd3) & ~32'd3;",
+     ": s_axi_wdata[NWP-1:0];",
+     'RUN_K keeps a value that is not a whole number of beats'),
 ]
 
 RESULT_RE = re.compile(r'WM_UVM_RESULT (PASS|FAIL) test=(\S+) errors=(\d+) fatals=(\d+)')
@@ -346,9 +379,10 @@ def main_mutants(args, sim):
         shutil.rmtree(out_root)
     tests = ['wm_smoke_test', 'wm_reg_test', 'wm_random_test']
     seeds = [1, 2]
+    mutants = [m+('small',) for m in MUTANTS] + [m+('small_w4',) for m in W4_MUTANTS]
 
     def one(m):
-        name, rel, old, new, what = m
+        name, rel, old, new, what, build = m
         src = out_root/name/'src'
         for d in ('rtl', 'sim'):
             shutil.copytree(ROOT/d, src/d)
@@ -357,14 +391,14 @@ def main_mutants(args, sim):
         if text.count(old) != 1:
             raise RuntimeError(f'mutant {name}: original text found {text.count(old)} times in {rel}')
         f.write_text(text.replace(old, new), encoding='utf-8')
-        rows = run_build(sim, 'small', tests, seeds, 12, out_root/name, src, args.timeout, quiet=True)
+        rows = run_build(sim, build, tests, seeds, 12, out_root/name, src, args.timeout, quiet=True)
         killed = [r for r in rows if r['result'] != 'PASS']
-        return name, what, rows, killed
+        return name, what, build, rows, killed
 
     survivors = []
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as ex:
-        for name, what, rows, killed in ex.map(one, MUTANTS):
+        for name, what, build, rows, killed in ex.map(one, mutants):
             by = sorted({f"{r['test']}" for r in killed})
             first = killed[0].get('first_error', '') if killed else ''
             print(f"  {'KILLED  ' if killed else 'SURVIVED'} {name:<24} {what}")
@@ -372,10 +406,10 @@ def main_mutants(args, sim):
                 print(f"           caught by {', '.join(by)}: {first[:160]}")
             else:
                 survivors.append(name)
-            results.append(dict(mutant=name, breaks=what, killed=bool(killed), caught_by=by,
+            results.append(dict(mutant=name, breaks=what, build=build, killed=bool(killed), caught_by=by,
                                 first_error=first))
     (out_root/'summary.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
-    print(f'\n{len(MUTANTS)-len(survivors)}/{len(MUTANTS)} mutants killed -> {out_root/"summary.json"}')
+    print(f'\n{len(mutants)-len(survivors)}/{len(mutants)} mutants killed -> {out_root/"summary.json"}')
     return 1 if survivors else 0
 
 
@@ -429,18 +463,21 @@ def main_report(args):
           '- **fixed** 빌드는 형상이 고정(K=24, COUT=9)이라 형상 칸 25개 중 1개 조합만 존재합니다. 9%가 최대입니다.',
           '- **v3**는 bank가 없어서(T=1) "K가 bank 수의 배수가 아님" 칸에 도달할 수 없습니다. 형상 최대가 100%가 아닙니다.',
           '- **board**의 랜덤 테스트는 레이어가 크기 때문에(K≤1152) 4개만 돌립니다. 형상 칸을 채우는 역할은 small 빌드가 맡습니다.',
+          '- **\\*_w4**는 한 주기에 활성값 4개를 받는 포트(W=4) 빌드입니다. 시퀀스가 호스트처럼 창과 가중치를 4의 배수로 0 패딩하고, '
+          'RUN_K는 K 또는 패딩한 길이로 씁니다. 형상 칸은 레이어가 요청한 K로 셉니다(코어가 실제로 쓰는 K는 늘 4의 배수).',
+          '- **fixed_w4**도 형상이 고정(K=24, COUT=9)이라 형상 최대가 9%입니다.',
           '']
     m = base/'mutants'/'summary.json'
     if m.exists():
         ms = json.loads(m.read_text(encoding='utf-8'))
         killed = sum(x['killed'] for x in ms)
         L += ['## 뮤턴트 (일부러 심은 버그)', '',
-              f'**{killed}/{len(ms)} 검출.** small 빌드에서 smoke / reg / random(12 레이어) × 시드 2개를 돌려, '
-              '하나라도 FAIL이면 "검출"입니다.', '',
-              '| 뮤턴트 | 깨지는 것 | 결과 | 잡은 테스트 |', '|---|---|---|---|']
+              f'**{killed}/{len(ms)} 검출.** 표의 빌드(W=4 경로의 버그는 small_w4, 나머지는 small)에서 '
+              'smoke / reg / random(12 레이어) × 시드 2개를 돌려, 하나라도 FAIL이면 "검출"입니다.', '',
+              '| 뮤턴트 | 빌드 | 깨지는 것 | 결과 | 잡은 테스트 |', '|---|---|---|---|---|']
         for x in ms:
-            L.append(f"| `{x['mutant']}` | {x['breaks']} | {'검출' if x['killed'] else '**놓침**'} | "
-                     f"{', '.join(x['caught_by'])} |")
+            L.append(f"| `{x['mutant']}` | {x.get('build', 'small')} | {x['breaks']} | "
+                     f"{'검출' if x['killed'] else '**놓침**'} | {', '.join(x['caught_by'])} |")
         L.append('')
     out = UVM_DIR/'RESULTS_UVM_KO.md'
     out.write_text('\n'.join(L), encoding='utf-8')

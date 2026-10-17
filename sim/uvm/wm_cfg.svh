@@ -10,6 +10,7 @@ class wm_cfg extends uvm_object;
     // Built geometry of the DUT (tb_top parameters).
     int unsigned kmax, coutmax, p, t, depth, impl;
     bit          runtime_geom;
+    int unsigned w = 1;          // activations per core cycle: 1, or 4 (padded windows)
 
     // Throttling. 0 = never idle / always ready, which is how the board DMA runs
     // and the only case in which IN_STALL and OUT_STALL must read 0.
@@ -28,11 +29,11 @@ class wm_cfg extends uvm_object;
     endfunction
 
     function bit [31:0] expected_id();
-        return 32'h4D41_0000 | (32'(runtime_geom) << 8) | impl;
+        return 32'h4D41_0000 | (32'(w == 4) << 9) | (32'(runtime_geom) << 8) | impl;
     endfunction
 
     function string describe();
-        return $sformatf("K=%0d COUT=%0d P=%0d T=%0d DEPTH=%0d IMPL=%0d RUNTIME_GEOM=%0d",
-                         kmax, coutmax, p, t, depth, impl, runtime_geom);
+        return $sformatf("K=%0d COUT=%0d P=%0d T=%0d DEPTH=%0d IMPL=%0d RUNTIME_GEOM=%0d W=%0d",
+                         kmax, coutmax, p, t, depth, impl, runtime_geom, w);
     endfunction
 endclass

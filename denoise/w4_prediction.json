@@ -1,0 +1,483 @@
+{
+  "image": "05.png",
+  "P": 16,
+  "T": 4,
+  "mode": "sparse (mode_seq 1), as every board run",
+  "formula": "window = max(ceil(K/W)+1, ceil(COUT/16)*max(1, max_b nnz_b), COUT)",
+  "networks": {
+    "A": {
+      "model": "dn_d7_c32_es",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 9,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 2097167,
+          "predicted_w1": 2097152,
+          "w1_gap": 15,
+          "predicted_w4": 2097152,
+          "predicted_w4_dense": 2097152
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 18939967,
+          "predicted_w1": 18939904,
+          "w1_gap": 63,
+          "predicted_w4": 6795881,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 18939965,
+          "predicted_w1": 18939904,
+          "w1_gap": 61,
+          "predicted_w4": 5741118,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 18939965,
+          "predicted_w1": 18939904,
+          "w1_gap": 61,
+          "predicted_w4": 6506788,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 18939961,
+          "predicted_w1": 18939904,
+          "w1_gap": 57,
+          "predicted_w4": 5868913,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 65536,
+          "board_w1": 18939963,
+          "predicted_w1": 18939904,
+          "w1_gap": 59,
+          "predicted_w4": 5529626,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv7",
+          "K": 297,
+          "COUT": 1,
+          "windows": 65536,
+          "board_w1": 19529755,
+          "predicted_w1": 19529728,
+          "w1_gap": 27,
+          "predicted_w4": 4980736,
+          "predicted_w4_dense": 4980736
+        }
+      ],
+      "board_w1_total": 116326743,
+      "predicted_w1_total": 116326400,
+      "predicted_w4_total": 37520214,
+      "predicted_w4_dense_total": 54263808,
+      "pixels": 65536,
+      "per_pixel": {
+        "board_w1": 1775.0052337646484,
+        "predicted_w4": 572.5130310058594,
+        "predicted_w4_dense": 828.0
+      }
+    },
+    "B + QAT": {
+      "model": "dn_d10_c64_us_es_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 1048620,
+          "predicted_w1": 1048576,
+          "w1_gap": 44,
+          "predicted_w4": 1048576,
+          "predicted_w4_dense": 1048576
+        },
+        {
+          "name": "conv2",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453755,
+          "predicted_w1": 9453568,
+          "w1_gap": 187,
+          "predicted_w4": 6460264,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv3",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453735,
+          "predicted_w1": 9453568,
+          "w1_gap": 167,
+          "predicted_w4": 5011140,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv4",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453739,
+          "predicted_w1": 9453568,
+          "w1_gap": 171,
+          "predicted_w4": 5401952,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv5",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453767,
+          "predicted_w1": 9453568,
+          "w1_gap": 199,
+          "predicted_w4": 5457816,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv6",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453743,
+          "predicted_w1": 9453568,
+          "w1_gap": 175,
+          "predicted_w4": 5212568,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv7",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453727,
+          "predicted_w1": 9453568,
+          "w1_gap": 159,
+          "predicted_w4": 5131593,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv8",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453727,
+          "predicted_w1": 9453568,
+          "w1_gap": 159,
+          "predicted_w4": 4228583,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv9",
+          "K": 576,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 9453739,
+          "predicted_w1": 9453568,
+          "w1_gap": 171,
+          "predicted_w4": 4312776,
+          "predicted_w4_dense": 9437184
+        },
+        {
+          "name": "conv10",
+          "K": 612,
+          "COUT": 4,
+          "windows": 16384,
+          "board_w1": 10043445,
+          "predicted_w1": 10043392,
+          "w1_gap": 53,
+          "predicted_w4": 2523136,
+          "predicted_w4_dense": 2523136
+        }
+      ],
+      "board_w1_total": 86721997,
+      "predicted_w1_total": 86720512,
+      "predicted_w4_total": 44788404,
+      "predicted_w4_dense_total": 79069184,
+      "pixels": 65536,
+      "per_pixel": {
+        "board_w1": 1323.2726593017578,
+        "predicted_w4": 683.4168090820312,
+        "predicted_w4_dense": 1206.5
+      }
+    },
+    "B-32 maxout + QAT": {
+      "model": "dn_d10_c32_us_mo_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 1048620,
+          "predicted_w1": 1048576,
+          "w1_gap": 44,
+          "predicted_w4": 1048576,
+          "predicted_w4_dense": 1048576
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735119,
+          "predicted_w1": 4734976,
+          "w1_gap": 143,
+          "predicted_w4": 4293380,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735099,
+          "predicted_w1": 4734976,
+          "w1_gap": 123,
+          "predicted_w4": 3687284,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735103,
+          "predicted_w1": 4734976,
+          "w1_gap": 127,
+          "predicted_w4": 3681068,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735095,
+          "predicted_w1": 4734976,
+          "w1_gap": 119,
+          "predicted_w4": 3921416,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735107,
+          "predicted_w1": 4734976,
+          "w1_gap": 131,
+          "predicted_w4": 4156564,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735107,
+          "predicted_w1": 4734976,
+          "w1_gap": 131,
+          "predicted_w4": 3929532,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735099,
+          "predicted_w1": 4734976,
+          "w1_gap": 123,
+          "predicted_w4": 3529892,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 64,
+          "windows": 16384,
+          "board_w1": 4735103,
+          "predicted_w1": 4734976,
+          "w1_gap": 127,
+          "predicted_w4": 3390260,
+          "predicted_w4_dense": 4718592
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "board_w1": 5324841,
+          "predicted_w1": 5324800,
+          "w1_gap": 41,
+          "predicted_w4": 1343488,
+          "predicted_w4_dense": 1343488
+        }
+      ],
+      "board_w1_total": 44254293,
+      "predicted_w1_total": 44253184,
+      "predicted_w4_total": 32981460,
+      "predicted_w4_dense_total": 40140800,
+      "pixels": 65536,
+      "per_pixel": {
+        "board_w1": 675.2669219970703,
+        "predicted_w4": 503.25714111328125,
+        "predicted_w4_dense": 612.5
+      }
+    },
+    "B-32 ReLU + QAT": {
+      "model": "dn_d10_c32_us_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 606247,
+          "predicted_w1": 606208,
+          "w1_gap": 39,
+          "predicted_w4": 524288,
+          "predicted_w4_dense": 524288
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735041,
+          "predicted_w1": 4734976,
+          "w1_gap": 65,
+          "predicted_w4": 1504687,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735041,
+          "predicted_w1": 4734976,
+          "w1_gap": 65,
+          "predicted_w4": 1434940,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735045,
+          "predicted_w1": 4734976,
+          "w1_gap": 69,
+          "predicted_w4": 1448281,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735041,
+          "predicted_w1": 4734976,
+          "w1_gap": 65,
+          "predicted_w4": 1562871,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735041,
+          "predicted_w1": 4734976,
+          "w1_gap": 65,
+          "predicted_w4": 1369156,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735037,
+          "predicted_w1": 4734976,
+          "w1_gap": 61,
+          "predicted_w4": 1375380,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735035,
+          "predicted_w1": 4734976,
+          "w1_gap": 59,
+          "predicted_w4": 1288962,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "board_w1": 4735049,
+          "predicted_w1": 4734976,
+          "w1_gap": 73,
+          "predicted_w4": 1436403,
+          "predicted_w4_dense": 2359296
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "board_w1": 5324835,
+          "predicted_w1": 5324800,
+          "w1_gap": 35,
+          "predicted_w4": 1343488,
+          "predicted_w4_dense": 1343488
+        }
+      ],
+      "board_w1_total": 43811412,
+      "predicted_w1_total": 43810816,
+      "predicted_w4_total": 13288456,
+      "predicted_w4_dense_total": 20742144,
+      "pixels": 65536,
+      "per_pixel": {
+        "board_w1": 668.5090942382812,
+        "predicted_w4": 202.7657470703125,
+        "predicted_w4_dense": 316.5
+      }
+    }
+  },
+  "ratios": {
+    "B/A at W=1 (board)": 0.7455035253587389,
+    "B/A at W=4 (predicted)": 1.1937139804159966,
+    "maxout/ReLU at W=1 (board)": 1.010108804527916,
+    "maxout/ReLU at W=4 (predicted)": 2.4819632920483765,
+    "A W=1 / W=4 (predicted speed-up)": 3.100375253723233
+  }
+}

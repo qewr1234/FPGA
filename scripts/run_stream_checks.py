@@ -53,13 +53,20 @@ def bank_max(row, t):
     return max(counts)
 
 
+def padded(x, w, k):
+    """Windows and weights padded with zero taps up to k, as the W = 4 host does."""
+    return [row+[0]*(k-len(row)) for row in x], [row+[0]*(k-len(row)) for row in w]
+
+
 def run_case(case, out, vectors, iverilog, vvp):
-    name, vec, impl, p, depth, stall, pattern, gaps, mode_seq, reset, t = case
+    name, vec, impl, p, depth, stall, pattern, gaps, mode_seq, reset, t = case[:11]
+    width = case[11] if len(case) > 11 else 1
     dest = out/name
     dest.mkdir()
     meta = vectors[vec]
     params = dict(K=meta['K'], COUT=meta['COUT'], P=p, DEPTH=depth, N=meta['N'], IMPL=impl,
-                  STALL_LEN=stall, PATTERN=pattern, INPUT_GAPS=gaps, MODE_SEQ=mode_seq, RESET_TEST=reset, T=t)
+                  STALL_LEN=stall, PATTERN=pattern, INPUT_GAPS=gaps, MODE_SEQ=mode_seq, RESET_TEST=reset, T=t,
+                  W=width)
     sources = [out/'sources/rtl/sparse_window_mac.sv', out/'sources/rtl/continuous_window_mac.sv',
                out/'sources/rtl/overlapped_window_mac.sv', out/'sources/rtl/banked_window_mac.sv',
                out/'sources/sim/tb_stream_compare.sv']
@@ -83,7 +90,7 @@ def run_case(case, out, vectors, iverilog, vvp):
         taps = [bank_max(x[frame], t) if mode else (k+t-1)//t for frame, mode in wins]
     else:
         taps = [nz[frame] if mode else k for frame, mode in wins]
-    model = stream_model(k, meta['COUT'], p, depth, impl, taps, stall, pattern, gaps)
+    model = stream_model(k, meta['COUT'], p, depth, impl, taps, stall, pattern, gaps, w=width)
     t0 = rows[0]['start_cycle']
     for w, (row, (frame, mode)) in enumerate(zip(rows, wins)):
         assert row['window'] == w and row['frame'] == frame and row['sparse_mode'] == mode
@@ -136,7 +143,7 @@ def main():
         x, w, b = fixture(k, c)
         vectors[name] = export_vectors(out/'vectors'/name, x, w, b, source={'synthetic_seed': 20260916+k*100+c})
     cases = []
-    # (name, vector, impl, P, DEPTH, stall, pattern, gaps, mode_seq, reset, T)
+    # (name, vector, impl, P, DEPTH, stall, pattern, gaps, mode_seq, reset, T[, W])
     for impl in (0, 1, 2):
         for p in (1, 2, 4, 8):
             for depth in (1, 2, 3):
@@ -167,6 +174,28 @@ def main():
         cases.append((f'v4_minimum_p{p}', 'synthetic_k1_c9', 3, p, 2, 12, 0, 0, 2, 1, 2))
     for mode_seq in (0, 1):
         cases.append((f'v4_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9', 3, 4, 2, 0, 0, 0, mode_seq, 0, 4))
+    # v4 with a four-wide window port (W=4, T=4): the same fixtures padded with zero
+    # taps to a multiple of 4, the way the host pads them for that bitstream.
+    for k, c in [(1, 9), (9, 9), (9, 17), (27, 9)]:
+        kp = -(-k//4)*4
+        x, w, b = fixture(k, c)
+        x, w = padded(x, w, kp)
+        vectors[f'synthetic_k{k}_c{c}_pad{kp}'] = export_vectors(
+            out/'vectors'/f'synthetic_k{k}_c{c}_pad{kp}', x, w, b,
+            source={'synthetic_seed': 20260916+k*100+c, 'zero_taps_appended': kp-k})
+    for p in (1, 2, 8):
+        for stall in (0, 12):
+            cases.append((f'v4w4_k12_p{p}_d2_s{stall}', 'synthetic_k9_c9_pad12', 3, p, 2, stall, 0, 0, 2, 0, 4, 4))
+    for k, c, p, depth, stall in [(12, 17, 8, 2, 4), (12, 9, 3, 3, 4), (12, 9, 8, 8, 12), (28, 9, 2, 1, 0),
+                                  (28, 9, 4, 3, 4)]:
+        vec = {12: f'synthetic_k9_c{c}_pad12', 28: 'synthetic_k27_c9_pad28'}[k]
+        cases.append((f'v4w4_edge_k{k}_c{c}_p{p}_d{depth}_s{stall}', vec, 3, p, depth, stall, 0, 0, 2, 0, 4, 4))
+    for pattern in (0, 1, 2):
+        cases.append((f'v4w4_gaps_pattern{pattern}', 'synthetic_k27_c9_pad28', 3, 4, 2, 12, pattern, 1, 2, 1, 4, 4))
+    for p in (1, 8):
+        cases.append((f'v4w4_minimum_p{p}', 'synthetic_k1_c9_pad4', 3, p, 2, 12, 0, 0, 2, 1, 4, 4))
+    for mode_seq in (0, 1):
+        cases.append((f'v4w4_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9_pad28', 3, 4, 2, 0, 0, 0, mode_seq, 0, 4, 4))
     if args.suite == 'full':
         for split in ('calibration', 'evaluation'):
             path = ROOT/'data'/(split+'.wpr')
@@ -193,6 +222,9 @@ def main():
         cases.append(('v3_evaluation_p64_d2_s0', 'evaluation', 2, 64, 2, 0, 0, 0, 2, 0, 1))
         cases.append(('v4_evaluation_p16_d2_s0_t4', 'evaluation', 3, 16, 2, 0, 0, 0, 2, 0, 4))
         cases.append(('v3_evaluation_p128_d2_s0', 'evaluation', 2, 128, 2, 0, 0, 0, 2, 0, 1))
+        # The four-wide port on the same windows (K = 576 needs no padding).
+        cases.append(('v4w4_evaluation_p16_d2_s0_t4', 'evaluation', 3, 16, 2, 0, 0, 0, 2, 0, 4, 4))
+        cases.append(('v4w4_evaluation_p8_d2_s12_t4', 'evaluation', 3, 8, 2, 12, 0, 0, 2, 0, 4, 4))
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         futures = [pool.submit(run_case, case, out, vectors, iverilog, vvp) for case in cases]

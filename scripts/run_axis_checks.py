@@ -51,11 +51,24 @@ def compile_and_run(dest, top, sources, params, vector, iverilog, vvp, tag):
                    dest, dest/f'{tag}_sim.log')
 
 
+def add_vectors(vectors, out, name, x, w, b, source, pad):
+    """Export a fixture, and with pad also its copy padded with zero taps to a
+    multiple of 4 (name + '_pad'), which is what the W=4 host sends."""
+    vectors[name] = export_vectors(out/'vectors'/name, x, w, b, source=source)
+    k = len(w[0])
+    if pad and k % 4:
+        kp = -(-k//4)*4
+        vectors[name+'_pad'] = export_vectors(
+            out/'vectors'/(name+'_pad'), [r+[0]*(kp-k) for r in x], [r+[0]*(kp-k) for r in w], b,
+            source=dict(source, zero_taps_appended=kp-k))
+
+
 def run_case(case, out, vectors, iverilog, vvp):
     name, vec, impl, p, depth, t, mode_seq, in_gap, out_gap = case[:9]
     # Optional tail: build the wrapper larger than the data and tell it the data's
     # shape at run time. 0 means "build at the data's shape", the fixed design.
-    kmax, coutmax, runtime = (list(case[9:])+[0, 0, 0])[:3]
+    # The last is W, the activations the core takes per cycle (1 or 4).
+    kmax, coutmax, runtime, width = (list(case[9:])+[0, 0, 0, 1][len(case[9:]):])[:4]
     dest = out/name
     meta = vectors[vec]
     k, cout, n = meta['K'], meta['COUT'], meta['N']
@@ -63,11 +76,14 @@ def run_case(case, out, vectors, iverilog, vvp):
     src = lambda rel: out/'sources'/rel
 
     # 1. The bare core on the same stream, no stalls, no gaps: the reference cycles.
-    core_params = dict(K=k, COUT=cout, P=p, DEPTH=depth, N=n, IMPL=impl, STALL_LEN=0,
-                       PATTERN=0, INPUT_GAPS=0, MODE_SEQ=mode_seq, RESET_TEST=0, T=t)
+    #    At W=4 it runs the windows padded to a multiple of 4, as the host pads
+    #    them; the wrapper bench pads the unpadded vector itself.
+    core_vec = vec if width == 1 or k % 4 == 0 else vec+'_pad'
+    core_params = dict(K=vectors[core_vec]['K'], COUT=cout, P=p, DEPTH=depth, N=n, IMPL=impl, STALL_LEN=0,
+                       PATTERN=0, INPUT_GAPS=0, MODE_SEQ=mode_seq, RESET_TEST=0, T=t, W=width)
     core_log = compile_and_run(dest, 'tb_stream_compare',
                                [src(s) for s in CORE_SOURCES]+[src('sim/tb_stream_compare.sv')],
-                               core_params, vector, iverilog, vvp, 'core')
+                               core_params, out/'vectors'/core_vec, iverilog, vvp, 'core')
     m = re.search(r'PASS ALL checked_values=(\d+) windows=(\d+) total_cycles=(\d+)', core_log)
     assert m, core_log
     core_cycles = int(m.group(3))
@@ -80,7 +96,8 @@ def run_case(case, out, vectors, iverilog, vvp):
     # runtime-geometry build that costs even one cycle more fails here.
     wrap_params = dict(K=k, COUT=cout, P=p, DEPTH=depth, N=n, IMPL=impl, T=t,
                        KMAX=kmax, COUTMAX=coutmax, RUNTIME_GEOM=runtime,
-                       MODE_SEQ=mode_seq, IN_GAP=in_gap, OUT_GAP=out_gap, EXPECT_CYCLES=expect)
+                       MODE_SEQ=mode_seq, IN_GAP=in_gap, OUT_GAP=out_gap, EXPECT_CYCLES=expect,
+                       W=width)
     wrap_log = compile_and_run(dest, 'tb_axis_wrapper',
                                [src(s) for s in CORE_SOURCES]+[src('rtl/window_mac_axis.sv'),
                                                                src('sim/tb_axis_wrapper.sv')],
@@ -139,13 +156,13 @@ def main():
 
     vectors, cases = {}, []
     if args.suite == 'smoke':
-        # K must be a multiple of 4: the wrapper packs four activations per beat.
-        for k, c in [(12, 9), (4, 1), (28, 17)]:
+        # The built K must be a multiple of 4: the wrapper packs four activations
+        # per beat. k9 is data for a larger runtime-geometry build only.
+        for k, c in [(12, 9), (4, 1), (28, 17), (9, 9)]:
             name = f'synthetic_k{k}_c{c}'
             x, w, b = fixture(k, c)
             x = x[:8]
-            vectors[name] = export_vectors(out/'vectors'/name, x, w, b,
-                                           source={'synthetic_seed': 20260916+k*100+c})
+            add_vectors(vectors, out, name, x, w, b, {'synthetic_seed': 20260916+k*100+c}, pad=True)
         for impl, t in [(2, 1), (3, 1), (3, 2), (3, 4)]:
             v = 'v3' if impl == 2 else f'v4t{t}'
             cases.append((f'{v}_k12_p2_d2', 'synthetic_k12_c9', impl, 2, 2, t, 2, 0, 0))
@@ -158,6 +175,17 @@ def main():
             cases.append((f'{v}_k12_ingap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 5, 0))
             cases.append((f'{v}_k12_outgap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 0, 7))
             cases.append((f'{v}_k12_bothgap', 'synthetic_k12_c9', impl, 2, 2, t, 2, 3, 4))
+        # The four-wide port (W=4). Unthrottled, IN_STALL must stay 0: the wrapper
+        # takes a beat every cycle. k9 on a larger build writes RUN_K=9 and must
+        # read back 12, the padded length the bench then streams.
+        for p, d in [(2, 2), (8, 3)]:
+            cases.append((f'v4t4w4_k12_p{p}_d{d}', 'synthetic_k12_c9', 3, p, d, 4, 2, 0, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_k4_c1_p1_d1', 'synthetic_k4_c1', 3, 1, 1, 4, 0, 0, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_k28_c17_p4_d2', 'synthetic_k28_c17', 3, 4, 2, 4, 1, 0, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_k9_runtime', 'synthetic_k9_c9', 3, 4, 2, 4, 2, 0, 0, 48, 20, 1, 4))
+        cases.append(('v4t4w4_k12_ingap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 5, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_k12_outgap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 0, 7, 0, 0, 0, 4))
+        cases.append(('v4t4w4_k12_bothgap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 3, 4, 0, 0, 0, 4))
     elif args.suite == 'geom':
         # One build, many layers. KMAX/COUTMAX are the CIFAR bitstream's built-in
         # maxima; each case feeds it a layer that is smaller in K, in COUT, or in
@@ -174,15 +202,17 @@ def main():
             name = f'layer_k{k}_c{c}'
             x, w, b = fixture(k, c)
             x = x[:8]
-            vectors[name] = export_vectors(out/'vectors'/name, x, w, b,
-                                           source={'synthetic_seed': 20260916+k*100+c})
-        for impl, t in [(2, 1), (3, 4)]:
-            v = 'v3' if impl == 2 else f'v4t{t}'
+            add_vectors(vectors, out, name, x, w, b, {'synthetic_seed': 20260916+k*100+c}, pad=True)
+        for impl, t, width in [(2, 1, 1), (3, 4, 1), (3, 4, 4)]:
+            v = 'v3' if impl == 2 else f'v4t{t}' + ('w4' if width == 4 else '')
             for k, c in layers:
                 # mode_seq 2 alternates dense and sparse windows, which is the
                 # only mode that exercises both tap counts in one run.
                 cases.append((f'{v}_k{k}_c{c}_runtime', f'layer_k{k}_c{c}', impl,
-                              8, 2, t, 2, 0, 0, KMAX, COUTMAX, 1))
+                              8, 2, t, 2, 0, 0, KMAX, COUTMAX, 1, width))
+        # The board build exactly (P=16), at W=4, on the 64-output layer.
+        cases.append(('v4t4w4_k288_c64_p16_runtime', 'layer_k288_c64', 3, 16, 2, 4, 2, 0, 0,
+                      KMAX, COUTMAX, 1, 4))
         # Control: the same large build told to run its full built-in shape, and
         # the same shape built fixed. Both must agree, or RUNTIME_GEOM=1 changed
         # behaviour rather than only adding the ability to shrink.
@@ -200,6 +230,9 @@ def main():
         for impl, t in [(2, 1), (3, 1), (3, 4), (3, 8)]:
             v = 'v3' if impl == 2 else f'v4t{t}'
             cases.append((f'{v}_evaluation_p8_d2', 'evaluation', impl, 8, 2, t, 2, 0, 0))
+        cases.append(('v4t4w4_evaluation_p8_d2', 'evaluation', 3, 8, 2, 4, 2, 0, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_evaluation_p16_d2', 'evaluation', 3, 16, 2, 4, 2, 0, 0, 0, 0, 0, 4))
+        cases.append(('v4t4w4_evaluation_p16_d2_ingap', 'evaluation', 3, 16, 2, 4, 2, 9, 0, 0, 0, 0, 4))
         cases.append(('v3_evaluation_p8_d2_ingap', 'evaluation', 2, 8, 2, 1, 2, 9, 0))
         cases.append(('v3_evaluation_p8_d2_outgap', 'evaluation', 2, 8, 2, 1, 2, 0, 11))
 
