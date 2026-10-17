@@ -189,14 +189,32 @@ def summarize(args):
           "report",args.out/"summary.json",flush=True)
 
 
+def selftest():
+    rng=np.random.default_rng(42)
+    count=rng.integers(0,10,size=(20,32),dtype=np.uint8)
+    group=np.arange(32)%4
+    cost,maximum,bound=cost_and_banks(count,32,288,group)
+    assert len(cost)==20 and len(maximum)==20 and len(bound)==20
+    assert np.all(cost>=73)
+    lower=np.maximum(73,2*np.maximum(1,(count.sum(axis=1,dtype=np.int32)+3)//4))
+    assert np.all(lower<=cost),"Relaxed bound exceeds feasible group cost"
+    z=np.zeros((4,32),dtype=np.uint8)
+    zero_cost,_,floor=cost_and_banks(z,32,288,group)
+    assert np.all(zero_cost==73) and np.all(floor)
+    print("PASS: window floor, bank-max and relaxed lower-bound mechanism selftest")
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--selftest",action="store_true")
     ap.add_argument("--sigmas",default="15,25,50")
     ap.add_argument("--seeds",default="0,1,2")
     ap.add_argument("--max-images",type=int,default=0)
     ap.add_argument("--device",choices=["auto","cpu","cuda"],default="auto")
     ap.add_argument("--out",type=Path,default=ROOT/"build"/"q1_gpu_bank_mechanism")
     args=ap.parse_args()
+    if args.selftest:
+        selftest();return
     sigmas=[int(s) for s in args.sigmas.split(",") if s.strip()]
     seeds=[int(s) for s in args.seeds.split(",") if s.strip()]
     if sigmas!=[15,25,50] or seeds!=[0,1,2]:
