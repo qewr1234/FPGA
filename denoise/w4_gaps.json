@@ -9,19 +9,33 @@
           "K": 9,
           "COUT": 32,
           "kind": "first",
-          "w1": {
+          "board_w1": {
             "gap": 15,
             "in_stall": 0,
             "load": 10,
             "last": 4,
             "rest": 11
           },
-          "w4": {
+          "board_w4": {
             "gap": 9,
             "in_stall": 0,
             "load": 4,
             "last": 4,
             "rest": 5
+          },
+          "rtl_w1": {
+            "gap": 16,
+            "in_stall": 0,
+            "load": 10,
+            "last": 6,
+            "rest": 10
+          },
+          "rtl_w4": {
+            "gap": 10,
+            "in_stall": 0,
+            "load": 4,
+            "last": 6,
+            "rest": 6
           }
         },
         {
@@ -29,7 +43,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 63,
             "in_stall": 0,
             "load": 289,
@@ -37,11 +51,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 63,
             "in_stall": 0,
             "load": 73,
             "last": 44,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 117,
+            "in_stall": 0,
+            "load": 289,
+            "last": 98,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 98,
             "rest": 19,
             "rule_holds": true
           }
@@ -51,7 +81,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 61,
             "in_stall": 0,
             "load": 289,
@@ -59,11 +89,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 61,
             "in_stall": 0,
             "load": 73,
             "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 99,
+            "in_stall": 0,
+            "load": 289,
+            "last": 80,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 80,
             "rest": 19,
             "rule_holds": true
           }
@@ -73,7 +119,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 61,
             "in_stall": 0,
             "load": 289,
@@ -81,11 +127,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 61,
             "in_stall": 0,
             "load": 73,
             "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 109,
+            "in_stall": 0,
+            "load": 289,
+            "last": 90,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 90,
             "rest": 19,
             "rule_holds": true
           }
@@ -95,7 +157,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 57,
             "in_stall": 0,
             "load": 289,
@@ -103,11 +165,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 57,
             "in_stall": 0,
             "load": 73,
             "last": 38,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 113,
+            "in_stall": 0,
+            "load": 289,
+            "last": 94,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 94,
             "rest": 19,
             "rule_holds": true
           }
@@ -117,7 +195,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 59,
             "in_stall": 0,
             "load": 289,
@@ -125,11 +203,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 59,
             "in_stall": 0,
             "load": 73,
             "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 289,
+            "last": 72,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 73,
+            "last": 72,
             "rest": 19,
             "rule_holds": true
           }
@@ -139,7 +233,7 @@
           "K": 297,
           "COUT": 1,
           "kind": "last",
-          "w1": {
+          "board_w1": {
             "gap": 27,
             "in_stall": 0,
             "load": 298,
@@ -147,11 +241,27 @@
             "rest": 4,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 27,
             "in_stall": 0,
             "load": 76,
             "last": 23,
+            "rest": 4,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 53,
+            "in_stall": 0,
+            "load": 298,
+            "last": 49,
+            "rest": 4,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 53,
+            "in_stall": 0,
+            "load": 76,
+            "last": 49,
             "rest": 4,
             "rule_holds": true
           }
@@ -166,19 +276,33 @@
           "K": 36,
           "COUT": 64,
           "kind": "first",
-          "w1": {
+          "board_w1": {
             "gap": 44,
             "in_stall": 0,
             "load": 37,
             "last": 16,
             "rest": 28
           },
-          "w4": {
+          "board_w4": {
             "gap": 17,
             "in_stall": 0,
             "load": 10,
             "last": 16,
             "rest": 7
+          },
+          "rtl_w1": {
+            "gap": 49,
+            "in_stall": 0,
+            "load": 37,
+            "last": 36,
+            "rest": 13
+          },
+          "rtl_w4": {
+            "gap": 22,
+            "in_stall": 0,
+            "load": 10,
+            "last": 36,
+            "rest": 12
           }
         },
         {
@@ -186,7 +310,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 187,
             "in_stall": 0,
             "load": 577,
@@ -194,11 +318,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 168,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 407,
+            "in_stall": 0,
+            "load": 577,
+            "last": 388,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 388,
             "rest": 19,
             "rule_holds": true
           }
@@ -208,7 +348,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 167,
             "in_stall": 0,
             "load": 577,
@@ -216,11 +356,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 148,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 311,
+            "in_stall": 0,
+            "load": 577,
+            "last": 292,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 292,
             "rest": 19,
             "rule_holds": true
           }
@@ -230,7 +386,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 171,
             "in_stall": 0,
             "load": 577,
@@ -238,11 +394,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 339,
+            "in_stall": 0,
+            "load": 577,
+            "last": 320,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 320,
             "rest": 19,
             "rule_holds": true
           }
@@ -252,7 +424,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 199,
             "in_stall": 0,
             "load": 577,
@@ -260,11 +432,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 180,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 291,
+            "in_stall": 0,
+            "load": 577,
+            "last": 272,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 272,
             "rest": 19,
             "rule_holds": true
           }
@@ -274,7 +462,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 175,
             "in_stall": 0,
             "load": 577,
@@ -282,11 +470,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 156,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 315,
+            "in_stall": 0,
+            "load": 577,
+            "last": 296,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 296,
             "rest": 19,
             "rule_holds": true
           }
@@ -296,7 +500,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 159,
             "in_stall": 0,
             "load": 577,
@@ -304,11 +508,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 159,
             "in_stall": 0,
             "load": 145,
             "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 351,
+            "in_stall": 0,
+            "load": 577,
+            "last": 332,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 332,
             "rest": 19,
             "rule_holds": true
           }
@@ -318,7 +538,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 159,
             "in_stall": 0,
             "load": 577,
@@ -326,11 +546,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 159,
             "in_stall": 0,
             "load": 145,
             "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 319,
+            "in_stall": 0,
+            "load": 577,
+            "last": 300,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 300,
             "rest": 19,
             "rule_holds": true
           }
@@ -340,7 +576,7 @@
           "K": 576,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 171,
             "in_stall": 0,
             "load": 577,
@@ -348,11 +584,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 164,
             "in_stall": 0,
             "load": 145,
             "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 275,
+            "in_stall": 0,
+            "load": 577,
+            "last": 256,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 256,
             "rest": 19,
             "rule_holds": true
           }
@@ -362,7 +614,7 @@
           "K": 612,
           "COUT": 4,
           "kind": "last",
-          "w1": {
+          "board_w1": {
             "gap": 53,
             "in_stall": 0,
             "load": 613,
@@ -370,11 +622,27 @@
             "rest": 7,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 53,
             "in_stall": 0,
             "load": 154,
             "last": 46,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 82,
+            "in_stall": 0,
+            "load": 613,
+            "last": 75,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 82,
+            "in_stall": 0,
+            "load": 154,
+            "last": 75,
             "rest": 7,
             "rule_holds": true
           }
@@ -389,19 +657,33 @@
           "K": 36,
           "COUT": 64,
           "kind": "first",
-          "w1": {
+          "board_w1": {
             "gap": 44,
             "in_stall": 0,
             "load": 37,
             "last": 16,
             "rest": 28
           },
-          "w4": {
+          "board_w4": {
             "gap": 17,
             "in_stall": 0,
             "load": 10,
             "last": 16,
             "rest": 7
+          },
+          "rtl_w1": {
+            "gap": 49,
+            "in_stall": 0,
+            "load": 37,
+            "last": 36,
+            "rest": 13
+          },
+          "rtl_w4": {
+            "gap": 22,
+            "in_stall": 0,
+            "load": 10,
+            "last": 36,
+            "rest": 12
           }
         },
         {
@@ -409,7 +691,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 143,
             "in_stall": 0,
             "load": 289,
@@ -417,11 +699,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 124,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 279,
+            "in_stall": 0,
+            "load": 289,
+            "last": 260,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 260,
             "rest": 19,
             "rule_holds": true
           }
@@ -431,7 +729,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 123,
             "in_stall": 0,
             "load": 289,
@@ -439,11 +737,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 227,
+            "in_stall": 0,
+            "load": 289,
+            "last": 208,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 208,
             "rest": 19,
             "rule_holds": true
           }
@@ -453,7 +767,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 127,
             "in_stall": 0,
             "load": 289,
@@ -461,11 +775,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 227,
+            "in_stall": 0,
+            "load": 289,
+            "last": 208,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 208,
             "rest": 19,
             "rule_holds": true
           }
@@ -475,7 +805,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 119,
             "in_stall": 0,
             "load": 289,
@@ -483,11 +813,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 100,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 259,
+            "in_stall": 0,
+            "load": 289,
+            "last": 240,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 240,
             "rest": 19,
             "rule_holds": true
           }
@@ -497,7 +843,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 131,
             "in_stall": 0,
             "load": 289,
@@ -505,11 +851,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 243,
+            "in_stall": 0,
+            "load": 289,
+            "last": 224,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 224,
             "rest": 19,
             "rule_holds": true
           }
@@ -519,7 +881,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 131,
             "in_stall": 0,
             "load": 289,
@@ -527,11 +889,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 251,
+            "in_stall": 0,
+            "load": 289,
+            "last": 232,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 232,
             "rest": 19,
             "rule_holds": true
           }
@@ -541,7 +919,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 123,
             "in_stall": 0,
             "load": 289,
@@ -549,11 +927,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 263,
+            "in_stall": 0,
+            "load": 289,
+            "last": 244,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 244,
             "rest": 19,
             "rule_holds": true
           }
@@ -563,7 +957,7 @@
           "K": 288,
           "COUT": 64,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 127,
             "in_stall": 0,
             "load": 289,
@@ -571,11 +965,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 92,
             "in_stall": 0,
             "load": 73,
             "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 223,
+            "in_stall": 0,
+            "load": 289,
+            "last": 204,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 204,
             "rest": 19,
             "rule_holds": true
           }
@@ -585,7 +995,7 @@
           "K": 324,
           "COUT": 4,
           "kind": "last",
-          "w1": {
+          "board_w1": {
             "gap": 41,
             "in_stall": 0,
             "load": 325,
@@ -593,11 +1003,27 @@
             "rest": 7,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 41,
             "in_stall": 0,
             "load": 82,
             "last": 34,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 79,
+            "in_stall": 0,
+            "load": 325,
+            "last": 72,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 79,
+            "in_stall": 0,
+            "load": 82,
+            "last": 72,
             "rest": 7,
             "rule_holds": true
           }
@@ -612,19 +1038,33 @@
           "K": 36,
           "COUT": 32,
           "kind": "first",
-          "w1": {
+          "board_w1": {
             "gap": 39,
             "in_stall": 0,
             "load": 37,
             "last": 8,
             "rest": 31
           },
-          "w4": {
+          "board_w4": {
             "gap": 17,
             "in_stall": 0,
             "load": 10,
             "last": 8,
             "rest": 9
+          },
+          "rtl_w1": {
+            "gap": 44,
+            "in_stall": 0,
+            "load": 37,
+            "last": 18,
+            "rest": 26
+          },
+          "rtl_w4": {
+            "gap": 22,
+            "in_stall": 0,
+            "load": 10,
+            "last": 18,
+            "rest": 12
           }
         },
         {
@@ -632,7 +1072,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 65,
             "in_stall": 0,
             "load": 289,
@@ -640,11 +1080,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 65,
             "in_stall": 0,
             "load": 73,
             "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 115,
+            "in_stall": 0,
+            "load": 289,
+            "last": 96,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 96,
             "rest": 19,
             "rule_holds": true
           }
@@ -654,7 +1110,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 65,
             "in_stall": 0,
             "load": 289,
@@ -662,11 +1118,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 65,
             "in_stall": 0,
             "load": 73,
             "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 109,
+            "in_stall": 0,
+            "load": 289,
+            "last": 90,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 90,
             "rest": 19,
             "rule_holds": true
           }
@@ -676,7 +1148,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 69,
             "in_stall": 0,
             "load": 289,
@@ -684,11 +1156,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 69,
             "in_stall": 0,
             "load": 73,
             "last": 50,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 289,
+            "last": 72,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 73,
+            "last": 72,
             "rest": 19,
             "rule_holds": true
           }
@@ -698,7 +1186,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 65,
             "in_stall": 0,
             "load": 289,
@@ -706,11 +1194,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 77,
             "in_stall": 12,
             "load": 73,
             "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 97,
+            "in_stall": 0,
+            "load": 289,
+            "last": 78,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 78,
             "rest": 19,
             "rule_holds": true
           }
@@ -720,7 +1224,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 65,
             "in_stall": 0,
             "load": 289,
@@ -728,11 +1232,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 65,
             "in_stall": 0,
             "load": 73,
             "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 101,
+            "in_stall": 0,
+            "load": 289,
+            "last": 82,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 82,
             "rest": 19,
             "rule_holds": true
           }
@@ -742,7 +1262,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 61,
             "in_stall": 0,
             "load": 289,
@@ -750,11 +1270,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 61,
             "in_stall": 0,
             "load": 73,
             "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 97,
+            "in_stall": 0,
+            "load": 289,
+            "last": 78,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 78,
             "rest": 19,
             "rule_holds": true
           }
@@ -764,7 +1300,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 59,
             "in_stall": 0,
             "load": 289,
@@ -772,11 +1308,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 59,
             "in_stall": 0,
             "load": 73,
             "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 107,
+            "in_stall": 0,
+            "load": 289,
+            "last": 88,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 88,
             "rest": 19,
             "rule_holds": true
           }
@@ -786,7 +1338,7 @@
           "K": 288,
           "COUT": 32,
           "kind": "hidden",
-          "w1": {
+          "board_w1": {
             "gap": 73,
             "in_stall": 0,
             "load": 289,
@@ -794,11 +1346,27 @@
             "rest": 19,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 73,
             "in_stall": 0,
             "load": 73,
             "last": 54,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 121,
+            "in_stall": 0,
+            "load": 289,
+            "last": 102,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 102,
             "rest": 19,
             "rule_holds": true
           }
@@ -808,7 +1376,7 @@
           "K": 324,
           "COUT": 4,
           "kind": "last",
-          "w1": {
+          "board_w1": {
             "gap": 35,
             "in_stall": 0,
             "load": 325,
@@ -816,11 +1384,27 @@
             "rest": 7,
             "rule_holds": true
           },
-          "w4": {
+          "board_w4": {
             "gap": 35,
             "in_stall": 0,
             "load": 82,
             "last": 28,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w1": {
+            "gap": 62,
+            "in_stall": 0,
+            "load": 325,
+            "last": 55,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w4": {
+            "gap": 62,
+            "in_stall": 0,
+            "load": 82,
+            "last": 55,
             "rest": 7,
             "rule_holds": true
           }
@@ -828,5 +1412,8 @@
       ]
     }
   },
-  "rule_holds": "66/66"
+  "rule_holds": {
+    "board": "66/66",
+    "rtl_sample": "66/66"
+  }
 }
