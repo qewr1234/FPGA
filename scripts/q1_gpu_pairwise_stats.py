@@ -17,7 +17,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -187,14 +187,9 @@ def main():
                  "exploratory_two_sided_image_sign_test_p"]
         w=csv.DictWriter(f,fieldnames=headers);w.writeheader()
         for r in records:
-            w.writerow({**r,
-                        "ci_low_pp":r["paired_bootstrap_ci95_pp"][0],
-                        "ci_high_pp":r["paired_bootstrap_ci95_pp"][1],
-                        **{"paired_bootstrap_ci95_pp":None}} if False else {
-                            **{k:v for k,v in r.items() if k!="paired_bootstrap_ci95_pp"},
-                            "ci_low_pp":r["paired_bootstrap_ci95_pp"][0],
-                            "ci_high_pp":r["paired_bootstrap_ci95_pp"][1]
-                        })
+            flat={k:v for k,v in r.items() if k!="paired_bootstrap_ci95_pp"}
+            flat["ci_low_pp"],flat["ci_high_pp"]=r["paired_bootstrap_ci95_pp"]
+            w.writerow(flat)
     lines=[
         "# Paired GPU bank permutation method comparison",
         "",
