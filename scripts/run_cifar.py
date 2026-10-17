@@ -128,7 +128,7 @@ def maxpool2(q):
 
 
 # -------------------------------------------------------------- board files ---
-def write_board_files(cfg_src, x, gold, mode_seq, pad4=False):
+def write_board_files(cfg_src, x, gold, mode_seq, pad4=False, pad_to=None):
     """Lay out what run_board_xsdb.tcl loads, and say what the run will be.
 
     config.bin is copied rather than rebuilt: it is the exporter's output, and
@@ -141,10 +141,13 @@ def write_board_files(cfg_src, x, gold, mode_seq, pad4=False):
     weights, get zero taps appended up to the next multiple of 4. Zero times zero
     adds nothing, so gold stays as it is. Only then is config.bin rebuilt, from
     the exporter's own file, with zero words inserted after each channel.
+    pad_to=2 does the same to a multiple of 2, for the two-wide port (CNN_W=2,
+    ID bit 10), which loads a window half a beat at a time.
     """
     n, k = x.shape
     cout = gold.shape[1]
-    kp = -(-k//4)*4 if pad4 else k
+    m = pad_to or (4 if pad4 else 1)
+    kp = -(-k//m)*m
     if n*kp % 4:
         raise SystemExit(f'{n} windows of {k} taps is {n*k} activations, which '
                          f'does not pack into whole 32-bit beats')

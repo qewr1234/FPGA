@@ -11,9 +11,10 @@ sim/tb_axis_wrapper.sv: sparse mode, as every board run, with the zero padding
 the host does at W=4 and an unthrottled stream (a DMA that keeps up). The bench
 checks every output against the integer oracle and reads the CYCLES register.
 
-The same windows run at W=4 and at W=1. Each total is compared with the
-per-window count predict_w4.py made its prediction with (window_cycles), summed
-over the same windows. At W=1 that count matched the board on whole layers to
+The same windows run at W=4 and at W=1 (--widths; --widths 2 --out
+denoise/w2_rtl_sim.json runs the two-wide build). Each total is compared with
+the per-window count predict_w4.py made its prediction with (window_cycles),
+summed over the same windows. At W=1 that count matched the board on whole layers to
 within each layer's fill and drain; here it is checked against the RTL at both
 widths on the real data, which no synthetic vector did.
 
@@ -74,7 +75,9 @@ def main():
     ap.add_argument('--jobs', type=int, default=3)
     ap.add_argument('--work', type=Path, default=ROOT/'build'/'w4_rtl_sim')
     ap.add_argument('--out', type=Path, default=HERE/'w4_rtl_sim.json')
+    ap.add_argument('--widths', default='1,4', help='port widths to simulate, comma separated')
     args = ap.parse_args()
+    widths = [int(v) for v in args.widths.split(',')]
     commit = subprocess.run(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
     dirty = subprocess.run(['git', '-C', str(ROOT), 'status', '--porcelain', '--'] + SOURCES,
                            capture_output=True, text=True).stdout.strip()
@@ -91,7 +94,7 @@ def main():
                            source={'model': model, 'layer': L['name'], 'image': '05.png', 'window_index': idx.tolist()})
             row = dict(name=L['name'], K=L['K'], COUT=L['COUT'], windows_in_layer=int(x.shape[0]),
                        windows=int(len(idx)), nonzero_fraction=float((xs != 0).mean()))
-            for w in (1, 4):
+            for w in widths:
                 row[f'model_w{w}'] = int(window_cycles(xs, L['K'], L['COUT'], w).sum())
                 jobs.append((label, len(recs[label]['layers']), w, args.work/name/f'w{w}', vec, L['K'], L['COUT'], len(idx)))
             recs[label]['layers'].append(row)
@@ -106,13 +109,15 @@ def main():
             print(f'  {label:<18} {row["name"]:<7} W={w}: RTL {row[f"rtl_w{w}"]:>8,}  '
                   f'count {row[f"model_w{w}"]:>8,}  gap {row[f"gap_w{w}"]:>4}', flush=True)
     for label, r in recs.items():
-        for w in (1, 4):
+        for w in widths:
             r[f'rtl_w{w}'] = sum(l[f'rtl_w{w}'] for l in r['layers'])
             r[f'model_w{w}'] = sum(l[f'model_w{w}'] for l in r['layers'])
-        r['rtl_speedup_w1_over_w4'] = r['rtl_w1']/r['rtl_w4']
-        gaps = [l['gap_w4'] for l in r['layers']]
-        print(f'{label:<18} sampled windows: W=1 RTL {r["rtl_w1"]:,} (count {r["model_w1"]:,}), '
-              f'W=4 RTL {r["rtl_w4"]:,} (count {r["model_w4"]:,}); W=4 per-layer gaps {min(gaps)}..{max(gaps)}')
+        if 1 in widths and 4 in widths:
+            r['rtl_speedup_w1_over_w4'] = r['rtl_w1']/r['rtl_w4']
+        print(f'{label:<18} sampled windows: ' + '; '.join(
+            f'W={w} RTL {r[f"rtl_w{w}"]:,} (count {r[f"model_w{w}"]:,}, per-layer gaps '
+            f'{min(l[f"gap_w{w}"] for l in r["layers"])}..{max(l[f"gap_w{w}"] for l in r["layers"])})'
+            for w in widths))
     out = dict(what='RTL simulation (Icarus) of window_mac_axis at the board build, on sampled real windows; '
                     'not a board measurement',
                build=BUILD, image='05.png', mode='sparse (MODE_SEQ=1)', windows_per_layer=args.windows,

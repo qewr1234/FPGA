@@ -10,11 +10,12 @@
 //     walk, CTRL[4] arms a run of NWINDOWS windows.
 //   - CTRL[1]=0: each beat is four 7-bit activations, packed flat across
 //     windows; K consecutive activations are one window. On a W=4 build RUN_K
-//     is a multiple of 4, so this is the same as one window per K/4 beats.
+//     is a multiple of 4, so this is the same as one window per K/4 beats; on
+//     a W=2 build a multiple of 2, so a window may end after half a beat.
 //   - every window produces RUN_COUT results ReLU(bias[c] + sum_t w[c][t]*a[t]),
 //     in channel order, TLAST on the last channel of the last window.
 //   - RUN_K / RUN_COUT clamp 0 and anything above the build to the build; on a
-//     W=4 build RUN_K then rounds up to a multiple of 4.
+//     W=2 or W=4 build RUN_K then rounds up to a multiple of W.
 //
 // Every output beat is compared in order. Register reads are compared where the
 // value is defined by the spec (ID, geometry, CTRL, NWINDOWS, CFGCOUNT, and the
@@ -31,7 +32,7 @@
 class wm_run_obs extends uvm_object;
     `uvm_object_utils(wm_run_obs)
     int unsigned k, cout, nwin, mode_seq;
-    int unsigned k_req;          // RUN_K as written (clamped), before W=4 rounds it
+    int unsigned k_req;          // RUN_K as written (clamped), before W=2 or W=4 rounds it
     int unsigned acts, zero_acts, zero_windows;
     int unsigned outputs, relu_clamped, max_weight_hits, min_weight_hits;
     int unsigned cycles, in_stall, out_stall;

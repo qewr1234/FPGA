@@ -8,8 +8,8 @@
 // cannot simply hold start_ready low and are measured on the same stream.
 // Cycle metric per window: start-accept edge and last-output-accept edge, both
 // as posedge indices. The stream total is end[last]-start[0].
-// W=4 (IMPL=3, T=4 only) sends a window as K/4 beats of four activations, tap
-// 4r+j in lane j; the vectors must already be padded so that K is a multiple of 4.
+// W>1 (IMPL=3, W dividing T) sends a window as K/W beats of W activations, tap
+// W*r+j in lane j; the vectors must already be padded so that K is a multiple of W.
 module tb_stream_compare;
     parameter integer K=27,COUT=9,P=2,DEPTH=2,N=8,IMPL=2;
     parameter integer STALL_LEN=0,PATTERN=0,INPUT_GAPS=0,MODE_SEQ=2,RESET_TEST=0,T=1,W=1;
@@ -85,8 +85,8 @@ module tb_stream_compare;
             if(dut.take_cfg && !dut.core_idle) $fatal(1,"configuration accepted while not idle");
         end
     end endgenerate
-    initial if(W!=1 && (IMPL!=3 || T!=W || RK%W!=0))
-        $fatal(1,"W=%0d needs IMPL=3, T=W and K a multiple of W (got IMPL=%0d T=%0d K=%0d)",W,IMPL,T,RK);
+    initial if(W!=1 && (IMPL!=3 || T%W!=0 || RK%W!=0))
+        $fatal(1,"W=%0d needs IMPL=3, W dividing T and K a multiple of W (got IMPL=%0d T=%0d K=%0d)",W,IMPL,T,RK);
     reg [7:0] weights [0:COUT*K-1];
     reg [31:0] biases [0:COUT-1];
     reg [7:0] inputs [0:N*K-1];

@@ -13,11 +13,13 @@
 //
 // IN_GAP/OUT_GAP model a DMA that cannot keep up; the default 0 is the clean case.
 //
-// W=4 builds the four-wide window port. The bench then does what the host does
-// for that bitstream: it pads every window and every channel's weights with zero
-// taps up to KP, a multiple of 4, and streams windows beat aligned. It writes the
-// data's own K to RUN_K and requires the read-back to be KP, so a host that forgot
-// to pad would see the mismatch instead of a hang.
+// W=2 and W=4 build the two- and four-wide window ports. The bench then does
+// what the host does for that bitstream: it pads every window and every
+// channel's weights with zero taps up to KP, a multiple of W, and streams the
+// windows back to back (at W=4 they are then beat aligned; at W=2 a window may
+// end after half a beat). It writes the data's own K to RUN_K and requires the
+// read-back to be KP, so a host that forgot to pad would see the mismatch
+// instead of a hang.
 module tb_axis_wrapper;
     // K and COUT are the geometry of the DATA: the vectors, the oracle and the
     // streams are all this shape. KMAX/COUTMAX are the geometry the wrapper is
@@ -34,8 +36,8 @@ module tb_axis_wrapper;
     localparam integer CB=(COUTMAX==0) ? COUT : COUTMAX;
     // W=1: activations are packed four to a beat with no per-window alignment, so
     // the run only needs the TOTAL to divide by four -- a window may end mid beat.
-    // W=4: each window is KP taps, the last KP-K of them zero, so beats align.
-    localparam integer KP=(W==1) ? K : (K+3)/4*4;
+    // W>1: each window is KP taps, the last KP-K of them zero, KP a multiple of W.
+    localparam integer KP=(W==1) ? K : (K+W-1)/W*W;
     localparam integer ACTS=NWIN*KP;
     localparam integer BEATS=(ACTS+3)/4;
 
@@ -160,7 +162,7 @@ module tb_axis_wrapper;
         repeat(4) @(negedge aclk);
 
         axil_read(6'h24, r_id);
-        if(r_id !== (32'h4D41_0000 | ((W==4)<<9) | (RUNTIME_GEOM<<8) | IMPL))
+        if(r_id !== (32'h4D41_0000 | ((W==2)<<10) | ((W==4)<<9) | (RUNTIME_GEOM<<8) | IMPL))
             $fatal(1,"ID register reads %h",r_id);
 
         // ---- runtime geometry ----

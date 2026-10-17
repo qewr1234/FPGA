@@ -20,11 +20,13 @@
 //               K must be a multiple of 4. Windows follow each other with no gap;
 //               the wrapper raises start_valid between them.
 //               W=1 (default, the measured build) feeds the core one activation
-//               per cycle, four cycles per beat. W=4 (IMPL=3, T=4 only) hands the
-//               core the whole beat in one cycle; every window must then be a
-//               whole number of beats, so RUN_K rounds up to a multiple of 4 and
-//               the host pads each window and each channel's weights to that
-//               length with zeros.
+//               per cycle, four cycles per beat. W=2 and W=4 (IMPL=3, T=4 only)
+//               hand the core half a beat or the whole beat per cycle; every
+//               window must then be a whole number of those, so RUN_K rounds up
+//               to a multiple of W and the host pads each window and each
+//               channel's weights to that length with zeros. At W=2 a window may
+//               end after the first half of a beat, as one may end inside a beat
+//               at W=1; the next window starts with the second half.
 //
 // Output stream: one 32-bit result per beat, window order then channel order,
 // exactly the core's order. TLAST marks the last channel of the last window.
@@ -36,8 +38,8 @@
 // DMA starved the core and the run measured the DMA, not the core.
 //
 // Register map (AXI4-Lite, 32-bit):
-//   0x28 RUN_K     taps this layer uses  (0 or > K  -> the built K; W=4 rounds up
-//                  to a multiple of 4)
+//   0x28 RUN_K     taps this layer uses  (0 or > K  -> the built K; W=2 and W=4
+//                  round up to a multiple of W)
 //   0x2C RUN_COUT  channels this layer uses (0 or > COUT -> the built COUT)
 //   0x00 CTRL      [0] hold core in reset   [1] cfg mode   [3:2] mode_seq
 //                  [4] arm run (self clearing)             [5] reset cfg walker
@@ -50,11 +52,12 @@
 //   0x18 OUTSTALL  cycles the core was blocked on output
 //   0x1C OUTCOUNT  results emitted
 //   0x20 CFGCOUNT  configuration items accepted
-//   0x24 ID        0x4D41_0000 | (W==4 << 9) | (RUNTIME_GEOM << 8) | IMPL
+//   0x24 ID        0x4D41_0000 | (W==2 << 10) | (W==4 << 9) | (RUNTIME_GEOM << 8) | IMPL
 //                  Bit 8 lets the host tell a bitstream that honours RUN_K /
 //                  RUN_COUT from one that silently ignores them -- otherwise a
 //                  fixed build fed a smaller layer just returns wrong numbers.
-//                  Bit 9 tells a W=4 bitstream, which needs padded windows.
+//                  Bits 9 and 10 tell a W=4 and a W=2 bitstream, which need
+//                  padded windows.
 //
 // Host ordering: arming a run (CTRL[4]) clears the input holding register, so arm
 // BEFORE starting the MM2S transfer. Arming while data is already in flight drops
@@ -67,7 +70,7 @@ module window_mac_axis #(
     // is what the resource comparison is measured on.
     parameter integer RUNTIME_GEOM=0,
     parameter integer K=576, COUT=128, P=8, DEPTH=2, T=4, IMPL=2,
-    // Activations the core takes per cycle: 1, or 4 with IMPL=3 and T=4.
+    // Activations the core takes per cycle: 1, or 2 or 4 with IMPL=3 and T=4.
     parameter integer W=1,
     parameter integer KW=(K<2 ? 1 : $clog2(K)),
     parameter integer CW=(COUT<2 ? 1 : $clog2(COUT))
@@ -105,8 +108,8 @@ module window_mac_axis #(
 );
     initial if(K % 4 != 0)
         $fatal(1, "window_mac_axis packs four activations per beat: K must be a multiple of 4");
-    initial if(W!=1 && !(W==4 && IMPL==3 && T==4))
-        $fatal(1, "window_mac_axis: W=4 needs the banked core (IMPL=3) with T=4");
+    initial if(W!=1 && !((W==2 || W==4) && IMPL==3 && T==4))
+        $fatal(1, "window_mac_axis: W=2 and W=4 need the banked core (IMPL=3) with T=4");
 
     localparam [5:0] REG_CTRL=6'h00, REG_NWIN=6'h04, REG_STATUS=6'h08, REG_CYCLES=6'h0C,
                      REG_WINDONE=6'h10, REG_INSTALL=6'h14, REG_OUTSTALL=6'h18,
@@ -192,13 +195,15 @@ module window_mac_axis #(
     wire [7*W-1:0] core_s_data;
     generate if(W==1) begin: narrow
         assign core_s_data = cur_act;
+    end else if(W==2) begin: half             // half a beat, the lower tap in lane 0
+        assign core_s_data = sub[0] ? {beat[30:24], beat[22:16]} : {beat[14:8], beat[6:0]};
     end else begin: wide                      // the whole beat, tap i in lane 0
         assign core_s_data = {beat[30:24], beat[22:16], beat[14:8], beat[6:0]};
     end endgenerate
     wire act_take = core_s_valid && core_s_ready;
-    wire drain    = act_take && (W!=1 || sub==2'd3);
-    // Last take of a window: an activation when W=1, a beat when W=4 (k_run is
-    // then a multiple of 4, see REG_RUN_K).
+    wire drain    = act_take && ((W==1) ? sub==2'd3 : (W==2) ? sub==2'd1 : 1'b1);
+    // Last take of a window: an activation when W=1, a half beat when W=2, a
+    // beat when W=4 (k_run is then a multiple of W, see REG_RUN_K).
     wire [FW-1:0] feed_last = (W==1) ? k_run-1 : k_run/W-1;
     wire refill   = !ctrl_cfg_mode && s_axis_tvalid && (!have_beat || drain);
 
@@ -279,12 +284,13 @@ module window_mac_axis #(
                 REG_NWIN: nwindows<=s_axi_wdata;
                 // Zero means "the built size", so writing 0 is a way back to the
                 // default without knowing what it is.
-                // W=4 rounds up to a whole number of beats (K is one already),
-                // so no window can end inside a beat; the read-back then
-                // differs from what was written, which the host checks.
+                // W=2 and W=4 round up to a whole number of core beats (K is
+                // one already), so no window can end inside one; the read-back
+                // then differs from what was written, which the host checks.
                 REG_RUN_K:    run_k   <=(s_axi_wdata==0 || s_axi_wdata>K)
                                         ? K[NWP-1:0]
                                         : (W==1) ? s_axi_wdata[NWP-1:0]
+                                        : (W==2) ? (s_axi_wdata[NWP-1:0]+32'd1) & ~32'd1
                                                  : (s_axi_wdata[NWP-1:0]+32'd3) & ~32'd3;
                 REG_RUN_COUT: run_cout<=(s_axi_wdata==0 || s_axi_wdata>COUT)
                                         ? COUT[CWP:0] : s_axi_wdata[CWP:0];
@@ -307,7 +313,8 @@ module window_mac_axis #(
                 REG_OUTSTALL: s_axi_rdata<=out_stall;
                 REG_OUTCOUNT: s_axi_rdata<=out_count;
                 REG_CFGCOUNT: s_axi_rdata<=cfg_count;
-                REG_ID:       s_axi_rdata<=32'h4D41_0000 | (W==4 ? 32'h200 : 32'h0) | (RUNTIME_GEOM<<8) | IMPL;
+                REG_ID:       s_axi_rdata<=32'h4D41_0000 | (W==2 ? 32'h400 : 32'h0) | (W==4 ? 32'h200 : 32'h0)
+                                           | (RUNTIME_GEOM<<8) | IMPL;
                 default:      s_axi_rdata<=32'd0;
                 endcase
             end else if(s_axi_rvalid && s_axi_rready) s_axi_rvalid<=1'b0;

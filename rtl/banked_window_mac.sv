@@ -19,12 +19,15 @@
 // Tuple RAM bits: 2 * T * ceil(K/T) * (rowbits+7), about the same as v3.
 //
 // W is the number of activations the window port takes per cycle: 1 (the
-// built and measured core) or T. With W = T one beat carries taps
-// T*r .. T*r+T-1, which live in the T different banks at the same row r, so
-// every bank stores at most one tuple per cycle as before and a window loads
-// in K/T cycles instead of K. The window must then hold a whole number of
-// beats: the host pads K up to a multiple of T with zero activations and zero
-// weights. W = 1 leaves every signal of the load side exactly as it was.
+// built and measured core) or any divisor of T (T itself, or 2 when T = 4).
+// Beat q carries taps W*q .. W*q+W-1, lane j holding tap W*q+j. Those taps live
+// in the W different banks W*ph .. W*ph+W-1 at the same row q / (T/W), where
+// ph = q mod (T/W) is the beat's phase, so every bank stores at most one tuple
+// per cycle as before and a window loads in K/W cycles instead of K. With
+// W = T every beat is phase 0 and fills one row of all T banks. The window
+// must hold a whole number of beats: the host pads K up to a multiple of W
+// with zero activations and zero weights. W = 1 leaves every signal of the
+// load side exactly as it was, and W = T every signal of the W = T core.
 module banked_window_mac #(
     parameter integer K=576, COUT=128, P=2, DEPTH=2, T=4,
     // 0 pins the geometry to K and COUT, and run_k / run_cout are ignored, so
@@ -33,7 +36,7 @@ module banked_window_mac #(
     // make the resource comparison meaningless, so both carry the switch and
     // both are measured with it off.
     parameter integer RUNTIME_GEOM=0,
-    parameter integer W=1,                             // activations per input beat: 1 or T
+    parameter integer W=1,                             // activations per input beat: 1 or a divisor of T
     parameter integer KW=(K<2 ? 1 : $clog2(K)),
     parameter integer CW=(COUT<2 ? 1 : $clog2(COUT)),
     parameter integer NW=$clog2(K+1)
@@ -67,14 +70,17 @@ module banked_window_mac #(
     localparam integer NBW=$clog2(ROWS+1);             // bank tuple count
     localparam integer TBW=(T<2 ? 1 : $clog2(T));
     localparam integer TAW=$clog2(2*ROWS);             // tuple RAM address: {bank, position}
-    initial if(W!=1 && W!=T)
-        $fatal(1, "banked_window_mac: W must be 1 or T (one tap per bank per beat)");
+    localparam integer NPH=T/W;                        // beat phases per row of the banks
+    localparam integer PHW=(NPH<2 ? 1 : $clog2(NPH));
+    initial if(W<1 || T%W!=0)
+        $fatal(1, "banked_window_mac: W must divide T (at most one tap per bank per beat)");
 
     // Load side.
     reg load_active, load_bank, mode;
     reg [KW-1:0] input_tap;
     reg [TBW-1:0] in_bank;
     reg [ROWW-1:0] in_row;
+    reg [PHW-1:0] in_ph;                               // phase of the next beat (W > 1)
     reg [NBW-1:0] nb_load [0:T-1];
     reg [NBW-1:0] load_max;
     reg [1:0] busy, loaded;
@@ -122,14 +128,16 @@ module banked_window_mac #(
     wire [NBW-1:0] nb_next=nb_cur+nb_one;
     wire [NBW-1:0] max_next=(store_input && nb_next>load_max) ? nb_next : load_max;
 
-    // W = T: bank b takes lane b of the beat. Unused (and removed) when W = 1.
-    wire [7*T-1:0] s_lanes=(W==1) ? s_data[6:0] : s_data;   // zero-extended when W = 1
+    // W > 1: bank b takes lane b % W of the beats of phase b / W (with W = T,
+    // lane b of every beat). Unused (and removed) when W = 1.
     wire [T-1:0] st_w;                                 // bank b stores a tuple this beat
     wire [T-1:0] at_max;                               // bank b holds load_max tuples
     wire [NBW-1:0] nb_inc [0:T-1];
     genvar lb;
     generate for(lb=0;lb<T;lb=lb+1) begin: wl
-        assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]!=0);
+        wire [6:0] lane_act=s_data[7*(lb%W)+:7];
+        wire in_phase=(NPH==1) || (in_ph==lb/W);
+        assign st_w[lb]=take_input && in_phase && (!mode || lane_act!=0);
         assign at_max[lb]=(nb_load[lb]==load_max);
         assign nb_inc[lb]=nb_load[lb]+nb_one;
     end endgenerate
@@ -170,7 +178,7 @@ module banked_window_mac #(
         reg [ROWW+6:0] tq;
         wire [TAW-1:0] write_addr=load_bank*ROWS+nb_load[bk];
         wire tuple_we=(W==1) ? (store_input && in_bank==bk) : st_w[bk];
-        wire [6:0] tuple_act=(W==1) ? s_data[6:0] : s_lanes[7*bk+:7];
+        wire [6:0] tuple_act=(W==1) ? s_data[6:0] : s_data[7*(bk%W)+:7];
         always @(posedge clk) begin
             if(rst_n && tuple_we) tmem[write_addr]<={in_row,tuple_act};
             if(issue) tq<=tmem[read_addr];
@@ -204,7 +212,7 @@ module banked_window_mac #(
     reg signed [31:0] tree;
     always @(posedge clk) begin
         if(!rst_n) begin
-            load_active<=0;load_bank<=0;mode<=0;input_tap<=0;in_bank<=0;in_row<=0;load_max<=0;
+            load_active<=0;load_bank<=0;mode<=0;input_tap<=0;in_bank<=0;in_row<=0;in_ph<=0;load_max<=0;
             busy<=0;loaded<=0;win_max[0]<=0;win_max[1]<=0;
             for(b=0;b<T;b=b+1) begin nb_load[b]<=0;win_nb[0][b]<=0;win_nb[1][b]<=0;end
             run_bank<=0;issue_pos<=0;issue_group<=0;
@@ -225,7 +233,7 @@ module banked_window_mac #(
             // ---- load side ----
             if(take_start) begin
                 load_active<=1;busy[load_bank]<=1;
-                mode<=sparse_mode;input_tap<=0;in_bank<=0;in_row<=0;load_max<=0;
+                mode<=sparse_mode;input_tap<=0;in_bank<=0;in_row<=0;in_ph<=0;load_max<=0;
                 for(b=0;b<T;b=b+1) nb_load[b]<=0;
             end else if(take_input && W==1) begin
                 if(store_input) nb_load[in_bank]<=nb_next;
@@ -239,10 +247,12 @@ module banked_window_mac #(
                     load_active<=0;load_bank<=~load_bank;
                 end else input_tap<=input_tap+1'b1;
             end else if(take_input) begin
-                // W = T: one row of every bank per beat; input_tap counts beats.
+                // W > 1: W banks per beat, the next row after the last phase;
+                // input_tap counts beats.
                 for(b=0;b<T;b=b+1) if(st_w[b]) nb_load[b]<=nb_inc[b];
                 load_max<=max_wide;
-                in_row<=in_row+1'b1;
+                if(NPH==1 || in_ph==NPH-1) begin in_row<=in_row+1'b1;in_ph<=0;end
+                else in_ph<=in_ph+1'b1;
                 if(input_tap==beats_eff-1) begin
                     loaded[load_bank]<=1;win_max[load_bank]<=max_wide;
                     for(b=0;b<T;b=b+1)

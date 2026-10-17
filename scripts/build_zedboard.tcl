@@ -8,10 +8,10 @@
 #   set ::env(CNN_DEPTH) 2
 #   set ::env(CNN_T) 4         ;# v4 only
 #   set ::env(CNN_CLOCK_MHZ) 100
-#   set ::env(CNN_W) 1         ;# 4 = four activations per cycle (v4, T=4 only)
+#   set ::env(CNN_W) 1         ;# 2 or 4 = two or four activations per cycle (v4, T=4 only)
 #   source scripts/build_zedboard.tcl
 #
-# Output: build/zed_v<impl+1>_p<P>_t<T>[_w4]_<stamp>/
+# Output: build/zed_v<impl+1>_p<P>_t<T>[_w2|_w4]_<stamp>/
 #   system_wrapper.bit, system_wrapper.xsa, and the usual reports.
 #
 # This is NOT out-of-context synthesis. It is a full board design, so the reported
@@ -55,14 +55,16 @@ if {$impl != 2 && $impl != 3} { error "CNN_IMPL must be 2 (v3) or 3 (v4)" }
 set K       [env_or CNN_K 576]
 set COUT    [env_or CNN_COUT 128]
 set runtime [env_or CNN_RUNTIME_GEOM 0]
-# Activations the core takes per cycle. 1 is the build every board number so far
-# was measured on. 4 hands the banked core a whole 32-bit beat per cycle; it then
-# needs every window padded to a multiple of 4 taps (run_denoise.py --w4), reads
-# ID bit 9, and is built into its own _w4 directory, which run_board_xsdb.tcl
-# never picks on its own: it is run only by name (--build / WM_BUILD).
+# Activations the core takes per cycle. 1 is the default build. 4 hands the
+# banked core a whole 32-bit beat per cycle; it then needs every window padded to
+# a multiple of 4 taps (run_denoise.py --w4), reads ID bit 9, and is built into its
+# own _w4 directory. 2 hands it half a beat per cycle: windows padded to a
+# multiple of 2 (run_denoise.py --w2), ID bit 10, its own _w2 directory.
+# run_board_xsdb.tcl never picks a _w2 or _w4 build on its own: they are run only
+# by name (--build / WM_BUILD).
 set wide    [env_or CNN_W 1]
-if {$wide != 1 && !($wide == 4 && $impl == 3 && $banks == 4)} {
-    error "CNN_W must be 1, or 4 with CNN_IMPL=3 and CNN_T=4"
+if {$wide != 1 && !(($wide == 2 || $wide == 4) && $impl == 3 && $banks == 4)} {
+    error "CNN_W must be 1, or 2 or 4 with CNN_IMPL=3 and CNN_T=4"
 }
 if {$K % 4 != 0} { error "CNN_K must be a multiple of 4: the wrapper packs four activations per beat" }
 set tag "v[expr {$impl+1}]_p${parallel}_t${banks}"

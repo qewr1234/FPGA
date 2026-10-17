@@ -54,7 +54,7 @@ def bank_max(row, t):
 
 
 def padded(x, w, k):
-    """Windows and weights padded with zero taps up to k, as the W = 4 host does."""
+    """Windows and weights padded with zero taps up to k, as the W = 2 and W = 4 hosts do."""
     return [row+[0]*(k-len(row)) for row in x], [row+[0]*(k-len(row)) for row in w]
 
 
@@ -196,6 +196,33 @@ def main():
         cases.append((f'v4w4_minimum_p{p}', 'synthetic_k1_c9_pad4', 3, p, 2, 12, 0, 0, 2, 1, 4, 4))
     for mode_seq in (0, 1):
         cases.append((f'v4w4_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9_pad28', 3, 4, 2, 0, 0, 0, mode_seq, 0, 4, 4))
+    # v4 with a two-wide window port (W=2, T=4): beats alternate between banks 0-1
+    # and banks 2-3 of one row. The fixtures padded to a multiple of 2, as the W=2
+    # host pads them (K = 9 -> 10 also ends windows on an odd beat, phase 1).
+    for k, c in [(1, 9), (9, 9), (9, 17), (27, 9)]:
+        kp = -(-k//2)*2
+        if f'synthetic_k{k}_c{c}_pad{kp}' in vectors:     # k27 -> 28, as for W=4
+            continue
+        x, w, b = fixture(k, c)
+        x, w = padded(x, w, kp)
+        vectors[f'synthetic_k{k}_c{c}_pad{kp}'] = export_vectors(
+            out/'vectors'/f'synthetic_k{k}_c{c}_pad{kp}', x, w, b,
+            source={'synthetic_seed': 20260916+k*100+c, 'zero_taps_appended': kp-k})
+    for p in (1, 2, 8):
+        for stall in (0, 12):
+            cases.append((f'v4w2_k10_p{p}_d2_s{stall}', 'synthetic_k9_c9_pad10', 3, p, 2, stall, 0, 0, 2, 0, 4, 2))
+    for k, c, p, depth, stall in [(10, 17, 8, 2, 4), (10, 9, 3, 3, 4), (10, 9, 8, 8, 12), (28, 9, 2, 1, 0),
+                                  (28, 9, 4, 3, 4), (12, 9, 4, 2, 0)]:
+        vec = {10: f'synthetic_k9_c{c}_pad10', 28: 'synthetic_k27_c9_pad28', 12: 'synthetic_k9_c9_pad12'}[k]
+        cases.append((f'v4w2_edge_k{k}_c{c}_p{p}_d{depth}_s{stall}', vec, 3, p, depth, stall, 0, 0, 2, 0, 4, 2))
+    for pattern in (0, 1, 2):
+        cases.append((f'v4w2_gaps_pattern{pattern}', 'synthetic_k27_c9_pad28', 3, 4, 2, 12, pattern, 1, 2, 1, 4, 2))
+    for p in (1, 8):
+        cases.append((f'v4w2_minimum_p{p}', 'synthetic_k1_c9_pad2', 3, p, 2, 12, 0, 0, 2, 1, 4, 2))
+    for mode_seq in (0, 1):
+        cases.append((f'v4w2_modeseq{mode_seq}_p4_d2', 'synthetic_k27_c9_pad28', 3, 4, 2, 0, 0, 0, mode_seq, 0, 4, 2))
+    # W=2 on T=2 (one row of both banks per beat, the W = T case at another T).
+    cases.append(('v4w2_t2_k10_p4_d2_s4', 'synthetic_k9_c9_pad10', 3, 4, 2, 4, 0, 0, 2, 0, 2, 2))
     if args.suite == 'full':
         for split in ('calibration', 'evaluation'):
             path = ROOT/'data'/(split+'.wpr')
@@ -225,6 +252,8 @@ def main():
         # The four-wide port on the same windows (K = 576 needs no padding).
         cases.append(('v4w4_evaluation_p16_d2_s0_t4', 'evaluation', 3, 16, 2, 0, 0, 0, 2, 0, 4, 4))
         cases.append(('v4w4_evaluation_p8_d2_s12_t4', 'evaluation', 3, 8, 2, 12, 0, 0, 2, 0, 4, 4))
+        cases.append(('v4w2_evaluation_p16_d2_s0_t4', 'evaluation', 3, 16, 2, 0, 0, 0, 2, 0, 4, 2))
+        cases.append(('v4w2_evaluation_p8_d2_s12_t4', 'evaluation', 3, 8, 2, 12, 0, 0, 2, 0, 4, 2))
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         futures = [pool.submit(run_case, case, out, vectors, iverilog, vvp) for case in cases]

@@ -124,11 +124,17 @@ foreach {cname ck ccout cn} {conv1 27 32 8192 conv4 576 64 2048 conv6 1152 128 5
         incr failures
     }
 }
-# A bitstream with the four-wide window port (ID bit 9) must refuse a layer whose
-# windows are not padded to whole beats, and run one that is.
-foreach {cname ck ccout cn want} {
-    conv1 27 32 8192 "needs windows padded to a multiple of 4 taps"
-    conv4 576 64 2048 "\"activations_per_cycle\": 4"} {
+# A bitstream with the four-wide (ID bit 9) or two-wide (ID bit 10) window port
+# must refuse a layer whose windows are not padded to a multiple of W taps, and
+# run one that is. K=298 is the baseline's last layer padded for W=2: it is not a
+# multiple of 4, so the four-wide build must still refuse it.
+foreach {fault cname ck ccout cn want} {
+    wide conv1 27 32 8192 "needs windows padded to a multiple of 4 taps"
+    wide conv4 576 64 2048 "\"activations_per_cycle\": 4"
+    wide conv7 298 1 2048 "needs windows padded to a multiple of 4 taps"
+    half conv1 27 32 8192 "needs windows padded to a multiple of 2 taps"
+    half conv7 298 1 2048 "\"activations_per_cycle\": 2"
+    half conv4 576 64 2048 "\"activations_per_cycle\": 2"} {
     wm_blob [file join $boarddir config.bin] [expr {($ccout * $ck + $ccout) * 4}]
     wm_blob [file join $boarddir input.bin]  [expr {$cn * $ck}]
     wm_blob [file join $boarddir gold.bin]   [expr {$cn * $ccout * 4}]
@@ -137,14 +143,14 @@ foreach {cname ck ccout cn want} {
     puts $fh " \"frames\": $cn, \"windows\": $cn, \"mode_seq\": 1}"
     close $fh
     file delete -force [file join $repo build fake_xsdb_build] [file join $boarddir run.json]
-    set rc [catch {exec [info nameofexecutable] $inner $repo 0 wide 2>@1} out]
+    set rc [catch {exec [info nameofexecutable] $inner $repo 0 $fault 2>@1} out]
     if {[file exists [file join $boarddir run.json]]} {
         set fh [open [file join $boarddir run.json]]; append out [read $fh]; close $fh
     }
     if {[string first $want $out] >= 0} {
-        puts [format "  ok    %-26s %s" "four-wide $cname" "-> $want"]
+        puts [format "  ok    %-26s %s" "$fault $cname" "-> $want"]
     } else {
-        puts [format "  FAIL  %-26s expected '%s'" "four-wide $cname" $want]
+        puts [format "  FAIL  %-26s expected '%s'" "$fault $cname" $want]
         puts "        got: [string range $out end-600 end]"
         incr failures
     }

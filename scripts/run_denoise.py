@@ -24,11 +24,12 @@ Writes build/denoise_run/<image>_{clean,noisy,denoised}.png and report.json.
 
 --w4 is for the bitstream with the four-wide window port (CNN_W=4): the core
 then takes a whole 32-bit beat per cycle, so every window is padded with zero
-taps to a multiple of 4 (run_cifar.write_board_files, pad4). Every board run's
-core ID is checked against the flag, so a run on the other bitstream stops
-instead of being recorded under the wrong name, and the stall counters are kept:
-a four-wide port needs a beat every cycle from the DMA, and IN_STALL says when
-it did not get one.
+taps to a multiple of 4 (run_cifar.write_board_files, pad4). --w2 is the same for
+the two-wide port (CNN_W=2): half a beat per cycle, windows padded to a multiple
+of 2. Every board run's core ID is checked against the flag, so a run on another
+bitstream stops instead of being recorded under the wrong name, and the stall
+counters are kept: a W-wide port needs a beat every 4/W cycles from the DMA, and
+IN_STALL says when it did not get one.
 """
 import argparse
 import json
@@ -80,14 +81,22 @@ def node_geometry(L, h, w):
     return pad, (h + 2*pad - d*(L['kh']-1) - 1)//s + 1, (w + 2*pad - d*(L['kw']-1) - 1)//s + 1
 
 
+def port_width(args):
+    """Activations per cycle the run is for: 4 (--w4), 2 (--w2) or 1."""
+    w4, w2 = getattr(args, 'w4', False), getattr(args, 'w2', False)
+    if w4 and w2:
+        raise SystemExit('--w4 and --w2 name different bitstreams; pick one')
+    return 4 if w4 else 2 if w2 else 1
+
+
 def run_layer(L, x, args, tag):
     """All windows of one layer: emulated, or on the board in tiles. -> (N, COUT) INT32."""
     gold = oracle(x, L['wq'], L['bq'])
     if args.emulate:
         return gold, dict(emulated=True, runs=0, mismatches=0)
     n, k = x.shape
-    w4 = getattr(args, 'w4', False)
-    kb = -(-k//4)*4 if w4 else k                     # taps per window as streamed
+    width = port_width(args)
+    kb = -(-k//width)*width                          # taps per window as streamed
     acc = np.empty_like(gold)
     cycles = wall = in_stall = out_stall = 0
     clocks, ids = set(), set()
@@ -102,14 +111,15 @@ def run_layer(L, x, args, tag):
         if pad:
             xt = np.concatenate([xt, np.zeros((pad, k), xt.dtype)])
             gt = np.concatenate([gt, oracle(xt[-pad:], L['wq'], L['bq'])])
-        write_board_files(L['cfg'], xt, gt, args.mode, pad4=w4)
+        write_board_files(L['cfg'], xt, gt, args.mode, pad_to=width)
         info = run_board(args.xsdb, args.build, args.out/f'{tag}_{L["name"]}_t{s}_xsdb.log',
                          args.fclk)
-        wide = (int(info['core_id'], 16) >> 9) & 1
-        if wide != w4:
-            raise SystemExit(f'the bitstream reads ID {info["core_id"]}, which '
-                             f'{"has" if wide else "does not have"} the four-wide window port, '
-                             f'but this run was {"" if w4 else "not "}started with --w4. '
+        cid = int(info['core_id'], 16)
+        built = 4 if (cid >> 9) & 1 else 2 if (cid >> 10) & 1 else 1
+        if built != width:
+            raise SystemExit(f'the bitstream reads ID {info["core_id"]}, a port that takes {built} '
+                             f'activation(s) per cycle, but this run was started for {width} '
+                             f'({"--w%d" % width if width > 1 else "no --w2/--w4"}). '
                              f'Pick the bitstream with --build.')
         res = board_results(xt.shape[0], L['COUT'])
         acc[s:e] = res[:e-s]
@@ -217,6 +227,9 @@ def main():
     ap.add_argument('--w4', action='store_true',
                     help='the bitstream takes four activations per cycle (built with CNN_W=4): '
                          'pad every window to a multiple of 4 taps')
+    ap.add_argument('--w2', action='store_true',
+                    help='the bitstream takes two activations per cycle (built with CNN_W=2): '
+                         'pad every window to a multiple of 2 taps')
     ap.add_argument('--tile', type=int, default=65536,
                     help='windows per board run (65536 = one 256x256 image)')
     ap.add_argument('--start-layer', type=int, default=1,
@@ -272,7 +285,7 @@ def main():
         print(f'  PSNR {p_noisy:.2f} dB -> {p_out:.2f} dB   (matches int_eval.json)\n')
 
     report = dict(emulated=bool(args.emulate), model=man['model'], set=args.set, sigma=man['sigma'],
-                  mode_seq=args.mode, activations_per_cycle=4 if args.w4 else 1, images=rows,
+                  mode_seq=args.mode, activations_per_cycle=port_width(args), images=rows,
                   mean_psnr_noisy=float(np.mean([r['psnr_noisy'] for r in rows])),
                   mean_psnr_denoised=float(np.mean([r['psnr_denoised'] for r in rows])),
                   mismatches=0)

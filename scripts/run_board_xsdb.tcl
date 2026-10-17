@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-10-17 o (four-wide window port: K a multiple of 4, never picked by default)"
+set WM_SCRIPT_VERSION "2026-10-17 p (two- and four-wide window ports: K a multiple of W, never picked by default)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -562,16 +562,16 @@ if {[info exists ::env(WM_BUILD)] && $::env(WM_BUILD) ne ""} {
 } else {
     set cands {}
     foreach d [glob -nocomplain -directory [file join $here build] zed_*] {
-        # A four-wide (CNN_W=4) bitstream is only ever run by name: every number
-        # measured so far is one activation per cycle, and a run that picks the
-        # newest build would otherwise land on it the day it is built.
-        if {[string match *_w4_* [file tail $d]]} continue
+        # A two- or four-wide (CNN_W=2, CNN_W=4) bitstream is only ever run by
+        # name: the default numbers are one activation per cycle, and a run that
+        # picks the newest build would otherwise land on it the day it is built.
+        if {[string match *_w4_* [file tail $d]] || [string match *_w2_* [file tail $d]]} continue
         set b [file join $d system_wrapper.bit]
         if {[file exists $b]} { lappend cands [list [file mtime $b] $d] }
     }
     if {[llength $cands] == 0} {
-        error "no build/zed_*/system_wrapper.bit under $here (four-wide *_w4_* builds are\
-               only used by name). Run RUN_BUILD_ZED.cmd first, or set ::env(WM_BUILD)."
+        error "no build/zed_*/system_wrapper.bit under $here (wide *_w2_* and *_w4_* builds\
+               are only used by name). Run RUN_BUILD_ZED.cmd first, or set ::env(WM_BUILD)."
     }
     set build [lindex [lindex [lsort -index 0 -integer $cands] end] 1]
 }
@@ -919,10 +919,11 @@ puts "DDR      : buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
 foreach n [wm_ps_notes] { puts "Note     : $n" }
 set impl [expr {$wm_core_id & 0xf}]
 # ID bit 9: the core takes a whole 32-bit beat, four activations, per cycle (built
-# with CNN_W=4) instead of one.
-set wm_wide [expr {($wm_core_id >> 9) & 1}]
+# with CNN_W=4) instead of one; bit 10: half a beat, two activations (CNN_W=2).
+set wm_w [expr {(($wm_core_id >> 9) & 1) ? 4 : ((($wm_core_id >> 10) & 1) ? 2 : 1)}]
+set wm_wide [expr {$wm_w > 1}]
 puts "Core     : [expr {$impl == 3 ? {v4 banked_window_mac} : {v3 overlapped_window_mac}}]\
-      [expr {$wm_wide ? {four activations/cycle} : {one activation/cycle}}]\
+      [expr {$wm_w == 4 ? {four activations/cycle} : ($wm_w == 2 ? {two activations/cycle} : {one activation/cycle})}]\
       K=$WM_K COUT=$WM_COUT windows=$WM_NWIN"
 set wm_fclk [wm_fclk_mhz]
 if {$wm_fclk > 0} {
@@ -990,14 +991,14 @@ if {!$has_runtime && ($WM_K != $built_k || $WM_COUT != $built_cout)} {
            K=$built_k COUT=$built_cout and ignores RUN_K/RUN_COUT. Rebuild with\
            CNN_RUNTIME_GEOM=1, or run data of the shape it was built for."
 }
-# A four-wide port loads a window as whole beats, so every window must be padded
-# to a multiple of 4 taps (run_denoise.py --w4 does). The core would round RUN_K
-# up and the read-back below would fail anyway; this says why.
-if {$wm_wide && $WM_K % 4 != 0} {
-    error "this bitstream takes four activations per cycle (ID [wm_hex $wm_core_id], bit 9)\
-           and needs windows padded to a multiple of 4 taps, but this data is K=$WM_K.\
-           scripts/run_denoise.py --w4 pads them; otherwise run a bitstream built\
-           without CNN_W=4."
+# A W-wide port loads a window W activations at a time, so every window must be
+# padded to a multiple of W taps (run_denoise.py --w4 / --w2 does). The core would
+# round RUN_K up and the read-back below would fail anyway; this says why.
+if {$wm_wide && $WM_K % $wm_w != 0} {
+    error "this bitstream takes $wm_w activations per cycle (ID [wm_hex $wm_core_id],\
+           bit [expr {$wm_w == 4 ? 9 : 10}]) and needs windows padded to a multiple of\
+           $wm_w taps, but this data is K=$WM_K. scripts/run_denoise.py --w$wm_w pads\
+           them; otherwise run a bitstream built without CNN_W=$wm_w."
 }
 wm_wr $REG_RUN_K    $WM_K
 wm_wr $REG_RUN_COUT $WM_COUT
@@ -1156,7 +1157,7 @@ if {$bad != 0} {
            [expr {$install + $outstall}] cycles for memory."
     puts "        CYCLES is not comparable with RESULTS_KO.md."
 } elseif {$wm_wide} {
-    puts "RESULT: PASS -- core bound, four activations per cycle. CYCLES is NOT"
+    puts "RESULT: PASS -- core bound, $wm_w activations per cycle. CYCLES is NOT"
     puts "        comparable with verification/included_run/summary.json or any number"
     puts "        measured on the one-activation-per-cycle build."
 } else {
@@ -1174,7 +1175,7 @@ puts $rfh "  \"K\": $WM_K, \"COUT\": $WM_COUT, \"mode_seq\": $WM_MODE_SEQ,"
 puts $rfh "  \"fclk_mhz\": [format %.4f $wm_fclk],"
 puts $rfh "  \"built_k\": $built_k, \"built_cout\": $built_cout,"
 puts $rfh "  \"runtime_geometry\": [expr {$has_runtime ? {true} : {false}}],"
-puts $rfh "  \"activations_per_cycle\": [expr {$wm_wide ? 4 : 1}],"
+puts $rfh "  \"activations_per_cycle\": $wm_w,"
 puts $rfh "  \"windows_expected\": $WM_NWIN, \"windows_done\": $windone,"
 puts $rfh "  \"results_expected\": $WM_RESULT_WORDS, \"results\": $outcount,"
 puts $rfh "  \"mismatches\": $bad, \"first_bad_word\": $first_bad,"

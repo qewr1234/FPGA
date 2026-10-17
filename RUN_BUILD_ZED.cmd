@@ -7,9 +7,10 @@ rem   IMPL       2 = overlapped_window_mac (v3), 3 = banked_window_mac (v4). Def
 rem   P          output-channel lanes. Default 8.
 rem   T          tap banks, v4 only. Default 4.
 rem   CLOCK_MHZ  fabric clock. Default 100.
-rem   W          activations the core takes per cycle: 1, or 4 (v4 with T=4 only;
-rem              built into build\zed_v4_p16_t4_w4_*, run with run_denoise.py --w4).
-rem              Default 1. Always set here, so a W=4 build never leaks into the next.
+rem   W          activations the core takes per cycle: 1, or 2 or 4 (v4 with T=4 only;
+rem              built into build\zed_v4_p16_t4_w2_* or _w4_*, run with run_denoise.py
+rem              --w2 or --w4). Default 1. Always set here, so a wide build never
+rem              leaks into the next.
 rem
 rem K, COUT and runtime geometry come from the environment (CNN_K, CNN_COUT,
 rem CNN_RUNTIME_GEOM). The denoiser and CIFAR bitstream:

@@ -7,7 +7,7 @@
 // The bins are the cases the design has distinct logic for:
 //   K      1 tap, 2-3 taps (shorter than one input beat), not a multiple of the
 //          bank count T, a multiple of T, the built maximum -- as the layer asked
-//          for it, before a W=4 build pads it to a whole number of beats
+//          for it, before a W=2 or W=4 build pads it to a multiple of W
 //   COUT   1 channel, fewer than one lane group P, exactly P, between groups
 //          (the last group partly idle), the built maximum
 //   mode   all dense, all sparse, alternating per window
@@ -76,7 +76,7 @@ class wm_coverage extends uvm_subscriber #(wm_run_obs);
 
     function void write(wm_run_obs t);
         ob = t;
-        // K as the layer asked for it; a W=4 build pads it, which is the point.
+        // K as the layer asked for it; a W=2 or W=4 build pads it, which is the point.
         kc = (t.k_req == 1)         ? 0 :
              (t.k_req < 4)          ? 1 :
              (t.k_req == cfg.kmax)  ? 4 :

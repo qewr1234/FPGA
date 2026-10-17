@@ -159,9 +159,10 @@ set BUILT_K     $LAYOUT_K
 set BUILT_COUT  $COUT
 set HAS_RUNTIME [expr {$FAULT eq "fixedgeom" ? 0 : 1}]
 # "wide" is a bitstream built with CNN_W=4: ID bit 9, and RUN_K rounds up to a
-# multiple of 4 the way window_mac_axis does.
-set WIDE [expr {$FAULT eq "wide" ? 1 : 0}]
-set CORE(36) [expr {0x4D410000 | ($WIDE << 9) | ($HAS_RUNTIME << 8) | 2}]
+# multiple of 4 the way window_mac_axis does. "half" is CNN_W=2: ID bit 10, RUN_K
+# rounds up to a multiple of 2.
+set WIDE [expr {$FAULT eq "wide" ? 4 : ($FAULT eq "half" ? 2 : 0)}]
+set CORE(36) [expr {0x4D410000 | (($WIDE == 4) << 9) | (($WIDE == 2) << 10) | ($HAS_RUNTIME << 8) | 2}]
 set CORE(40) $BUILT_K
 set CORE(44) $BUILT_COUT
 if {$FAULT eq "badid"} { set CORE(36) 0x4D420002 }
@@ -246,7 +247,7 @@ proc mwr {args} {
         # size". That clamp is what the run script probes the maximum with.
         if {$off == 40} {
             set CORE(40) [expr {($val == 0 || $val > $BUILT_K) ? $BUILT_K : $val}]
-            if {$WIDE} { set CORE(40) [expr {($CORE(40) + 3) / 4 * 4}] }
+            if {$WIDE} { set CORE(40) [expr {($CORE(40) + $WIDE - 1) / $WIDE * $WIDE}] }
             return
         }
         if {$off == 44} {

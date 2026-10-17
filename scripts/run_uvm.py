@@ -50,6 +50,10 @@ BUILDS = {
     'small_w4': dict(KMAX=48,   COUTMAX=20,  P=4,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=4),
     'fixed_w4': dict(KMAX=24,   COUTMAX=9,   P=2,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=0, W=4),
     'board_w4': dict(KMAX=1152, COUTMAX=128, P=16, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=4),
+    # The two-wide window port (CNN_W=2), the same three shapes.
+    'small_w2': dict(KMAX=48,   COUTMAX=20,  P=4,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=2),
+    'fixed_w2': dict(KMAX=24,   COUTMAX=9,   P=2,  DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=0, W=2),
+    'board_w2': dict(KMAX=1152, COUTMAX=128, P=16, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=2),
 }
 # Which tests each build runs, and the layer count of wm_random_test on it.
 PLAN = {
@@ -60,6 +64,9 @@ PLAN = {
     'small_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 150),
     'fixed_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 40),
     'board_w4': (['wm_smoke_test', 'wm_reg_test', 'wm_cifar_shapes_test', 'wm_random_test'], 4),
+    'small_w2': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 150),
+    'fixed_w2': (['wm_smoke_test', 'wm_reg_test', 'wm_random_test'], 40),
+    'board_w2': (['wm_smoke_test', 'wm_reg_test', 'wm_cifar_shapes_test', 'wm_random_test'], 4),
 }
 
 # Known bugs for --mutants: (name, file, original text, mutated text, what it breaks).
@@ -119,8 +126,8 @@ W4_MUTANTS = [
      "assign core_s_data = {beat[30:24], beat[14:8], beat[22:16], beat[6:0]};",
      'the second and third activation of every beat trade places'),
     ('w4_sparse_drops_ones', 'rtl/banked_window_mac.sv',
-     "assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]!=0);",
-     "assign st_w[lb]=take_input && (!mode || s_lanes[7*lb+:7]>7'd1);",
+     "assign st_w[lb]=take_input && in_phase && (!mode || lane_act!=0);",
+     "assign st_w[lb]=take_input && in_phase && (!mode || lane_act>7'd1);",
      'sparse mode skips activations equal to 1 in a four-wide beat'),
     ('w4_lane3_not_in_max', 'rtl/banked_window_mac.sv',
      "wire [NBW-1:0] max_wide=(|(st_w & at_max)) ? load_max+nb_one : load_max;",
@@ -134,6 +141,34 @@ W4_MUTANTS = [
      ": (s_axi_wdata[NWP-1:0]+32'd3) & ~32'd3;",
      ": s_axi_wdata[NWP-1:0];",
      'RUN_K keeps a value that is not a whole number of beats'),
+]
+
+# Bugs in the W=2 paths (beat phases, half beats), run on the small_w2 build.
+W2_MUTANTS = [
+    ('w2_halves_swapped', 'rtl/window_mac_axis.sv',
+     "assign core_s_data = sub[0] ? {beat[30:24], beat[22:16]} : {beat[14:8], beat[6:0]};",
+     "assign core_s_data = sub[0] ? {beat[14:8], beat[6:0]} : {beat[30:24], beat[22:16]};",
+     'the two halves of every beat are fed in the wrong order'),
+    ('w2_lanes_swapped', 'rtl/window_mac_axis.sv',
+     "assign core_s_data = sub[0] ? {beat[30:24], beat[22:16]} : {beat[14:8], beat[6:0]};",
+     "assign core_s_data = sub[0] ? {beat[22:16], beat[30:24]} : {beat[6:0], beat[14:8]};",
+     'the two activations of every half beat trade lanes'),
+    ('w2_phase_stuck', 'rtl/banked_window_mac.sv',
+     "wire in_phase=(NPH==1) || (in_ph==lb/W);",
+     "wire in_phase=(NPH==1) || (lb/W==0);",
+     'banks 2 and 3 never store a tuple: the odd beats of a row are lost'),
+    ('w2_row_every_beat', 'rtl/banked_window_mac.sv',
+     "if(NPH==1 || in_ph==NPH-1) begin in_row<=in_row+1'b1;in_ph<=0;end",
+     "if(1) begin in_row<=in_row+1'b1;in_ph<=in_ph+1'b1;end",
+     'the row advances on every beat, so the odd beats read the next row\'s weights'),
+    ('w2_drain_first_half', 'rtl/window_mac_axis.sv',
+     "wire drain    = act_take && ((W==1) ? sub==2'd3 : (W==2) ? sub==2'd1 : 1'b1);",
+     "wire drain    = act_take && ((W==1) ? sub==2'd3 : (W==2) ? sub==2'd0 : 1'b1);",
+     'every beat is dropped after its first half'),
+    ('w2_run_k_not_rounded', 'rtl/window_mac_axis.sv',
+     ": (W==2) ? (s_axi_wdata[NWP-1:0]+32'd1) & ~32'd1",
+     ": (W==2) ? s_axi_wdata[NWP-1:0]",
+     'RUN_K keeps an odd value, which is not a whole number of half beats'),
 ]
 
 RESULT_RE = re.compile(r'WM_UVM_RESULT (PASS|FAIL) test=(\S+) errors=(\d+) fatals=(\d+)')
@@ -379,7 +414,8 @@ def main_mutants(args, sim):
         shutil.rmtree(out_root)
     tests = ['wm_smoke_test', 'wm_reg_test', 'wm_random_test']
     seeds = [1, 2]
-    mutants = [m+('small',) for m in MUTANTS] + [m+('small_w4',) for m in W4_MUTANTS]
+    mutants = ([m+('small',) for m in MUTANTS] + [m+('small_w4',) for m in W4_MUTANTS]
+               + [m+('small_w2',) for m in W2_MUTANTS])
 
     def one(m):
         name, rel, old, new, what, build = m
@@ -466,13 +502,15 @@ def main_report(args):
           '- **\\*_w4**는 한 주기에 활성값 4개를 받는 포트(W=4) 빌드입니다. 시퀀스가 호스트처럼 창과 가중치를 4의 배수로 0 패딩하고, '
           'RUN_K는 K 또는 패딩한 길이로 씁니다. 형상 칸은 레이어가 요청한 K로 셉니다(코어가 실제로 쓰는 K는 늘 4의 배수).',
           '- **fixed_w4**도 형상이 고정(K=24, COUT=9)이라 형상 최대가 9%입니다.',
+          '- **\\*_w2**는 한 주기에 활성값 2개(beat의 절반)를 받는 포트(W=2) 빌드입니다. 같은 방식으로 2의 배수로 0 패딩하며, '
+          'K가 4의 배수가 아니면 창이 beat 중간에서 끝나고 다음 창이 그 beat의 뒷절반에서 시작합니다. **fixed_w2**의 형상 최대도 9%입니다.',
           '']
     m = base/'mutants'/'summary.json'
     if m.exists():
         ms = json.loads(m.read_text(encoding='utf-8'))
         killed = sum(x['killed'] for x in ms)
         L += ['## 뮤턴트 (일부러 심은 버그)', '',
-              f'**{killed}/{len(ms)} 검출.** 표의 빌드(W=4 경로의 버그는 small_w4, 나머지는 small)에서 '
+              f'**{killed}/{len(ms)} 검출.** 표의 빌드(W=4 경로의 버그는 small_w4, W=2 경로의 버그는 small_w2, 나머지는 small)에서 '
               'smoke / reg / random(12 레이어) × 시드 2개를 돌려, 하나라도 FAIL이면 "검출"입니다.', '',
               '| 뮤턴트 | 빌드 | 깨지는 것 | 결과 | 잡은 테스트 |', '|---|---|---|---|---|']
         for x in ms:

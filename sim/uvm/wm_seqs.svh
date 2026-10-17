@@ -10,10 +10,10 @@
 // What the layer contains is a wm_layer: a randomized description (geometry,
 // mode, data style, throttling) from which the beats are generated.
 //
-// On a W=4 build the sequence does what the host does for that bitstream: every
-// window and every channel's weights are padded with zero taps to KP, the next
-// multiple of 4. RUN_K is written either as K or as KP at random; the DUT must
-// round the first up to the second.
+// On a W=2 or W=4 build the sequence does what the host does for that bitstream:
+// every window and every channel's weights are padded with zero taps to KP, the
+// next multiple of W. RUN_K is written either as K or as KP at random; the DUT
+// must round the first up to the second.
 
 typedef enum {W_RANDOM, W_EXTREME, W_SPARSE, W_NEGATIVE, W_ZERO} wm_wstyle_e;
 typedef enum {B_ZERO, B_SMALL, B_LARGE} wm_bstyle_e;
@@ -344,7 +344,7 @@ class wm_reg_vseq extends wm_base_vseq;
         reg_read(REG_NWIN, d);     reg_read(REG_RUN_K, d);   reg_read(REG_RUN_COUT, d);
         reg_read(REG_CFGCOUNT, d);
         // Geometry registers: in range, zero (= built size), above the build.
-        // 5 and kmax-1 are not multiples of 4: a W=4 build reads them back rounded up.
+        // 5 and kmax-1 are not multiples of 4 or 2: a W=4 or W=2 build reads them back rounded up.
         kv = '{1, 5, kmax/2, kmax-1, kmax, 0, kmax+1, 32'h8000_0000, 32'hFFFF_FFFF};
         cv = '{1, coutmax/2, coutmax, 0, coutmax+1, 32'hFFFF_FFFF};
         foreach(kv[i]) begin reg_write(REG_RUN_K, kv[i]);    reg_read(REG_RUN_K, d);    end
