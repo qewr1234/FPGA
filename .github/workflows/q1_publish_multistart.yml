@@ -1,0 +1,48 @@
+name: Publish verified Multi-start INT8 model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "research/q1_codesign/multistart_export_20261018.json"
+      - "research/q1_codesign/multistart_bitexact_summary_20261018.json"
+      - "scripts/q1_publish_multistart.py"
+      - ".github/workflows/q1_publish_multistart.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verified-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout original QAT model and uploaded verifier JSON
+        uses: actions/checkout@v4
+
+      - name: Install exact CPU export dependencies
+        run: python3 -m pip install "numpy==1.26.4" "Pillow>=10,<12"
+
+      - name: Reconstruct model and verify binary SHA256 against 720-case evidence
+        run: |
+          python3 scripts/q1_publish_multistart.py
+          python3 -m zipfile -t research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip
+
+      - name: Make verified model downloadable from GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: q1_multistart_verified_export_20261018
+          path: research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip
+          if-no-files-found: error
+
+      - name: Publish verified model ZIP in GitHub main repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip
+          if git diff --cached --quiet; then
+            echo "Verified model ZIP already committed."
+            exit 0
+          fi
+          git commit -m "research: publish reconstructed SHA256-verified multistart QAT model"
+          git push origin HEAD:main
