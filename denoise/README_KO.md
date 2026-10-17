@@ -182,6 +182,7 @@ python denoise\compare_w4.py
   - 코어 단독(`run_stream_checks.py --suite smoke`): W=2 20개 사례를 포함한 179개에서 모든 출력이 정수 오라클과 같고, 창마다 시작·끝 사이클이 모델과 정확히 같다.
   - 래퍼(`run_axis_checks.py` smoke·geom·real): W=2 사례(창이 beat 중간에서 끝나는 K=9·297 포함)에서 래퍼 비용 0, 느린 DMA 사례에서 위의 대기 부등식 성립.
   - 실제 창(`python denoise/sim_w4_layers.py --widths 2 --windows 512 --out denoise/w2_rtl_sim.json`): 네 망의 모든 층(37개)에서 05.png의 창 512개씩, 보드 빌드 설정으로 모든 출력이 정확하다. 사이클은 계수와 층마다 12–308 차이이고, W=1·W=4에서 읽어 낸 채움·비움 규칙이 은닉층과 마지막 층 33개 모두에서 정확히 맞았다(`w4_gaps.py`, 보지 않은 데이터).
+  - UVM(Verilator 5.052, `scripts/run_uvm.py`, 고친 RTL로 다시): 빌드 10종(W=2 빌드 small_w2·fixed_w2·board_w2 포함)에서 UVM 1.2 99/99, IEEE 1800.2-2020 66/66 통과. 뮤턴트 21개(W=2 경로 6개: 절반 순서, 레인 순서, 위상 고정, 행 증가, 뒷절반 버림, RUN_K 올림 누락) 모두 검출. 결과는 `sim/uvm/RESULTS_UVM_KO.md`.
 
 *W=2 예측 (Set12 05.png, sparse 모드, 사이클/px; 80장 범위는 `test_set_ratios.json`)*
 

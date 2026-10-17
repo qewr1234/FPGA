@@ -6,7 +6,7 @@ Verilator: `Verilator 5.052 2026-09-05 rev v5.052`
 
 ## verilator_1800.2-2020.3.1  —  UVM: `1800.2-2020.3.1`
 
-**46/46 통과**, 출력 37,525개, 레지스터 읽기 7,659개 비교.
+**66/66 통과**, 출력 52,007개, 레지스터 읽기 10,528개 비교.
 
 | 빌드 | 테스트 | 시드 | 결과 | 비교한 출력 | 레지스터 읽기 | 커버리지 (형상 / 모드×0 / 데이터 / 흐름) |
 |---|---|---|---|---|---|---|
@@ -33,10 +33,20 @@ Verilator: `Verilator 5.052 2026-09-05 rev v5.052`
 | board_w4 | wm_random_test | 1,2 | 2/2 | 1,467 | 47 | 14–23% / 33–47% / 83% / 62–88% |
 | board_w4 | wm_reg_test | 1,2 | 2/2 | 134 | 164 | 9% / 20% / 33–67% / 38% |
 | board_w4 | wm_smoke_test | 1,2 | 2/2 | 512 | 14 | 9% / 20% / 67% / 38% |
+| small_w2 | wm_random_test | 1,2 | 2/2 | 8,435 | 1,743 | 89–94% / 100% / 100% / 100% |
+| small_w2 | wm_reg_test | 1,2 | 2/2 | 46 | 164 | 9% / 20% / 33% / 38% |
+| small_w2 | wm_smoke_test | 1,2 | 2/2 | 80 | 14 | 9% / 20% / 67% / 38% |
+| fixed_w2 | wm_random_test | 1,2 | 2/2 | 1,944 | 461 | 9% / 100% / 100% / 100% |
+| fixed_w2 | wm_reg_test | 1,2 | 2/2 | 36 | 164 | 9% / 20% / 33–50% / 38% |
+| fixed_w2 | wm_smoke_test | 1,2 | 2/2 | 36 | 14 | 9% / 20% / 50–67% / 38% |
+| board_w2 | wm_cifar_shapes_test | 1,2 | 2/2 | 1,792 | 84 | 20–26% / 20% / 67% / 38% |
+| board_w2 | wm_random_test | 1,2 | 2/2 | 1,467 | 47 | 20–29% / 40–60% / 83% / 62–88% |
+| board_w2 | wm_reg_test | 1,2 | 2/2 | 134 | 164 | 9% / 20% / 33–67% / 38% |
+| board_w2 | wm_smoke_test | 1,2 | 2/2 | 512 | 14 | 9% / 20% / 67% / 38% |
 
 ## verilator_uvm-1.2  —  UVM: `uvm-1.2`
 
-**69/69 통과**, 출력 63,179개, 레지스터 읽기 11,419개 비교.
+**99/99 통과**, 출력 87,549개, 레지스터 읽기 15,700개 비교.
 
 | 빌드 | 테스트 | 시드 | 결과 | 비교한 출력 | 레지스터 읽기 | 커버리지 (형상 / 모드×0 / 데이터 / 흐름) |
 |---|---|---|---|---|---|---|
@@ -63,6 +73,16 @@ Verilator: `Verilator 5.052 2026-09-05 rev v5.052`
 | board_w4 | wm_random_test | 1,2,3 | 3/3 | 2,649 | 71 | 14–29% / 47–60% / 83–100% / 88–100% |
 | board_w4 | wm_reg_test | 1,2,3 | 3/3 | 514 | 246 | 9% / 20% / 50–67% / 38% |
 | board_w4 | wm_smoke_test | 1,2,3 | 3/3 | 768 | 21 | 9% / 20% / 67% / 38% |
+| small_w2 | wm_random_test | 1,2,3 | 3/3 | 14,237 | 2,590 | 89–94% / 100% / 100% / 100% |
+| small_w2 | wm_reg_test | 1,2,3 | 3/3 | 82 | 246 | 9% / 20% / 33–67% / 38% |
+| small_w2 | wm_smoke_test | 1,2,3 | 3/3 | 120 | 21 | 9% / 20% / 67% / 38% |
+| fixed_w2 | wm_random_test | 1,2,3 | 3/3 | 3,204 | 693 | 9% / 93–100% / 100% / 100% |
+| fixed_w2 | wm_reg_test | 1,2,3 | 3/3 | 54 | 246 | 9% / 20% / 50% / 38% |
+| fixed_w2 | wm_smoke_test | 1,2,3 | 3/3 | 54 | 21 | 9% / 20% / 50–67% / 38% |
+| board_w2 | wm_cifar_shapes_test | 1,2,3 | 3/3 | 2,688 | 126 | 20–26% / 20% / 67% / 38% |
+| board_w2 | wm_random_test | 1,2,3 | 3/3 | 2,649 | 71 | 20–29% / 47–60% / 83–100% / 88–100% |
+| board_w2 | wm_reg_test | 1,2,3 | 3/3 | 514 | 246 | 9% / 20% / 50–67% / 38% |
+| board_w2 | wm_smoke_test | 1,2,3 | 3/3 | 768 | 21 | 9% / 20% / 67% / 38% |
 
 ### 커버리지 읽는 법
 
@@ -73,10 +93,11 @@ Verilator: `Verilator 5.052 2026-09-05 rev v5.052`
 - **board**의 랜덤 테스트는 레이어가 크기 때문에(K≤1152) 4개만 돌립니다. 형상 칸을 채우는 역할은 small 빌드가 맡습니다.
 - **\*_w4**는 한 주기에 활성값 4개를 받는 포트(W=4) 빌드입니다. 시퀀스가 호스트처럼 창과 가중치를 4의 배수로 0 패딩하고, RUN_K는 K 또는 패딩한 길이로 씁니다. 형상 칸은 레이어가 요청한 K로 셉니다(코어가 실제로 쓰는 K는 늘 4의 배수).
 - **fixed_w4**도 형상이 고정(K=24, COUT=9)이라 형상 최대가 9%입니다.
+- **\*_w2**는 한 주기에 활성값 2개(beat의 절반)를 받는 포트(W=2) 빌드입니다. 같은 방식으로 2의 배수로 0 패딩하며, K가 4의 배수가 아니면 창이 beat 중간에서 끝나고 다음 창이 그 beat의 뒷절반에서 시작합니다. **fixed_w2**의 형상 최대도 9%입니다.
 
 ## 뮤턴트 (일부러 심은 버그)
 
-**15/15 검출.** 표의 빌드(W=4 경로의 버그는 small_w4, 나머지는 small)에서 smoke / reg / random(12 레이어) × 시드 2개를 돌려, 하나라도 FAIL이면 "검출"입니다.
+**21/21 검출.** 표의 빌드(W=4 경로의 버그는 small_w4, W=2 경로의 버그는 small_w2, 나머지는 small)에서 smoke / reg / random(12 레이어) × 시드 2개를 돌려, 하나라도 FAIL이면 "검출"입니다.
 
 | 뮤턴트 | 빌드 | 깨지는 것 | 결과 | 잡은 테스트 |
 |---|---|---|---|---|
@@ -95,3 +116,9 @@ Verilator: `Verilator 5.052 2026-09-05 rev v5.052`
 | `w4_lane3_not_in_max` | small_w4 | the group length ignores the last bank, so its extra tuples are never issued | 검출 | wm_random_test |
 | `w4_last_beat_uncounted` | small_w4 | the tuples of the last beat of a window are masked out | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
 | `w4_run_k_not_rounded` | small_w4 | RUN_K keeps a value that is not a whole number of beats | 검출 | wm_random_test, wm_reg_test |
+| `w2_halves_swapped` | small_w2 | the two halves of every beat are fed in the wrong order | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
+| `w2_lanes_swapped` | small_w2 | the two activations of every half beat trade lanes | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
+| `w2_phase_stuck` | small_w2 | banks 2 and 3 never store a tuple: the odd beats of a row are lost | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
+| `w2_row_every_beat` | small_w2 | the row advances on every beat, so the odd beats read the next row's weights | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
+| `w2_drain_first_half` | small_w2 | every beat is dropped after its first half | 검출 | wm_random_test, wm_reg_test, wm_smoke_test |
+| `w2_run_k_not_rounded` | small_w2 | RUN_K keeps an odd value, which is not a whole number of half beats | 검출 | wm_reg_test |
