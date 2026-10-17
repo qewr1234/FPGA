@@ -85,7 +85,7 @@ def main():
                 f" + {row[k]['rest']}" for k, *_ in runs))
         out['networks'][label] = dict(model=model, layers=rows)
     out['rule_holds'] = {k: f'{a}/{b}' for k, (a, b) in held.items() if b}
-    print("rule holds on the hidden and last layers:",,
+    print('rule holds on the hidden and last layers:',
           ', '.join(f'{k} {v}' for k, v in out['rule_holds'].items()))
     (HERE/'w4_gaps.json').write_text(json.dumps(out, indent=2)+'\n')
     print('wrote', HERE/'w4_gaps.json')
