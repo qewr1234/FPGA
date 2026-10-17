@@ -1,0 +1,27 @@
+name: Check physical A B C model preflight without FPGA
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/q1_fpga_triplet.py"
+      - "RUN_FPGA_Q1_TRIPLET_PREFLIGHT.cmd"
+      - ".github/workflows/q1_fpga_triplet_check.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preflight-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify syntax of model verification and board triplet tools
+        run: |
+          python3 -m py_compile scripts/q1_fpga_bank_ab.py scripts/q1_fpga_triplet.py scripts/q1_board_ab_compare.py
+      - name: Verify GitHub model archives and 720-case Multi-start hashes, WITHOUT connecting any board
+        run: |
+          python3 scripts/q1_fpga_triplet.py
+      - name: Confirm candidate unpacking produced no changes to tracked original model
+        run: |
+          test -s build/q1_reviewer_export/dn_d10_c32_us_fx_qat/manifest.json
+          test -s build/q1_multistart_export/dn_d10_c32_us_fx_qat/manifest.json
+          git diff --exit-code denoise/export/dn_d10_c32_us_fx_qat/
