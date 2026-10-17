@@ -122,8 +122,10 @@ def main():
                     for position,channel in enumerate(old_order):
                         unpermuted[channel]=values[position]
                     node[field]=[unpermuted[channel] for channel in new_order]
-        (out/"manifest.json").write_text(
-            json.dumps(old_meta,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+        # The supplied Windows-verified exported manifest uses CRLF; Linux
+        # runners default to LF. Preserve exact bytes or the SHA256 guard fails.
+        exact_manifest=(json.dumps(old_meta,indent=2,ensure_ascii=False)+"\n").replace("\n","\r\n")
+        (out/"manifest.json").write_bytes(exact_manifest.encode("utf-8"))
         if set(orders)!={f"conv{i}" for i in range(1,9)}:
             raise AssertionError("Unexpected exported producer channel permutations")
         for entry in mapping["layers"]:
