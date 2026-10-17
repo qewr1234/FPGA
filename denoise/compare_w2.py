@@ -13,15 +13,22 @@ Fixed before any W=2 measurement, so the reading cannot drift toward the result:
   - A measurement counts only if its core ID has bit 10 set and bit 9 clear
     (the W=2 bitstream) and every layer was compared bit for bit with the host
     oracle (run_denoise stops otherwise).
-  - IN_STALL > 0 means the DMA did not deliver half a beat every cycle, and
-    CYCLES then measures the DMA as well as the core. Such a layer is reported,
-    and flagged, not corrected.
+  - IN_STALL > 0 means the DMA did not deliver half a beat when the core could
+    take it (or could start a window), OUT_STALL > 0 that the sink held the
+    core; CYCLES then measures the DMA as well as the core. Such a layer is
+    reported, and flagged, not corrected.
   - Per network, the total must be within 0.01% of the count (the count leaves
     out each layer's fill and drain, tens to a few hundred cycles).
-  - Per layer, except the first, the measured cycles minus IN_STALL must EQUAL
-    exact_w2: count + min(load, last) + 19 on hidden layers, + COUT + 3 on the
-    last layer. This rule was read off the W=1 and W=4 runs (w4_gaps.py); here
-    it is tested on runs it has not seen. Every layer that misses is listed.
+  - Per layer, except the first, a layer with no stall must take EXACTLY
+    exact_w2 cycles: count + min(load, last) + 3 + the channels in the last
+    16-lane group (19 on hidden layers with COUT 32 or 64, 16 at COUT 45,
+    COUT + 3 on the last layers). This rule was read off the W=1 and W=4 runs
+    (w4_gaps.py); here it is tested on runs it has not seen. A layer that
+    stalled is held only to exact <= cycles <= exact + IN_STALL + OUT_STALL
+    (a stall can hide under compute) and is left out of the exact count.
+    Every layer that misses is listed.
+  - The two network-wide criteria (totals, exact layers) are decided only when
+    the four paper networks were all measured; the 45-channel run is optional.
   - Claim "with two values per cycle pooling stops being free": maxout/ReLU
     > 1.5 in cycles per pixel (1.01 on the one-value port; predicted 1.546).
   - Claim "with two values per cycle the 6.4x larger network B is still faster
@@ -69,10 +76,17 @@ def main():
                        exact=q.get('exact_w2'), board_w1=q.get('board_w1'),
                        in_stall=L['in_stall'], out_stall=L['out_stall'])
             if row['exact'] is not None:
-                row['exact_holds'] = (L['cycles'] - L['in_stall'] == row['exact'])
-                if not row['exact_holds']:
-                    misses.append(f'{label} {L["name"]}: {L["cycles"]} - {L["in_stall"]} stalled, '
-                                  f'exact {row["exact"]}')
+                stalled = L['in_stall'] + L['out_stall']
+                if not stalled:
+                    row['exact_holds'] = (L['cycles'] == row['exact'])
+                    ok = row['exact_holds']
+                else:
+                    row['exact_holds'] = None              # flagged: only the bound is tested
+                    ok = row['exact'] <= L['cycles'] <= row['exact'] + stalled
+                    row['exact_bound_holds'] = ok
+                if not ok:
+                    misses.append(f'{label} {L["name"]}: {L["cycles"]:,} cycles ({stalled} stalled), '
+                                  f'exact {row["exact"]:,}')
             rows.append(row)
         meas = sum(r['measured'] for r in rows)
         tot = p['predicted_w2_total']
@@ -83,20 +97,23 @@ def main():
                    per_pixel=dict(measured=meas/p['pixels'], predicted=p['per_pixel']['predicted_w2'],
                                   board_w1=p['per_pixel'].get('board_w1')),
                    in_stall=sum(r['in_stall'] for r in rows), out_stall=sum(r['out_stall'] for r in rows),
-                   exact_layers=f'{sum(r.get("exact_holds", False) for r in rows)}/'
-                                f'{sum(r["exact"] is not None for r in rows)}',
+                   exact_layers=f'{sum(r.get("exact_holds") is True for r in rows)}/'
+                                f'{sum(r.get("exact_holds") is not None for r in rows)}'
+                                f' (+{sum(r.get("exact_holds") is None and r["exact"] is not None for r in rows)} stalled)',
                    psnr_denoised=img['psnr_denoised'], layers=rows)
         out['networks'][label] = rec
         per_px[label] = rec['per_pixel']['measured']
         print(f'\n{label} ({p["model"]})  core ID {", ".join(rec["core_id"])}  {rec["fclk_mhz"]} MHz  '
               f'PSNR {rec["psnr_denoised"]:.2f} dB')
-        print(f'  {"layer":<7}{"K":>5}{"COUT":>5}{"measured":>13}{"predicted":>13}{"gap":>7}{"exact":>13}'
+        print(f'  {"layer":<7}{"K":>5}{"COUT":>5}{"measured":>13}{"predicted":>13}{"gap":>7}{"exact":>22}'
               f'{"in_stall":>10}{"out_stall":>10}')
         for r in rows:
-            flag = '  waited on the DMA' if r['in_stall'] else ''
-            ex = '-' if r['exact'] is None else f'{r["exact"]:,}' + ('' if r['exact_holds'] else ' MISS')
+            flag = ('  waited on the DMA' if r['in_stall'] else '') + ('  waited on the sink' if r['out_stall'] else '')
+            ex = ('-' if r['exact'] is None else f'{r["exact"]:,}' +
+                  ('' if r['exact_holds'] else ' MISS' if r['exact_holds'] is False
+                   else (' (bound)' if r['exact_bound_holds'] else ' MISS')))
             print(f'  {r["name"]:<7}{r["K"]:>5}{r["COUT"]:>5}{r["measured"]:>13,}{r["predicted"]:>13,}'
-                  f'{r["gap"]:>7}{ex:>13}{r["in_stall"]:>10,}{r["out_stall"]:>10,}{flag}')
+                  f'{r["gap"]:>7}{ex:>22}{r["in_stall"]:>10,}{r["out_stall"]:>10,}{flag}')
         print(f'  total {meas:,} measured, {tot:,} predicted ({rec["gap_percent"]:+.4f}%), '
               f'{rec["per_pixel"]["measured"]:.1f} cycles/px; exact per layer {rec["exact_layers"]}')
     if missing:
@@ -115,9 +132,16 @@ def main():
             measured=per_px['10 x 45 ReLU + QAT']/per_px['B-32 maxout + QAT'], predicted=r2['45-channel/maxout'])
         out['claims']['45-channel ReLU cheaper than maxout at W=2 (< 1)'] = \
             out['ratios']['45-channel/maxout']['measured'] < 1
-    out['claims']['every total within 0.01% of the count'] = all(n['within_0_01_percent'] for n in out['networks'].values())
-    out['claims']['every exact per-layer number holds'] = not misses
+    out['missing'] = missing
     out['exact_misses'] = misses
+    need = ('A', 'B + QAT', 'B-32 maxout + QAT', 'B-32 ReLU + QAT')
+    if have(*need):
+        out['claims']['every total within 0.01% of the count'] = \
+            all(n['within_0_01_percent'] for n in out['networks'].values())
+        out['claims']['every exact per-layer number holds'] = not misses
+    else:
+        print('\nthe network-wide criteria are not decided: '
+              + ', '.join(k for k in need if k not in per_px) + ' not measured')
     print()
     for k, v in out['ratios'].items():
         print(f'{k:<18} measured {v["measured"]:.3f}   predicted {v["predicted"]:.3f}')
@@ -125,8 +149,9 @@ def main():
         print(f'{k}: {"holds" if v else "DOES NOT HOLD"}')
     for m in misses:
         print('  exact miss: ' + m)
-    if any(n['in_stall'] for n in out['networks'].values()):
-        print('\nSome layers waited on the DMA (in_stall > 0): their cycles include it.')
+    if any(n['in_stall'] or n['out_stall'] for n in out['networks'].values()):
+        print('\nSome layers waited on the DMA or the sink (in_stall or out_stall > 0): their cycles '
+              'include it, and they are held only to the bound.')
     args.out.write_text(json.dumps(out, indent=2)+'\n')
     print(f'\nwrote {args.out}')
     return 0

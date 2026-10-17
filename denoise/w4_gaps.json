@@ -1,5 +1,5 @@
 {
-  "rule": "gap - in_stall = min(load, last) + c; c = 19 (hidden), COUT + 3 (last layer)",
+  "rule": "gap - in_stall = min(load, last) + c; c = 3 + ((COUT-1) % 16 + 1)",
   "networks": {
     "A": {
       "model": "dn_d7_c32_es",

@@ -113,6 +113,13 @@ def run_case(case, out, vectors, iverilog, vvp):
     assert int(w.group(1)) == nwin*cout, wrap_log
     if not (in_gap or out_gap):
         assert wrap_cycles == core_cycles, (name, wrap_cycles, core_cycles)
+    else:
+        # Every cycle a throttled run takes beyond the unthrottled core is a
+        # cycle the core waited on the DMA (IN_STALL) or on the sink (OUT_STALL);
+        # the counters may also hold waits that hid under compute, so this is a
+        # bound, not an equality.
+        assert wrap_cycles - core_cycles <= in_stall + out_stall, \
+            (name, 'stall counters miss a wait', wrap_cycles, core_cycles, in_stall, out_stall)
 
     report = dict(name=name, vector=vec, **wrap_params, core_cycles=core_cycles,
                   wrapper_cycles=wrap_cycles, in_stall=in_stall, out_stall=out_stall,
@@ -160,7 +167,7 @@ def main():
     if args.suite == 'smoke':
         # The built K must be a multiple of 4: the wrapper packs four activations
         # per beat. k9 is data for a larger runtime-geometry build only.
-        for k, c in [(12, 9), (4, 1), (28, 17), (9, 9)]:
+        for k, c in [(12, 9), (4, 1), (28, 17), (9, 9), (28, 4)]:
             name = f'synthetic_k{k}_c{c}'
             x, w, b = fixture(k, c)
             x = x[:8]
@@ -199,6 +206,16 @@ def main():
         cases.append(('v4t4w2_k12_ingap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 5, 0, 0, 0, 0, 2))
         cases.append(('v4t4w2_k12_outgap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 0, 7, 0, 0, 0, 2))
         cases.append(('v4t4w2_k12_bothgap', 'synthetic_k12_c9', 3, 2, 2, 4, 2, 3, 4, 0, 0, 0, 2))
+        # Load-bound windows (COUT <= K/W) with a slow DMA: the wait often falls
+        # on a window boundary, where the core could start but has no beat yet.
+        # (IN_GAP=2 is left out: this bench drops TVALID before a handshake, which
+        # AXI-Stream forbids, and at a gap of 2 that can lock it in step with
+        # TREADY; it hangs on the RTL before this check too. The UVM driver holds
+        # TVALID until accepted, as the DMA does.)
+        for width in (1, 2, 4):
+            v = f'v4t4w{width}' if width > 1 else 'v4t4'
+            for gap in (3, 5):
+                cases.append((f'{v}_k28_c4_ingap{gap}', 'synthetic_k28_c4', 3, 4, 2, 4, 0, gap, 0, 0, 0, 0, width))
     elif args.suite == 'geom':
         # One build, many layers. KMAX/COUTMAX are the CIFAR bitstream's built-in
         # maxima; each case feeds it a layer that is smaller in K, in COUT, or in

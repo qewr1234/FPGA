@@ -4,7 +4,7 @@
   "T": 4,
   "mode": "sparse (mode_seq 1), as every board run",
   "formula": "window = max(ceil(K/W)+1, ceil(COUT/16)*max(1, max_b nnz_b), COUT)",
-  "exact": "count + min(load, last) + 19 (hidden layers), + COUT + 3 (last layer); none for the first",
+  "exact": "count + min(load, last) + 3 + ((COUT-1) % 16 + 1); none for the first layer",
   "networks": {
     "A": {
       "model": "dn_d7_c32_es",
@@ -634,11 +634,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652016,
+          "exact_w1": 6652013,
           "predicted_w2": 3347790,
-          "exact_w2": 3347902,
+          "exact_w2": 3347899,
           "predicted_w4": 3172269,
-          "exact_w4": 3172381
+          "exact_w4": 3172378
         },
         {
           "name": "conv3",
@@ -647,11 +647,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6651998,
+          "exact_w1": 6651995,
           "predicted_w2": 3342345,
-          "exact_w2": 3342439,
+          "exact_w2": 3342436,
           "predicted_w4": 2583172,
-          "exact_w4": 2583266
+          "exact_w4": 2583263
         },
         {
           "name": "conv4",
@@ -660,11 +660,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652016,
+          "exact_w1": 6652013,
           "predicted_w2": 3342759,
-          "exact_w2": 3342871,
+          "exact_w2": 3342868,
           "predicted_w4": 2759195,
-          "exact_w4": 2759307
+          "exact_w4": 2759304
         },
         {
           "name": "conv5",
@@ -673,11 +673,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652019,
+          "exact_w1": 6652016,
           "predicted_w2": 3342510,
-          "exact_w2": 3342625,
+          "exact_w2": 3342622,
           "predicted_w4": 2794181,
-          "exact_w4": 2794296
+          "exact_w4": 2794293
         },
         {
           "name": "conv6",
@@ -686,11 +686,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652028,
+          "exact_w1": 6652025,
           "predicted_w2": 3342501,
-          "exact_w2": 3342625,
+          "exact_w2": 3342622,
           "predicted_w4": 2731484,
-          "exact_w4": 2731606
+          "exact_w4": 2731603
         },
         {
           "name": "conv7",
@@ -699,11 +699,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6651992,
+          "exact_w1": 6651989,
           "predicted_w2": 3342336,
-          "exact_w2": 3342424,
+          "exact_w2": 3342421,
           "predicted_w4": 2349954,
-          "exact_w4": 2350042
+          "exact_w4": 2350039
         },
         {
           "name": "conv8",
@@ -712,11 +712,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652004,
+          "exact_w1": 6652001,
           "predicted_w2": 3342336,
-          "exact_w2": 3342436,
+          "exact_w2": 3342433,
           "predicted_w4": 2269230,
-          "exact_w4": 2269330
+          "exact_w4": 2269327
         },
         {
           "name": "conv9",
@@ -725,11 +725,11 @@
           "windows": 16384,
           "kind": "hidden",
           "predicted_w1": 6651904,
-          "exact_w1": 6652013,
+          "exact_w1": 6652010,
           "predicted_w2": 3342354,
-          "exact_w2": 3342463,
+          "exact_w2": 3342460,
           "predicted_w4": 2487957,
-          "exact_w4": 2488066
+          "exact_w4": 2488063
         },
         {
           "name": "conv10",

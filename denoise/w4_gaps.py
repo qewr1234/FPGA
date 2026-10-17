@@ -15,14 +15,15 @@ when it exists):
     load   the cycles one window takes to load, ceil(K/w) + 1
     last   the run's last window's compute, ceil(COUT/16) * max over banks of
            its nonzero taps (sparse mode)
-    c      19 on hidden layers; COUT + 3 on the last layers
+    c      3 + the channels in the last 16-lane output group: 19 on the hidden
+           layers here (COUT 32 or 64), COUT + 3 on the last layers (COUT <= 16)
 
 Every window of a layer loads in the same time, and each window's compute
 overlaps the next window's load, so a run takes one load, then max(compute,
 load) for each window but the last, then the last window's compute. The count,
 max(load, compute) for every window, therefore leaves out min(load, last) once.
-At W=1 the load is always the longer, so on hidden layers the gap is the last
-window's compute + 19. The first layers are listed without a rule (at W=4 they
+At W=1 the load is always the longer, so the gap is the last window's compute
++ c (+ 19 on the hidden layers here). The first layers are listed without a rule (at W=4 they
 are bound by their COUT outputs). The constants were read off the W=1 and W=4 gaps
 after the W=4 board run; at W=2 (w2_rtl_sim.json, run after) the rule met data
 it had not been fitted to.
@@ -53,7 +54,7 @@ def main():
     rtl = json.loads((HERE/'w4_rtl_sim.json').read_text())
     f2 = HERE/'w2_rtl_sim.json'
     rtl2 = json.loads(f2.read_text()) if f2.exists() else None
-    out = dict(rule='gap - in_stall = min(load, last) + c; c = 19 (hidden), COUT + 3 (last layer)',
+    out = dict(rule='gap - in_stall = min(load, last) + c; c = 3 + ((COUT-1) % 16 + 1)',
                networks={})
     held = dict(board=[0, 0], rtl_sample=[0, 0], rtl_sample_w2=[0, 0])
     for label, model in MODELS.items():
@@ -74,7 +75,7 @@ def main():
                 load, last = load_and_last(last_window, L['K'], L['COUT'], w)
                 rec = dict(gap=gap, in_stall=stall, load=load, last=last, rest=gap - stall - min(load, last))
                 if kind != 'first':
-                    rec['rule_holds'] = rec['rest'] == (19 if kind == 'hidden' else L['COUT'] + 3)
+                    rec['rule_holds'] = rec['rest'] == 3 + (L['COUT'] - 1) % P + 1
                     h = held['board' if key.startswith('board') else 'rtl_sample_w2' if key == 'rtl_w2'
                              else 'rtl_sample']
                     h[0] += rec['rule_holds']; h[1] += 1

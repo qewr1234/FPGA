@@ -48,7 +48,9 @@
 //   0x08 STATUS    [0] armed  [1] measuring  [2] done
 //   0x0C CYCLES    measured cycles
 //   0x10 WINDONE   windows completed
-//   0x14 INSTALL   cycles the core was starved for input
+//   0x14 INSTALL   cycles the core was starved for input: it wanted an activation
+//                  and none had arrived, or it could start the next window and
+//                  no beat had arrived to start it with
 //   0x18 OUTSTALL  cycles the core was blocked on output
 //   0x1C OUTCOUNT  results emitted
 //   0x20 CFGCOUNT  configuration items accepted
@@ -183,6 +185,8 @@ module window_mac_axis #(
     wire sparse_mode = (ctrl_mode_seq==2'd0) ? 1'b0 :
                        (ctrl_mode_seq==2'd1) ? 1'b1 : win_in[0];
     wire take_start = start_valid && start_ready;
+    // Everything a start needs except the first beat of the window.
+    wire start_starved = go && !ctrl_cfg_mode && !feeding && !have_beat && (win_in < nwindows) && start_ready;
 
     // ---------------- activation feed ----------------
     // One holding register, four activations per beat. The next beat is accepted
@@ -356,7 +360,10 @@ module window_mac_axis #(
             // ---- measurement ----
             if(measuring && !run_done) begin
                 cycles<=cycles+32'd1;
-                if(core_s_ready && !core_s_valid) in_stall<=in_stall+32'd1;
+                // A window start held back for want of a beat is a stall too:
+                // without it, a DMA that falls behind exactly at window
+                // boundaries would lengthen CYCLES with IN_STALL still 0.
+                if((core_s_ready && !core_s_valid) || start_starved) in_stall<=in_stall+32'd1;
                 if(core_m_valid && !m_axis_tready) out_stall<=out_stall+32'd1;
             end
             if(take_output) begin

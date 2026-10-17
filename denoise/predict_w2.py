@@ -12,10 +12,15 @@ w2 in commit 55f13b4. What this file adds, written before any W = 2 hardware:
     board run exists (the check that the count means anything);
   - per layer, the exact cycles the run should take, count + fill and drain,
     with the rule w4_gaps.py read off the W = 1 and W = 4 runs:
-        min(load, last) + 19 on hidden layers, + COUT + 3 on the last layer
-    (load = ceil(K/W)+1, last = the last window's compute). The first layers
-    (bound by their COUT outputs) get no exact number. That rule was found
-    after the W = 4 run; W = 2 is the first run it meets unseen;
+        min(load, last) + 3 + g
+    (load = ceil(K/W)+1, last = the last window's compute, g = the channels
+    in the last 16-lane output group: 16 for COUT 32 and 64, so + 19 on the
+    hidden layers measured so far, and COUT for COUT <= 16, so + COUT + 3 on
+    the last layers). The first layers (bound by their COUT outputs) get no
+    exact number. That rule was found after the W = 4 run; W = 2 is the first
+    run it meets unseen. (The first version of this file wrote g = 16 for
+    every hidden layer; for the 45-channel network's COUT = 45 it is 13. That
+    was fixed, from the RTL, before any W = 2 bitstream existed.)
   - the parameter-matched 10 x 45 ReLU network (dn_d10_c45_us_fx_qat, never run
     on the board), at W = 1, 2 and 4, so a board run of it at any width is a
     prediction too.
@@ -35,10 +40,15 @@ MODELS = {'A': 'dn_d7_c32_es', 'B + QAT': 'dn_d10_c64_us_es_qat',
 WIDTHS = (1, 2, 4)
 
 
+def drain(cout):
+    """Cycles after the last window's compute: 3 + the channels of the last P-lane group."""
+    return 3 + (cout - 1) % P + 1
+
+
 def main():
     out = dict(image=IMAGE, P=P, T=T, mode='sparse (mode_seq 1), as every board run',
                formula='window = max(ceil(K/W)+1, ceil(COUT/16)*max(1, max_b nnz_b), COUT)',
-               exact='count + min(load, last) + 19 (hidden layers), + COUT + 3 (last layer); none for the first',
+               exact='count + min(load, last) + 3 + ((COUT-1) % 16 + 1); none for the first layer',
                networks={})
     for label, model in MODELS.items():
         got, (h, w_img) = layer_windows(model)
@@ -54,7 +64,7 @@ def main():
                 row[f'predicted_w{w}'] = c
                 if kind != 'first':
                     load, last = load_and_last(x[-1], L['K'], L['COUT'], w)
-                    row[f'exact_w{w}'] = c + min(load, last) + (19 if kind == 'hidden' else L['COUT'] + 3)
+                    row[f'exact_w{w}'] = c + min(load, last) + drain(L['COUT'])
             if board:
                 b = board[i]
                 assert b['name'] == L['name'] and b['windows'] == x.shape[0]
