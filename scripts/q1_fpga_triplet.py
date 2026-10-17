@@ -80,9 +80,13 @@ def preflight():
             if digest(MULTI)!=stress["config"]["candidate_sha256"]:
                 raise ValueError(f"Existing Multi-start candidate differs from GPU proof: {MULTI}. "
                                  "Move stale candidate aside; do NOT overwrite.")
-            for n in ("manifest.json","int_eval.json","permutation_manifest.json"):
+            for n in ("manifest.json","int_eval.json"):
                 if json.loads((MULTI/n).read_text(encoding="utf-8"))!=json.loads(z.read(prefix+n)):
-                    raise ValueError(f"Existing Multi-start {n} metadata differs")
+                    raise ValueError(f"Existing Multi-start {n} inference metadata differs")
+            # Files built on different PCs record different source absolute paths;
+            # only the permutation mapping is semantically meaningful here.
+            if json.loads((MULTI/"permutation_manifest.json").read_text(encoding="utf-8")).get("orders")!=expected_orders:
+                raise ValueError("Existing Multi-start permutation mapping differs")
             for i in range(1,11):
                 n=f"conv{i}_config.bin"
                 if (MULTI/n).read_bytes()!=z.read(prefix+n):
