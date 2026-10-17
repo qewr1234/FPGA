@@ -1,0 +1,39 @@
+name: Check Q1 GPU research scripts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/q1_gpu_deadline_suite.py
+      - scripts/q1_gpu_architecture_sweep.py
+      - scripts/q1_gpu_bitexact_stress.py
+      - scripts/q1_gpu_final_report.py
+      - RUN_GPU_Q1_ALL.cmd
+      - RUN_GPU_Q1_SMOKE.cmd
+      - .github/workflows/q1_gpu_syntax.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static compile of all new GPU experiment modules
+        run: |
+          python3 -m py_compile \
+            scripts/q1_reviewer_bank.py \
+            scripts/q1_reviewer_export.py \
+            scripts/q1_gpu_deadline_suite.py \
+            scripts/q1_gpu_architecture_sweep.py \
+            scripts/q1_gpu_bitexact_stress.py \
+            scripts/q1_gpu_final_report.py
+      - name: Verify expected research inputs
+        run: |
+          test -s research/q1_codesign/bank_export_perm.json
+          test -s denoise/export/dn_d10_c32_us_fx_qat/manifest.json
+          test -s denoise/export/dn_d10_c64_us_es_qat/manifest.json
+          test -s denoise/export/dn_d10_c32_us_mo_fx_qat/manifest.json
+          echo "Passed syntax and repo input presence; GPU execution is not tested in GitHub Actions."
