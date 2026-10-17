@@ -227,7 +227,9 @@ def main():
         out, recs = denoise(q_in, man, layers, args, stem, args.start_layer)
         p_noisy, p_out = psnr(clean, noisy), psnr(clean, out.astype(np.float32)/255)
         # The quantizer scored this exact image with the same integer model.
-        if abs(p_out - int_eval[name]) > 1e-6:
+        # 1e-5: the images agree to the pixel, but psnr() averages in float32 and
+        # int_eval.json may come from another PC whose numpy rounds that sum differently.
+        if abs(p_out - int_eval[name]) > 1e-5:
             raise SystemExit(f'{name}: {p_out:.4f} dB here but {int_eval[name]:.4f} dB in '
                              f'int_eval.json -- the driver and the quantizer disagree')
         Image.fromarray(np.uint8(np.rint(clean*255))).save(args.out/f'{stem}_clean.png')
