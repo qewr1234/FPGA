@@ -398,9 +398,9 @@ def main():
     if min(args.greedy_steps,args.anneal_steps,args.restarts,args.random_count,args.calib_windows)<1:
         ap.error("All optimization settings must be positive")
     if args.max_images<0:ap.error("--max-images must be >=0")
-    args.sigmas=parse_sigmas(args.sigmas)
-    args.seeds=parse_ints(args.seeds)
-    args.calib_seeds=parse_ints(args.calib_seeds)
+    args.sigmas=list(parse_sigmas(args.sigmas))
+    args.seeds=list(parse_ints(args.seeds))
+    args.calib_seeds=list(parse_ints(args.calib_seeds))
     args.out=Path(args.out)
     args.out.mkdir(parents=True,exist_ok=True)
     perm_source=Path(args.frozen)
@@ -428,8 +428,10 @@ def main():
     if len(layers)!=10 or not man.get("qat") or not man.get("graph") or any(L["post"]!="none" for L in layers):
         ap.error("Unexpected CNN, stopping rather than assuming validity")
     torch.backends.cudnn.benchmark=False
+    total_images = 68 if args.dataset=="BSD68" else 12
+    if args.max_images: total_images = min(total_images,args.max_images)
     print(f"GPU suite started. Device={dev} torch={torch.__version__}; "
-          f"total image conditions={len(args.sigmas)*len(args.seeds)*68}",flush=True)
+          f"total image conditions={len(args.sigmas)*len(args.seeds)*total_images}",flush=True)
     print("Original model, existing frozen permutation, calibration methods and BSD68 "
           "evaluation all use separate files; no original weights overwritten.",flush=True)
     runner=create_runner(layers,dev)
