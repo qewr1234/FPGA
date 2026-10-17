@@ -1,0 +1,46 @@
+name: Publish frozen FPGA bank-reordered INT8 model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "research/q1_codesign/bank_export_perm.json"
+      - "scripts/q1_package_reordered_export.py"
+      - ".github/workflows/q1_publish_reordered_export.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Generate and verify ZIP
+        run: |
+          python3 scripts/q1_package_reordered_export.py
+          python3 -m zipfile -t research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip
+
+      - name: Upload downloadable GitHub Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: q1_bank_reordered_export_20261018
+          path: research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip
+          if-no-files-found: error
+
+      - name: Commit ZIP into the main repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip
+          if git diff --cached --quiet; then
+            echo "Model ZIP already committed; no repository mutation needed."
+            exit 0
+          fi
+          git commit -m "research: publish downloadable verified bank permutation QAT export ZIP"
+          git push origin HEAD:main
