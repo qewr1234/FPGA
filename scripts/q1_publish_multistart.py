@@ -103,6 +103,27 @@ def main():
         out=Path(work)/MODEL
         out.mkdir()
         orders=export_network(src,mapping,out)
+        # Reconstruct exact GPU-side manifest metadata from the previous
+        # bit-exact Frozen01 export, NOT the GitHub original manifest whose
+        # serialization/provenance differs. Reverse the old channel labels,
+        # then apply this user's learned Multi-start permutation.
+        old_meta=json.loads((ROOT/"research"/"q1_codesign"/
+                             "frozen01_gpu_export_manifest_20261018.json").read_text(encoding="utf-8"))
+        old_perm=json.loads((ROOT/"research"/"q1_codesign"/
+                             "bank_export_perm.json").read_text(encoding="utf-8"))["orders"]
+        for node in old_meta["layers"]:
+            name=node["name"]
+            old_order=old_perm.get(name,list(range(node["COUT"])))
+            new_order=orders.get(name,list(range(node["COUT"])))
+            for field in ("requant","w_scale","a_scale_out"):
+                values=node.get(field)
+                if isinstance(values,list) and len(values)==node["COUT"]:
+                    unpermuted=[None]*len(values)
+                    for position,channel in enumerate(old_order):
+                        unpermuted[channel]=values[position]
+                    node[field]=[unpermuted[channel] for channel in new_order]
+        (out/"manifest.json").write_text(
+            json.dumps(old_meta,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
         if set(orders)!={f"conv{i}" for i in range(1,9)}:
             raise AssertionError("Unexpected exported producer channel permutations")
         for entry in mapping["layers"]:
