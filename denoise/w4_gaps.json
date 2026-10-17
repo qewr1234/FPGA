@@ -36,6 +36,13 @@
             "load": 4,
             "last": 6,
             "rest": 6
+          },
+          "rtl_w2": {
+            "gap": 12,
+            "in_stall": 0,
+            "load": 6,
+            "last": 6,
+            "rest": 6
           }
         },
         {
@@ -71,6 +78,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 98,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 117,
+            "in_stall": 0,
+            "load": 145,
             "last": 98,
             "rest": 19,
             "rule_holds": true
@@ -112,6 +127,14 @@
             "last": 80,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 99,
+            "in_stall": 0,
+            "load": 145,
+            "last": 80,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -147,6 +170,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 90,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 109,
+            "in_stall": 0,
+            "load": 145,
             "last": 90,
             "rest": 19,
             "rule_holds": true
@@ -188,6 +219,14 @@
             "last": 94,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 113,
+            "in_stall": 0,
+            "load": 145,
+            "last": 94,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -226,6 +265,14 @@
             "last": 72,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 145,
+            "last": 72,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -261,6 +308,14 @@
             "gap": 53,
             "in_stall": 0,
             "load": 76,
+            "last": 49,
+            "rest": 4,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 53,
+            "in_stall": 0,
+            "load": 150,
             "last": 49,
             "rest": 4,
             "rule_holds": true
@@ -303,6 +358,13 @@
             "load": 10,
             "last": 36,
             "rest": 12
+          },
+          "rtl_w2": {
+            "gap": 31,
+            "in_stall": 0,
+            "load": 19,
+            "last": 36,
+            "rest": 12
           }
         },
         {
@@ -338,6 +400,14 @@
             "gap": 164,
             "in_stall": 0,
             "load": 145,
+            "last": 388,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
             "last": 388,
             "rest": 19,
             "rule_holds": true
@@ -379,6 +449,14 @@
             "last": 292,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
+            "last": 292,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -414,6 +492,14 @@
             "gap": 164,
             "in_stall": 0,
             "load": 145,
+            "last": 320,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
             "last": 320,
             "rest": 19,
             "rule_holds": true
@@ -455,6 +541,14 @@
             "last": 272,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 291,
+            "in_stall": 0,
+            "load": 289,
+            "last": 272,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -490,6 +584,14 @@
             "gap": 164,
             "in_stall": 0,
             "load": 145,
+            "last": 296,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
             "last": 296,
             "rest": 19,
             "rule_holds": true
@@ -531,6 +633,14 @@
             "last": 332,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
+            "last": 332,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -566,6 +676,14 @@
             "gap": 164,
             "in_stall": 0,
             "load": 145,
+            "last": 300,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 308,
+            "in_stall": 0,
+            "load": 289,
             "last": 300,
             "rest": 19,
             "rule_holds": true
@@ -607,6 +725,14 @@
             "last": 256,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 275,
+            "in_stall": 0,
+            "load": 289,
+            "last": 256,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -642,6 +768,14 @@
             "gap": 82,
             "in_stall": 0,
             "load": 154,
+            "last": 75,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 82,
+            "in_stall": 0,
+            "load": 307,
             "last": 75,
             "rest": 7,
             "rule_holds": true
@@ -684,6 +818,13 @@
             "load": 10,
             "last": 36,
             "rest": 12
+          },
+          "rtl_w2": {
+            "gap": 31,
+            "in_stall": 0,
+            "load": 19,
+            "last": 36,
+            "rest": 12
           }
         },
         {
@@ -719,6 +860,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 260,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
             "last": 260,
             "rest": 19,
             "rule_holds": true
@@ -760,6 +909,14 @@
             "last": 208,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 208,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -795,6 +952,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 208,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
             "last": 208,
             "rest": 19,
             "rule_holds": true
@@ -836,6 +1001,14 @@
             "last": 240,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 240,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -871,6 +1044,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 224,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
             "last": 224,
             "rest": 19,
             "rule_holds": true
@@ -912,6 +1093,14 @@
             "last": 232,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 232,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -947,6 +1136,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 244,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
             "last": 244,
             "rest": 19,
             "rule_holds": true
@@ -988,6 +1185,14 @@
             "last": 204,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 204,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -1023,6 +1228,14 @@
             "gap": 79,
             "in_stall": 0,
             "load": 82,
+            "last": 72,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 79,
+            "in_stall": 0,
+            "load": 163,
             "last": 72,
             "rest": 7,
             "rule_holds": true
@@ -1065,6 +1278,13 @@
             "load": 10,
             "last": 18,
             "rest": 12
+          },
+          "rtl_w2": {
+            "gap": 31,
+            "in_stall": 0,
+            "load": 19,
+            "last": 18,
+            "rest": 13
           }
         },
         {
@@ -1100,6 +1320,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 96,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 115,
+            "in_stall": 0,
+            "load": 145,
             "last": 96,
             "rest": 19,
             "rule_holds": true
@@ -1141,6 +1369,14 @@
             "last": 90,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 109,
+            "in_stall": 0,
+            "load": 145,
+            "last": 90,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -1176,6 +1412,14 @@
             "gap": 91,
             "in_stall": 0,
             "load": 73,
+            "last": 72,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 91,
+            "in_stall": 0,
+            "load": 145,
             "last": 72,
             "rest": 19,
             "rule_holds": true
@@ -1217,6 +1461,14 @@
             "last": 78,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 97,
+            "in_stall": 0,
+            "load": 145,
+            "last": 78,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -1252,6 +1504,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 82,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 101,
+            "in_stall": 0,
+            "load": 145,
             "last": 82,
             "rest": 19,
             "rule_holds": true
@@ -1293,6 +1553,14 @@
             "last": 78,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 97,
+            "in_stall": 0,
+            "load": 145,
+            "last": 78,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -1328,6 +1596,14 @@
             "gap": 92,
             "in_stall": 0,
             "load": 73,
+            "last": 88,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 107,
+            "in_stall": 0,
+            "load": 145,
             "last": 88,
             "rest": 19,
             "rule_holds": true
@@ -1369,6 +1645,14 @@
             "last": 102,
             "rest": 19,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 121,
+            "in_stall": 0,
+            "load": 145,
+            "last": 102,
+            "rest": 19,
+            "rule_holds": true
           }
         },
         {
@@ -1407,6 +1691,14 @@
             "last": 55,
             "rest": 7,
             "rule_holds": true
+          },
+          "rtl_w2": {
+            "gap": 62,
+            "in_stall": 0,
+            "load": 163,
+            "last": 55,
+            "rest": 7,
+            "rule_holds": true
           }
         }
       ]
@@ -1414,6 +1706,7 @@
   },
   "rule_holds": {
     "board": "66/66",
-    "rtl_sample": "66/66"
+    "rtl_sample": "66/66",
+    "rtl_sample_w2": "33/33"
   }
 }

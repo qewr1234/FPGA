@@ -1,0 +1,461 @@
+{
+  "what": "RTL simulation (Icarus) of window_mac_axis at the board build, on sampled real windows; not a board measurement",
+  "build": {
+    "KMAX": 1152,
+    "COUTMAX": 128,
+    "P": 16,
+    "DEPTH": 2,
+    "IMPL": 3,
+    "T": 4,
+    "RUNTIME_GEOM": 1
+  },
+  "image": "05.png",
+  "mode": "sparse (MODE_SEQ=1)",
+  "windows_per_layer": 512,
+  "sampling": "four contiguous blocks centred at 1/8, 3/8, 5/8, 7/8 of the layer",
+  "rtl_commit": "2227c7711a32d85bc66a0492820245fac78bde9c",
+  "rtl_sources_modified_since_commit": false,
+  "rtl_sha256": {
+    "rtl/overlapped_window_mac.sv": "e8a04972b5a4540b1756c3034950dfd6831a9cda0582df339a32673b4925e311",
+    "rtl/banked_window_mac.sv": "d1cff4eedd5fb6fd54ba565cc393a2a692f775e8a2d3a96f428c7917db0c305b",
+    "rtl/window_mac_axis.sv": "1c90c95d6850bba7f204198dc17f2d8c231808c469d24e1d2f4878bef2a19ad4",
+    "sim/tb_axis_wrapper.sv": "cd49cc0b2d879cdd58b97698eb4fc38111a6e2549c4000e81aae7e53fa801be9"
+  },
+  "networks": {
+    "A": {
+      "model": "dn_d7_c32_es",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 9,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.9928385416666666,
+          "model_w2": 16384,
+          "rtl_w2": 16396,
+          "gap_w2": 12
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.5512830946180556,
+          "model_w2": 74240,
+          "rtl_w2": 74357,
+          "gap_w2": 117
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.5117458767361112,
+          "model_w2": 74240,
+          "rtl_w2": 74339,
+          "gap_w2": 99
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.5381198459201388,
+          "model_w2": 74240,
+          "rtl_w2": 74349,
+          "gap_w2": 109
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.5320502387152778,
+          "model_w2": 74240,
+          "rtl_w2": 74353,
+          "gap_w2": 113
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.4662611219618056,
+          "model_w2": 74240,
+          "rtl_w2": 74331,
+          "gap_w2": 91
+        },
+        {
+          "name": "conv7",
+          "K": 297,
+          "COUT": 1,
+          "windows_in_layer": 65536,
+          "windows": 512,
+          "nonzero_fraction": 0.5564696443602694,
+          "model_w2": 76800,
+          "rtl_w2": 76853,
+          "gap_w2": 53
+        }
+      ],
+      "rtl_w2": 464978,
+      "model_w2": 464384
+    },
+    "B + QAT": {
+      "model": "dn_d10_c64_us_es_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.9899088541666666,
+          "model_w2": 32768,
+          "rtl_w2": 32799,
+          "gap_w2": 31
+        },
+        {
+          "name": "conv2",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.5481228298611112,
+          "model_w2": 201868,
+          "rtl_w2": 202176,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv3",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4736056857638889,
+          "model_w2": 158357,
+          "rtl_w2": 158665,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv4",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4732157389322917,
+          "model_w2": 170741,
+          "rtl_w2": 171049,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv5",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4899766710069444,
+          "model_w2": 172081,
+          "rtl_w2": 172372,
+          "gap_w2": 291
+        },
+        {
+          "name": "conv6",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.441497802734375,
+          "model_w2": 163811,
+          "rtl_w2": 164119,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv7",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4449123806423611,
+          "model_w2": 162117,
+          "rtl_w2": 162425,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv8",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.3617045084635417,
+          "model_w2": 149042,
+          "rtl_w2": 149350,
+          "gap_w2": 308
+        },
+        {
+          "name": "conv9",
+          "K": 576,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.3752543131510417,
+          "model_w2": 148408,
+          "rtl_w2": 148683,
+          "gap_w2": 275
+        },
+        {
+          "name": "conv10",
+          "K": 612,
+          "COUT": 4,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4444667841094771,
+          "model_w2": 157184,
+          "rtl_w2": 157266,
+          "gap_w2": 82
+        }
+      ],
+      "rtl_w2": 1518904,
+      "model_w2": 1516377
+    },
+    "B-32 maxout + QAT": {
+      "model": "dn_d10_c32_us_mo_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.9899088541666666,
+          "model_w2": 32768,
+          "rtl_w2": 32799,
+          "gap_w2": 31
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.8392198350694444,
+          "model_w2": 134748,
+          "rtl_w2": 134912,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7189805772569444,
+          "model_w2": 116109,
+          "rtl_w2": 116273,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7160847981770834,
+          "model_w2": 116028,
+          "rtl_w2": 116192,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7597181532118056,
+          "model_w2": 123432,
+          "rtl_w2": 123596,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7596096462673612,
+          "model_w2": 131464,
+          "rtl_w2": 131628,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7307603624131944,
+          "model_w2": 123560,
+          "rtl_w2": 123724,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.6770358615451388,
+          "model_w2": 110836,
+          "rtl_w2": 111000,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 64,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.6397433810763888,
+          "model_w2": 106748,
+          "rtl_w2": 106912,
+          "gap_w2": 164
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.7832212094907407,
+          "model_w2": 83456,
+          "rtl_w2": 83535,
+          "gap_w2": 79
+        }
+      ],
+      "rtl_w2": 1080571,
+      "model_w2": 1079149
+    },
+    "B-32 ReLU + QAT": {
+      "model": "dn_d10_c32_us_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.9899088541666666,
+          "model_w2": 16384,
+          "rtl_w2": 16415,
+          "gap_w2": 31
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.5463528103298612,
+          "model_w2": 74240,
+          "rtl_w2": 74355,
+          "gap_w2": 115
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.5093858506944444,
+          "model_w2": 74240,
+          "rtl_w2": 74349,
+          "gap_w2": 109
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4864841037326389,
+          "model_w2": 74240,
+          "rtl_w2": 74331,
+          "gap_w2": 91
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.5241021050347222,
+          "model_w2": 74240,
+          "rtl_w2": 74337,
+          "gap_w2": 97
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4427897135416667,
+          "model_w2": 74240,
+          "rtl_w2": 74341,
+          "gap_w2": 101
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4737548828125,
+          "model_w2": 74240,
+          "rtl_w2": 74337,
+          "gap_w2": 97
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.3723822699652778,
+          "model_w2": 74240,
+          "rtl_w2": 74347,
+          "gap_w2": 107
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 32,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.4377577039930556,
+          "model_w2": 74240,
+          "rtl_w2": 74361,
+          "gap_w2": 121
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows_in_layer": 16384,
+          "windows": 512,
+          "nonzero_fraction": 0.5418535397376543,
+          "model_w2": 83456,
+          "rtl_w2": 83518,
+          "gap_w2": 62
+        }
+      ],
+      "rtl_w2": 694691,
+      "model_w2": 693760
+    }
+  }
+}
