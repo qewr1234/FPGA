@@ -8,6 +8,27 @@
 
 **실제 Smart ZYNQ SL 제조사/제작자 제공 PS DDR/MIO 설정, 비트스트림, XSDB 연결 절차를 먼저 검증하세요. 불확실하면 아래 FPGA 프로그래밍 명령은 실행하지 마세요.**
 
+## 0. 2026-10-18 추가: GitHub 배포형 안전 실행기
+
+FPGA PC에서 아래 순서로 진행합니다. 첫 명령은 압축파일 무결성과 원본/순열 모델을 확인하고 `build/q1_reviewer_export/dn_d10_c32_us_fx_qat`에 준비할 뿐, **FPGA/JTAG 프로그래밍을 절대 하지 않습니다**.
+
+```bat
+cd /d C:\fpga\FPGA
+git status
+git pull origin main
+RUN_FPGA_Q1_BANK_PREFLIGHT.cmd
+```
+
+실제 Smart ZYNQ SL 보드에 적합한 PS DDR/MIO 설정과 W=4 비트스트림을 확인한 후, **FPGA PC에서만**, 명시적인 경로와 별도의 run-id를 사용합니다.
+
+```bat
+RUN_FPGA_Q1_BANK_AB.cmd "C:\Xilinx\Vivado\2026.1\bin\xsdb.bat" "C:\fpga\FPGA\build\APPROVED_SMART_ZYNQ_SL_W4" trial_01 1
+```
+
+위의 두 번째 경로는 **예시 자리표시자**입니다. 실제 검증된 빌드 경로로 교체하지 않았다면 실행하지 마세요. 사용자 확인 문자열을 입력하기 전까지 보드 실행이 시작되지 않습니다. 이전 `zed_v4_*` 또는 `ZedBoard` 빌드는 거부합니다. 비교 결과는 `build/q1_bank_fpga_runs/trial_01/pair_01/comparison.json`에 저장되고, 기존 결과를 덮어쓰지 않습니다.
+
+**주의:** 확인 문자열은 물리적 핀 설정의 자동 검증이 아니라 사용자가 보드 매뉴얼/설계와 대조했다는 선언입니다. 호환을 확신하지 못하면 첫 번째 사전 점검까지만 수행해야 합니다.
+
 ## 1. GPU PC에서 학습/최적화 없이 후보 보존
 
 기존 `build/q1_reviewer_export/dn_d10_c32_us_fx_qat/` 폴더 안에 `manifest.json`, `int_eval.json`, `permutation_manifest.json`, `conv1_config.bin` ~ `conv10_config.bin` 가 있어야 합니다.
