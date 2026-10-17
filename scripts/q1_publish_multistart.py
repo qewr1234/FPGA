@@ -11,6 +11,7 @@ the independently reconstructed EXACT same INT8 model inputs.
 from __future__ import annotations
 import hashlib
 import json
+import shutil
 import sys
 import tempfile
 import zipfile
@@ -73,9 +74,33 @@ def main():
             raise AssertionError(f"Order and bank group conflict at {layer}")
 
     with tempfile.TemporaryDirectory() as work:
+        # The GPU-PC source manifest writes board_cycles_per_pixel as 666.0
+        # whereas the tracked GitHub source uses 666. They have identical
+        # numerical value but different byte hashes. Only normalize this
+        # *non-inference* metadata field in a disposable source copy.
+        # Do NOT alter the tracked original in denoise/export.
+        src=Path(work)/"verified_original_source"/MODEL
+        src.mkdir(parents=True)
+        orig_man=json.loads((ORIGINAL/"manifest.json").read_text(encoding="utf-8"))
+        if orig_man.get("board_cycles_per_pixel")!=666:
+            raise AssertionError("Unexpected original measured model summary metadata")
+        orig_man["board_cycles_per_pixel"]=666.0
+        (src/"manifest.json").write_text(
+            json.dumps(orig_man,indent=2,ensure_ascii=False)+"\n",
+            encoding="utf-8")
+        for f in ORIGINAL.glob("conv*_config.bin"):
+            shutil.copy2(f,src/f.name)
+        shutil.copy2(ORIGINAL/"int_eval.json",src/"int_eval.json")
+        local_original_digest=digest(src)
+        if local_original_digest!=cfg["original_sha256"]:
+            raise AssertionError(
+                "Even after the exact 666 -> 666.0 non-inference metadata "
+                "normalization, original source still differs from GPU-proven "
+                f"source: {local_original_digest} != {cfg['original_sha256']}"
+            )
         out=Path(work)/MODEL
         out.mkdir()
-        orders=export_network(ORIGINAL,mapping,out)
+        orders=export_network(src,mapping,out)
         if set(orders)!={f"conv{i}" for i in range(1,9)}:
             raise AssertionError("Unexpected exported producer channel permutations")
         for entry in mapping["layers"]:
