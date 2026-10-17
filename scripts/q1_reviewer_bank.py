@@ -199,6 +199,19 @@ def main():
         basetrain=float(cycles(subset,layer["COUT"],layer["K"],identity).mean())
         ev_base=cycles(valid,layer["COUT"],layer["K"],identity)
         ev_prop=cycles(valid,layer["COUT"],layer["K"],group)
+        # Negative controls: density-only sorting and 20 fixed random balanced layouts.
+        # IMPORTANT: neither control is selected using evaluation data.
+        sortix=np.argsort(-subset.mean(axis=0),kind="stable")
+        sorted_group=np.empty(len(group),dtype=np.int32)
+        sorted_group[sortix]=np.arange(len(group))%4
+        density_sorted_eval=int(cycles(valid,layer["COUT"],layer["K"],sorted_group).sum())
+        random_eval=[]
+        control_rng=np.random.default_rng(args.seed+1000+len(rows))
+        for _ in range(20):
+            ix=control_rng.permutation(len(group))
+            rg=np.empty(len(group),dtype=np.int32)
+            rg[ix]=np.arange(len(group))%4
+            random_eval.append(int(cycles(valid,layer["COUT"],layer["K"],rg).sum()))
         row=dict(layer=name,identity_cal_mean=round(basetrain,6),
                  optimized_cal_mean=round(optimized,6),
                  eval_identity_cycles=int(ev_base.sum()),
@@ -206,6 +219,12 @@ def main():
                  eval_saved_cycles=int(ev_base.sum()-ev_prop.sum()),
                  eval_relative_pct=round(100*(ev_base.sum()-ev_prop.sum())/ev_base.sum(),5),
                  eval_windows=len(valid),
+                 eval_density_sorted_cycles=density_sorted_eval,
+                 eval_random_median_cycles=float(np.median(random_eval)),
+                 eval_random_best_cycles=min(random_eval),
+                 beats_density_sorted_on_eval=bool(ev_prop.sum()<density_sorted_eval),
+                 beats_random_median_on_eval=bool(ev_prop.sum()<np.median(random_eval)),
+
                  original_channel_order=encode_order(group).tolist(),
                  group_of_original_channel=group.tolist())
         rows.append(row)
