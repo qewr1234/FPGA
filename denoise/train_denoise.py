@@ -590,6 +590,15 @@ def main():
     rng = np.random.default_rng(args.seed)
 
     dev = ('cuda' if torch.cuda.is_available() else 'cpu') if args.device == 'auto' else args.device
+    hw = dict(device=dev, torch=torch.__version__)
+    if dev.startswith('cuda'):
+        # Full fp32 convolutions, as on the CPU (cuDNN would use TF32 on recent GPUs),
+        # and cuDNN's deterministic convolution algorithms.
+        torch.backends.cudnn.allow_tf32 = False
+        torch.backends.cuda.matmul.allow_tf32 = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        hw.update(gpu=torch.cuda.get_device_name(torch.device(dev)), tf32=False, cudnn_deterministic=True)
     dil = [int(v) for v in args.dilation.split(',')] if args.dilation else None
     if args.arch == 'unet':
         c1, c2, enc, body, dec, up_ch = [int(v) for v in args.unet.split(',')]
@@ -606,7 +615,7 @@ def main():
                              ('_dil' if max(net.dilation) > 1 else '') +
                              {'maxout': '_mo', 'avg': '_avg', 'none': ''}[net.combine] +
                              ('_res' if net.residual else ('' if net.skip else '_noskip')))
-    print(f'device: {dev}')
+    print(f'device: {dev} (' + ', '.join(f'{k} {v}' for k, v in hw.items() if k != 'device') + ')')
     shapes = net.layer_shapes()
     for n, k, c, _ in shapes:
         assert k <= K_MAX and c <= COUT_MAX, f'{n}: K={k} COUT={c} exceeds the board build'
@@ -670,7 +679,7 @@ def main():
 
     def write_json():
         (HERE/f'{name}_train.json').write_text(json.dumps(dict(
-            name=name, args=vars(args), layers=shapes, board_cycles_per_pixel=cpp,
+            name=name, args=vars(args), hardware=hw, layers=shapes, board_cycles_per_pixel=cpp,
             best_val_epoch=best_ep if val is not None else None, resumed=resumed,
             curve=curve), indent=2), encoding='utf-8')
 
