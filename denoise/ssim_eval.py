@@ -15,9 +15,11 @@ Every output is rebuilt from the seed-0 noise the PSNR tables use, and each
 image's PSNR is checked against the stored value before its SSIM is kept: the
 integer models run through the board driver's host emulation
 (scripts/run_denoise.py, the arithmetic the board reproduces bit for bit) and
-must match int_eval.json to 1e-5 dB (the images agree to the pixel, but
-common.psnr averages in float32 and another PC's numpy rounds that sum
-differently, by up to about 2e-6 dB; the largest gap is recorded per model);
+must match int_eval.json to 1e-5 dB (common.psnr averages in float32 and
+another PC's numpy rounds that sum differently, by up to about 2e-6 dB with
+identical images, as checked pixel for pixel on dn_d10_c45_us_fx_qat's Set12;
+the check alone would not catch a single 1-LSB pixel; the largest gap is
+recorded per model);
 BM3D must match baselines.json (clipped
 7-bit input) and bm3d_protocol.json (unclipped) to 1e-3 dB; DnCNN-S must match
 dncnn_s_protocol.json to 1e-3 dB.

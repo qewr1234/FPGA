@@ -227,8 +227,11 @@ def main():
         out, recs = denoise(q_in, man, layers, args, stem, args.start_layer)
         p_noisy, p_out = psnr(clean, noisy), psnr(clean, out.astype(np.float32)/255)
         # The quantizer scored this exact image with the same integer model.
-        # 1e-5: the images agree to the pixel, but psnr() averages in float32 and
-        # int_eval.json may come from another PC whose numpy rounds that sum differently.
+        # 1e-5: psnr() averages in float32, and int_eval.json may come from another PC
+        # whose numpy rounds that sum differently (up to about 2e-6 dB with identical
+        # images). A gap this small does not by itself prove pixel equality, which a
+        # single 1-LSB pixel would also pass; the board's layer-by-layer comparison above
+        # is the bit-exact check.
         if abs(p_out - int_eval[name]) > 1e-5:
             raise SystemExit(f'{name}: {p_out:.4f} dB here but {int_eval[name]:.4f} dB in '
                              f'int_eval.json -- the driver and the quantizer disagree')

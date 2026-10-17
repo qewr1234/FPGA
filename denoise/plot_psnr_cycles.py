@@ -6,7 +6,9 @@
 Points are the integer (board-arithmetic) Set12 PSNRs from denoise/export/*/int_eval.json
 at the corrected cycle model's cost (board-measured models marked); the B-32 points are
 the fixed-budget (120 epochs + 15 QAT epochs) networks, three seeds each, joined by their
-range and drawn 5% apart in x (both cost about 670 cycles), with the parameter-matched
+range; both cost about 670 cycles, so ReLU is drawn 5% left and maxout 5% right of its
+cost, and the seeds within each 1.5% apart, at most 7% off (no marker hides another),
+with the parameter-matched
 45-channel ReLU network beside them, BM3D under the paper's input and on unclipped noise
 as horizontal lines, and the public DnCNN-S on the same input at its modelled cost.
 Second panel: BSD68.
@@ -35,6 +37,7 @@ MODELS = [  # name or seed group, label, family, marker, x factor (B-32 groups d
     (('dn_d10_c32_us_mo_fx_qat', 'dn_d10_c32_us_mo_fx_s2_qat', 'dn_d10_c32_us_mo_fx_s3_qat'), 'B-32 maxout+QAT', 'M', 'D', 1.05),
     ('dn_d10_c45_us_fx_qat', '45ch ReLU+QAT', 'R', 'v', 1.0),
 ]
+SEED_DX = (1/1.015, 1.0, 1.015)  # seeds 1, 2, 3 within a group, so that none hides another
 COLOR = {'A': INK, 'B': BLUE, 'R': AQUA, 'M': ORANGE}
 LABEL_DX = {  # per-panel label offsets (points) by label, chosen by looking at the render; None = no label
     # (dx, dy, anchor): the label hangs off the group's lowest ('lo') or highest ('hi') point
@@ -83,17 +86,17 @@ def main():
             for name in names:
                 man = json.loads((HERE/'export'/name/'manifest.json').read_text())
                 ev = json.loads((HERE/'export'/name/'int_eval.json').read_text())
-                x = (board_cycles(name) or model_cycles(man))*fx
+                x = (board_cycles(name) or model_cycles(man))*fx*(SEED_DX[names.index(name)] if len(names) > 1 else 1)
                 y = ev[s]['integer']
                 filled = board_cycles(name) is not None
                 ax.plot(x, y, mk, ms=5.5 if len(names) == 1 else 4.5, mfc=COLOR[fam] if filled else 'white',
                         mec=COLOR[fam], mew=1.2, zorder=3.5 if filled else 3)   # a board point stays visible
                 pts.append((x, y))
-            if len(pts) > 1:                           # the seeds' range
-                ax.plot([pts[0][0]]*2, [min(p[1] for p in pts), max(p[1] for p in pts)], color=COLOR[fam], lw=0.8, zorder=2)
+            if len(pts) > 1:                           # the seeds' range, at the group's x
+                ax.plot([pts[1][0]]*2, [min(p[1] for p in pts), max(p[1] for p in pts)], color=COLOR[fam], lw=0.8, zorder=2)
             if LABEL_DX[s][label] is not None:
                 dx, dy, at = LABEL_DX[s][label]
-                x, y = pts[0][0], (max if at == 'hi' else min)(p[1] for p in pts)
+                x, y = pts[len(pts)//2][0], (max if at == 'hi' else min)(p[1] for p in pts)
                 ax.annotate(LABEL_TEXT.get(label, text.get(label, label)), (x, y), xytext=(dx, dy), textcoords='offset points',
                             fontsize=6.5, color=INK, zorder=4, ha='center' if at == 'hi' and dy > 2 else ('right' if dx < 0 else 'left'),
                             va='bottom' if dy > 2 else ('top' if dy < -2 else 'center'))
