@@ -1,0 +1,22 @@
+name: Check Q1 bank mechanism cost model
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/q1_bank_mechanism.py"
+      - "RUN_GPU_Q1_BANK_MECHANISM.cmd"
+      - ".github/workflows/q1_bank_mechanism_check.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  model-selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install CPU-only numerical dependencies
+        run: python3 -m pip install "numpy==1.26.4" "Pillow>=10,<12"
+      - name: Compile and test mathematical W4 bank-floor invariants
+        run: |
+          python3 -m py_compile scripts/q1_bank_mechanism.py
+          python3 scripts/q1_bank_mechanism.py --selftest
