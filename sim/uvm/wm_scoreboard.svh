@@ -9,16 +9,18 @@
 //     in the geometry (RUN_K, RUN_COUT) current at the time. CTRL[5] resets the
 //     walk, CTRL[4] arms a run of NWINDOWS windows.
 //   - CTRL[1]=0: each beat is four 7-bit activations, packed flat across
-//     windows; K consecutive activations are one window.
+//     windows; K consecutive activations are one window. On a W=4 build RUN_K
+//     is a multiple of 4, so this is the same as one window per K/4 beats.
 //   - every window produces RUN_COUT results ReLU(bias[c] + sum_t w[c][t]*a[t]),
 //     in channel order, TLAST on the last channel of the last window.
-//   - RUN_K / RUN_COUT clamp 0 and anything above the build to the build.
+//   - RUN_K / RUN_COUT clamp 0 and anything above the build to the build; on a
+//     W=4 build RUN_K then rounds up to a multiple of 4.
 //
 // Every output beat is compared in order. Register reads are compared where the
 // value is defined by the spec (ID, geometry, CTRL, NWINDOWS, CFGCOUNT, and the
 // end-of-run counters once a run has finished); CYCLES is checked against the
-// one bound that holds for every build -- the input port takes one activation
-// per cycle, so a run can never be shorter than NWINDOWS*K cycles -- and the
+// one bound that holds for every build -- the core takes W activations per
+// cycle, so a run can never be shorter than NWINDOWS*K/W cycles -- and the
 // stall counters must read 0 whenever nothing throttled the run.
 
 `uvm_analysis_imp_decl(_axil)
@@ -29,6 +31,7 @@
 class wm_run_obs extends uvm_object;
     `uvm_object_utils(wm_run_obs)
     int unsigned k, cout, nwin, mode_seq;
+    int unsigned k_req;          // RUN_K as written (clamped), before W=4 rounds it
     int unsigned acts, zero_acts, zero_windows;
     int unsigned outputs, relu_clamped, max_weight_hits, min_weight_hits;
     int unsigned cycles, in_stall, out_stall;
@@ -55,6 +58,7 @@ class wm_scoreboard extends uvm_component;
 
     // ---- mirrored DUT state ----
     int unsigned run_k, run_cout, nwin;
+    int unsigned run_k_req;      // RUN_K as written, clamped but not rounded
     bit          core_rst, cfg_mode;
     bit [1:0]    mode_seq;
     int unsigned cfg_ch, cfg_tp, cfg_count;
@@ -97,7 +101,7 @@ class wm_scoreboard extends uvm_component;
         foreach(weights[i]) weights[i] = 0;
         foreach(biases[i])  biases[i]  = 0;
         // Reset values of the DUT.
-        run_k = cfg.kmax; run_cout = cfg.coutmax; nwin = 0;
+        run_k = cfg.kmax; run_k_req = cfg.kmax; run_cout = cfg.coutmax; nwin = 0;
         core_rst = 1; cfg_mode = 0; mode_seq = 0;
         cfg_ch = 0; cfg_tp = 0; cfg_phase = 0; cfg_count = 0;
         armed = 0;
@@ -139,13 +143,17 @@ class wm_scoreboard extends uvm_component;
                 r_in_thr = cfg.in_idle_pct != 0; r_out_thr = cfg.out_stall_pct != 0;
                 obs = wm_run_obs::type_id::create("obs");
                 obs.k = r_k; obs.cout = r_cout; obs.nwin = r_nwin; obs.mode_seq = d[3:2];
+                obs.k_req = cfg.runtime_geom ? run_k_req : cfg.kmax;
                 obs.in_throttled  = r_in_thr;
                 obs.out_throttled = r_out_thr;
             end
             if(d[5]) begin cfg_ch = 0; cfg_tp = 0; cfg_phase = 0; cfg_count = 0; end
         end
         REG_NWIN:     nwin     = d;
-        REG_RUN_K:    run_k    = (d == 0 || d > cfg.kmax)    ? cfg.kmax    : d;
+        REG_RUN_K: begin
+            run_k_req = (d == 0 || d > cfg.kmax) ? cfg.kmax : d;
+            run_k     = (run_k_req + cfg.w - 1) / cfg.w * cfg.w;   // kmax is a multiple of w
+        end
         REG_RUN_COUT: run_cout = (d == 0 || d > cfg.coutmax) ? cfg.coutmax : d;
         default: ;
         endcase
@@ -184,9 +192,9 @@ class wm_scoreboard extends uvm_component;
         REG_OUTCOUNT: if(run_complete()) expect_reg("OUTCOUNT", a, d, r_nwin*r_cout);
         REG_CYCLES: if(run_complete()) begin
             n_reads_checked++;
-            if(d < r_nwin*r_k)
+            if(d < r_nwin*r_k/cfg.w)
                 `uvm_error("SB_REG", $sformatf(
-                    "CYCLES=%0d is below the input floor NWINDOWS*K=%0d", d, r_nwin*r_k))
+                    "CYCLES=%0d is below the input floor NWINDOWS*K/W=%0d", d, r_nwin*r_k/cfg.w))
             if(obs != null) begin
                 obs.cycles = d;
                 run_ap.write(obs);

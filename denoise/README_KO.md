@@ -126,6 +126,40 @@ B-32 QAT 모델의 시드 1–3 평균 SSIM(Set12 / BSD68): ReLU 0.8459 / 0.8122
 
 비교 그림: `figures/05_dn_d10_c64_us_es_qat_board.pdf` (B+QAT, 30.06 dB). `make_figure.py --model dn_d10_c64_us_es_qat --board build/denoise_run_b_qat`로 만든다. 사이클 대 PSNR 산점도(논문 그림 2): `python denoise/plot_psnr_cycles.py` → `figures/psnr_vs_cycles.pdf`.
 
+### 4값/사이클 포트 (W=4) — 보드 측정 전
+
+심사 지적("병목은 이 설계가 스스로 정한 것이고, 병목을 바꿨을 때의 측정이 없다")에 실험으로 답하려고, 창 입력 포트가 사이클당 값 4개를 받는 코어를 만들었다. **보드 측정은 아직 없다.** 아래 예측은 이 비트스트림을 만들기 전에 커밋했다(7e81f6b, `predict_w4.py` → `w4_prediction.json`). 측정과 비교하는 기준도 측정 전에 `compare_w4.py`에 적어 두었다.
+
+- **바뀐 것:** `rtl/banked_window_mac.sv`에 파라미터 W(1 또는 T). W = T = 4이면 한 beat의 탭 4r..4r+3이 네 뱅크의 같은 행에 하나씩 들어가므로 "뱅크마다 사이클당 튜플 하나"는 그대로이고, 창 적재가 K+1에서 K/4+1 사이클로 준다. 래퍼(`rtl/window_mac_axis.sv`)는 beat를 통째로 넘긴다. 창이 beat 경계에서 끝나야 하므로 호스트가 창과 가중치를 4의 배수 길이로 0 패딩한다(`run_denoise.py --w4`; 0×0이라 결과는 같다). W=4에서 RUN_K는 4의 배수로 올림된다(패딩을 잊어도 코어가 멈추지 않고, 써 넣은 값과 읽은 값이 달라진다). ID 레지스터 비트 9가 W=4를 표시한다. 보드 스크립트는 비트 9인데 K가 4의 배수가 아니면 멈추고, `run_denoise.py`는 실행마다 ID와 `--w4`가 맞는지 확인하며 IN_STALL/OUT_STALL을 기록한다. 기본값 W=1 빌드의 신호는 바뀌지 않는다.
+- **시뮬레이션 검증 (보드 아님):**
+  - 코어 단독(Icarus, `scripts/run_stream_checks.py --suite smoke`): W=4 17개 사례(0 패딩으로 K=4·12·28, P 1–8, DEPTH 1–8, 출력 정지·입력 공백·중간 리셋 포함)에서 모든 출력이 정수 오라클과 같고, 창마다 시작·끝 사이클이 사이클 모델(`scripts/stream_model.py`, 적재 K/4 beat)과 정확히 같다. W=1 142개 사례도 그대로 통과.
+  - 래퍼(`scripts/run_axis_checks.py` smoke·geom·real): W=4 18개 사례에서 CYCLES가 코어 단독 측정과 같고(래퍼 비용 0), 스로틀이 없으면 IN_STALL = 0(매 사이클 beat 하나를 받음), K = 9·27 데이터는 RUN_K에 9·27을 써도 12·28로 읽힌다. 보드 빌드 형상(P=16)에서 VGG11 창(K=576, 출력 128) 64개는 W=4로 62,716 사이클이었다.
+  - UVM(Verilator 5.052, UVM 1.2, `scripts/run_uvm.py`): W=4 빌드 3종(small_w4, fixed_w4, board_w4)의 smoke·reg·random(·CIFAR 형상) 시험 30개가 모두 통과. 시퀀스가 호스트처럼 0 패딩하고 RUN_K는 K나 패딩한 길이 중 하나로 쓴다. W=1 빌드 4종의 39개는 비교한 출력 수까지 이전과 같다.
+  - 뮤턴트(일부러 심은 버그)에 W=4 경로의 버그 5개를 더했다. 결과는 `sim/uvm/RESULTS_UVM_KO.md`.
+- **아직 모르는 것:** DMA가 매 사이클 beat 하나(50 MHz에서 200 MB/s)를 대 줄지. W=1에서는 4사이클에 하나였다. 못 대면 IN_STALL이 0이 아니고, 그 층의 CYCLES에는 DMA 대기가 들어간다(보정하지 않고 그대로 보고한다). 타이밍(100 MHz 배치배선 WNS)도 빌드에서 확인해야 한다.
+
+*W=4 예측 (Set12 05.png, sparse 모드, 창당 `max(K'/4 + 1, ⌈COUT/16⌉ · max(1, 뱅크별 0 아닌 탭 수의 최댓값), COUT)`, K'은 4의 배수로 올린 K, 층의 채움·비움은 뺌)*
+
+| 망 | W=1 보드 (사이클/px) | W=4 예측 (사이클/px) | W=4 dense 상한 |
+|---|---|---|---|
+| A `dn_d7_c32_es` | 1,775.0 | 572.5 | 828.0 |
+| B + QAT `dn_d10_c64_us_es_qat` | 1,323.3 | 683.4 | 1,206.5 |
+| B-32 maxout + QAT `…_mo_fx_qat` | 675.3 | 503.3 | 612.5 |
+| B-32 ReLU + QAT `…_fx_qat` | 668.5 | 202.8 | 316.5 |
+
+같은 계산을 W=1에 쓰면 네 망의 층마다 보드와 15–199 사이클(층마다 붙는 채움·비움) 안에서 맞는다. 예측이 맞으면 B ÷ A는 0.75에서 1.19로(B가 A보다 느려짐), maxout ÷ ReLU는 1.01에서 2.48로 바뀐다. 논문 표 III의 sparse 추정(뱅크 불균형 1.0–1.3 가정)과 비교하면 네 망 각각은 범위 안이지만 maxout ÷ ReLU는 범위(2.59–2.79)보다 낮다. 그 추정은 두 망에 같은 불균형을 가정해 비율을 냈기 때문이다.
+
+실행(옛 PC, Vivado와 보드가 있는 곳):
+
+```
+set CNN_K=1152
+set CNN_COUT=128
+set CNN_RUNTIME_GEOM=1
+RUN_BUILD_ZED.cmd 3 16 4 100 4          REM -> build\zed_v4_p16_t4_w4_<stamp>, 약 1시간
+RUN_W4_DENOISE.cmd                      REM 네 망을 05.png로, 결과는 denoise\board_runs\<model>_05_w4.json
+python denoise\compare_w4.py            REM 예측과 비교 -> denoise\w4_measured.json
+```
+
 ## 실행 순서
 
 ```

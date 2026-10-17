@@ -9,6 +9,11 @@
 //
 // What the layer contains is a wm_layer: a randomized description (geometry,
 // mode, data style, throttling) from which the beats are generated.
+//
+// On a W=4 build the sequence does what the host does for that bitstream: every
+// window and every channel's weights are padded with zero taps to KP, the next
+// multiple of 4. RUN_K is written either as K or as KP at random; the DUT must
+// round the first up to the second.
 
 typedef enum {W_RANDOM, W_EXTREME, W_SPARSE, W_NEGATIVE, W_ZERO} wm_wstyle_e;
 typedef enum {B_ZERO, B_SMALL, B_LARGE} wm_bstyle_e;
@@ -229,15 +234,17 @@ class wm_layer_vseq extends wm_base_vseq;
     task body();
         wm_axis_pkt pkt;
         bit [31:0] d;
-        int unsigned n, polls;
+        int unsigned n, polls, kp;
+        int flat[$];             // the activations as streamed, padded windows
         wm_layer L = layer;
 
         `uvm_info("LAYER", L.convert2string(), UVM_MEDIUM)
         p_sequencer.cfg.in_idle_pct   = L.in_idle_pct;
         p_sequencer.cfg.out_stall_pct = L.out_stall_pct;
 
+        kp = (L.k + p_sequencer.cfg.w - 1) / p_sequencer.cfg.w * p_sequencer.cfg.w;
         if(p_sequencer.cfg.runtime_geom) begin
-            reg_write(REG_RUN_K, L.k);
+            reg_write(REG_RUN_K, (kp != L.k && $urandom_range(1)) ? kp : L.k);
             reg_write(REG_RUN_COUT, L.cout);
         end
 
@@ -245,7 +252,9 @@ class wm_layer_vseq extends wm_base_vseq;
         reg_write(REG_CTRL, 32'h22);
         pkt = wm_axis_pkt::type_id::create("cfg");
         pkt.what = "config";
-        foreach(L.weights[i]) pkt.data.push_back(junk(32'hFF) | (L.weights[i] & 32'hFF));
+        for(int c = 0; c < L.cout; c++)
+            for(int t = 0; t < kp; t++)
+                pkt.data.push_back(junk(32'hFF) | ((t < L.k) ? (L.weights[c*L.k+t] & 32'hFF) : 32'd0));
         foreach(L.biases[i])  pkt.data.push_back(L.biases[i]);
         send(pkt);
         reg_read(REG_CFGCOUNT, d);
@@ -256,11 +265,15 @@ class wm_layer_vseq extends wm_base_vseq;
         reg_write(REG_CTRL, 32'h10 | (L.mode_seq << 2));
         pkt = wm_axis_pkt::type_id::create("acts");
         pkt.what = "activations";
-        n = L.acts.size();
+        flat.delete();
+        for(int w = 0; w < L.nwin; w++)
+            for(int t = 0; t < kp; t++)
+                flat.push_back((t < L.k) ? L.acts[w*L.k+t] : 0);
+        n = flat.size();
         for(int a = 0; a < n; a += 4) begin
             bit [31:0] beat = junk(32'h7F7F_7F7F);
             for(int j = 0; j < 4; j++)
-                if(a+j < n) beat[8*j +: 7] = L.acts[a+j][6:0];
+                if(a+j < n) beat[8*j +: 7] = flat[a+j][6:0];
             pkt.data.push_back(beat);
         end
         send(pkt);
@@ -331,7 +344,8 @@ class wm_reg_vseq extends wm_base_vseq;
         reg_read(REG_NWIN, d);     reg_read(REG_RUN_K, d);   reg_read(REG_RUN_COUT, d);
         reg_read(REG_CFGCOUNT, d);
         // Geometry registers: in range, zero (= built size), above the build.
-        kv = '{1, kmax/2, kmax, 0, kmax+1, 32'h8000_0000, 32'hFFFF_FFFF};
+        // 5 and kmax-1 are not multiples of 4: a W=4 build reads them back rounded up.
+        kv = '{1, 5, kmax/2, kmax-1, kmax, 0, kmax+1, 32'h8000_0000, 32'hFFFF_FFFF};
         cv = '{1, coutmax/2, coutmax, 0, coutmax+1, 32'hFFFF_FFFF};
         foreach(kv[i]) begin reg_write(REG_RUN_K, kv[i]);    reg_read(REG_RUN_K, d);    end
         foreach(cv[i]) begin reg_write(REG_RUN_COUT, cv[i]); reg_read(REG_RUN_COUT, d); end

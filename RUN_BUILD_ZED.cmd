@@ -1,12 +1,22 @@
 @echo off
 rem Build the Zedboard design (Zynq PS + AXI DMA + one core) through to a bitstream.
 rem
-rem   RUN_BUILD_ZED.cmd [IMPL] [P] [T] [CLOCK_MHZ]
+rem   RUN_BUILD_ZED.cmd [IMPL] [P] [T] [CLOCK_MHZ] [W]
 rem
 rem   IMPL       2 = overlapped_window_mac (v3), 3 = banked_window_mac (v4). Default 2.
 rem   P          output-channel lanes. Default 8.
 rem   T          tap banks, v4 only. Default 4.
 rem   CLOCK_MHZ  fabric clock. Default 100.
+rem   W          activations the core takes per cycle: 1, or 4 (v4 with T=4 only;
+rem              built into build\zed_v4_p16_t4_w4_*, run with run_denoise.py --w4).
+rem              Default 1. Always set here, so a W=4 build never leaks into the next.
+rem
+rem K, COUT and runtime geometry come from the environment (CNN_K, CNN_COUT,
+rem CNN_RUNTIME_GEOM). The denoiser and CIFAR bitstream:
+rem   set CNN_K=1152
+rem   set CNN_COUT=128
+rem   set CNN_RUNTIME_GEOM=1
+rem   RUN_BUILD_ZED.cmd 3 16 4 100        (and ... 100 4 for the four-wide port)
 rem
 rem Examples:
 rem   RUN_BUILD_ZED.cmd              v3, P=8, 100 MHz  (start here)
@@ -21,9 +31,11 @@ if "%~1"=="" (set CNN_IMPL=2) else (set CNN_IMPL=%~1)
 if "%~2"=="" (set CNN_P=8)    else (set CNN_P=%~2)
 if "%~3"=="" (set CNN_T=4)    else (set CNN_T=%~3)
 if "%~4"=="" (set CNN_CLOCK_MHZ=100) else (set CNN_CLOCK_MHZ=%~4)
+if "%~5"=="" (set CNN_W=1) else (set CNN_W=%~5)
 if not defined CNN_DEPTH set CNN_DEPTH=2
 
-echo Building: IMPL=%CNN_IMPL% P=%CNN_P% DEPTH=%CNN_DEPTH% T=%CNN_T% clock=%CNN_CLOCK_MHZ% MHz
+echo Building: IMPL=%CNN_IMPL% P=%CNN_P% DEPTH=%CNN_DEPTH% T=%CNN_T% W=%CNN_W% clock=%CNN_CLOCK_MHZ% MHz
+echo           K=%CNN_K% COUT=%CNN_COUT% RUNTIME_GEOM=%CNN_RUNTIME_GEOM%   (empty = the script's default)
 echo This runs synthesis and implementation and takes a while. Leave it alone.
 echo.
 
@@ -53,6 +65,7 @@ echo     set ::env(CNN_IMPL) %CNN_IMPL%
 echo     set ::env(CNN_P) %CNN_P%
 echo     set ::env(CNN_T) %CNN_T%
 echo     set ::env(CNN_CLOCK_MHZ) %CNN_CLOCK_MHZ%
+echo     set ::env(CNN_W) %CNN_W%
 echo     source scripts/build_zedboard.tcl
 echo.
 echo Option 2 - tell this script where Vivado is, then re-run it:

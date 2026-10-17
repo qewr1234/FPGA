@@ -158,7 +158,10 @@ array set CORE {0 0 4 0 8 0 12 0 16 0 20 0 24 0 28 0 32 0 36 0x4D410002}
 set BUILT_K     $LAYOUT_K
 set BUILT_COUT  $COUT
 set HAS_RUNTIME [expr {$FAULT eq "fixedgeom" ? 0 : 1}]
-set CORE(36) [expr {0x4D410000 | ($HAS_RUNTIME << 8) | 2}]
+# "wide" is a bitstream built with CNN_W=4: ID bit 9, and RUN_K rounds up to a
+# multiple of 4 the way window_mac_axis does.
+set WIDE [expr {$FAULT eq "wide" ? 1 : 0}]
+set CORE(36) [expr {0x4D410000 | ($WIDE << 9) | ($HAS_RUNTIME << 8) | 2}]
 set CORE(40) $BUILT_K
 set CORE(44) $BUILT_COUT
 if {$FAULT eq "badid"} { set CORE(36) 0x4D420002 }
@@ -226,7 +229,7 @@ proc mwr {args} {
     while {[string match "-*" [lindex $args 0]]} { set args [lrange $args 1 end] }
     lassign $args addr val
     global MEM WM_BASE DMA_BASE CORE D CFG_MODE ARMED PENDING_RX FAULT
-    global BUILT_K BUILT_COUT
+    global BUILT_K BUILT_COUT WIDE
     layout_geom
     set addr [expr {$addr & 0xffffffff}]
     if {[mmu_blocking]} { error "Memory write error at [format 0x%08X $addr]. MMU section translation fault" }
@@ -243,6 +246,7 @@ proc mwr {args} {
         # size". That clamp is what the run script probes the maximum with.
         if {$off == 40} {
             set CORE(40) [expr {($val == 0 || $val > $BUILT_K) ? $BUILT_K : $val}]
+            if {$WIDE} { set CORE(40) [expr {($CORE(40) + 3) / 4 * 4}] }
             return
         }
         if {$off == 44} {

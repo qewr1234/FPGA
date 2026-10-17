@@ -124,6 +124,31 @@ foreach {cname ck ccout cn} {conv1 27 32 8192 conv4 576 64 2048 conv6 1152 128 5
         incr failures
     }
 }
+# A bitstream with the four-wide window port (ID bit 9) must refuse a layer whose
+# windows are not padded to whole beats, and run one that is.
+foreach {cname ck ccout cn want} {
+    conv1 27 32 8192 "needs windows padded to a multiple of 4 taps"
+    conv4 576 64 2048 "\"activations_per_cycle\": 4"} {
+    wm_blob [file join $boarddir config.bin] [expr {($ccout * $ck + $ccout) * 4}]
+    wm_blob [file join $boarddir input.bin]  [expr {$cn * $ck}]
+    wm_blob [file join $boarddir gold.bin]   [expr {$cn * $ccout * 4}]
+    set fh [open [file join $boarddir layout.json] w]
+    puts $fh "{\"split\": \"cifar\", \"K\": $ck, \"COUT\": $ccout,"
+    puts $fh " \"frames\": $cn, \"windows\": $cn, \"mode_seq\": 1}"
+    close $fh
+    file delete -force [file join $repo build fake_xsdb_build] [file join $boarddir run.json]
+    set rc [catch {exec [info nameofexecutable] $inner $repo 0 wide 2>@1} out]
+    if {[file exists [file join $boarddir run.json]]} {
+        set fh [open [file join $boarddir run.json]]; append out [read $fh]; close $fh
+    }
+    if {[string first $want $out] >= 0} {
+        puts [format "  ok    %-26s %s" "four-wide $cname" "-> $want"]
+    } else {
+        puts [format "  FAIL  %-26s expected '%s'" "four-wide $cname" $want]
+        puts "        got: [string range $out end-600 end]"
+        incr failures
+    }
+}
 unset ::env(WM_BOARD_DIR)
 file delete -force $boarddir
 

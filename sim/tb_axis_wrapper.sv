@@ -12,6 +12,12 @@
 //      IN_GAP or OUT_GAP throttles, so a DMA-bound hardware run is detectable.
 //
 // IN_GAP/OUT_GAP model a DMA that cannot keep up; the default 0 is the clean case.
+//
+// W=4 builds the four-wide window port. The bench then does what the host does
+// for that bitstream: it pads every window and every channel's weights with zero
+// taps up to KP, a multiple of 4, and streams windows beat aligned. It writes the
+// data's own K to RUN_K and requires the read-back to be KP, so a host that forgot
+// to pad would see the mismatch instead of a hang.
 module tb_axis_wrapper;
     // K and COUT are the geometry of the DATA: the vectors, the oracle and the
     // streams are all this shape. KMAX/COUTMAX are the geometry the wrapper is
@@ -19,16 +25,18 @@ module tb_axis_wrapper;
     // design this bench has always checked. Setting them larger, with
     // RUNTIME_GEOM=1, checks the case the CIFAR driver depends on: one large
     // build running a small layer, told its shape over AXI4-Lite at run time.
-    parameter integer K=12, COUT=9, P=2, DEPTH=2, N=8, IMPL=2, T=1;
+    parameter integer K=12, COUT=9, P=2, DEPTH=2, N=8, IMPL=2, T=1, W=1;
     parameter integer KMAX=0, COUTMAX=0, RUNTIME_GEOM=0;
     parameter integer MODE_SEQ=2, IN_GAP=0, OUT_GAP=0;
     parameter integer EXPECT_CYCLES=0;   // 0 = do not check against the core bench
     localparam integer NWIN=(MODE_SEQ==2) ? 2*N : N;
     localparam integer KB=(KMAX==0) ? K : KMAX;
     localparam integer CB=(COUTMAX==0) ? COUT : COUTMAX;
-    // Activations are packed four to a beat with no per-window alignment, so the
-    // run only needs the TOTAL to divide by four -- a window may end mid beat.
-    localparam integer ACTS=NWIN*K;
+    // W=1: activations are packed four to a beat with no per-window alignment, so
+    // the run only needs the TOTAL to divide by four -- a window may end mid beat.
+    // W=4: each window is KP taps, the last KP-K of them zero, so beats align.
+    localparam integer KP=(W==1) ? K : (K+3)/4*4;
+    localparam integer ACTS=NWIN*KP;
     localparam integer BEATS=(ACTS+3)/4;
 
     reg aclk=0; always #5 aclk=~aclk;
@@ -44,7 +52,7 @@ module tb_axis_wrapper;
     wire [31:0] m_tdata;   wire m_tvalid;  reg m_tready=1; wire m_tlast;
 
     window_mac_axis #(.K(KB),.COUT(CB),.P(P),.DEPTH(DEPTH),.T(T),.IMPL(IMPL),
-                      .RUNTIME_GEOM(RUNTIME_GEOM)) dut (
+                      .RUNTIME_GEOM(RUNTIME_GEOM),.W(W)) dut (
         .aclk(aclk), .aresetn(aresetn),
         .s_axi_awaddr(awaddr), .s_axi_awvalid(awvalid), .s_axi_awready(awready),
         .s_axi_wdata(wdata), .s_axi_wstrb(4'hF), .s_axi_wvalid(wvalid), .s_axi_wready(wready),
@@ -85,8 +93,8 @@ module tb_axis_wrapper;
     // finished its last window by then and never looks at them.
     function automatic [6:0] act(input integer a);
         begin
-            if(a>=ACTS) act=7'd0;
-            else act=inputs[win_frame(a/K)*K + (a%K)][6:0];
+            if(a>=ACTS || a%KP>=K) act=7'd0;
+            else act=inputs[win_frame(a/KP)*K + (a%KP)][6:0];
         end
     endfunction
 
@@ -152,7 +160,7 @@ module tb_axis_wrapper;
         repeat(4) @(negedge aclk);
 
         axil_read(6'h24, r_id);
-        if(r_id !== (32'h4D41_0000 | (RUNTIME_GEOM<<8) | IMPL))
+        if(r_id !== (32'h4D41_0000 | ((W==4)<<9) | (RUNTIME_GEOM<<8) | IMPL))
             $fatal(1,"ID register reads %h",r_id);
 
         // ---- runtime geometry ----
@@ -165,8 +173,9 @@ module tb_axis_wrapper;
             axil_write(6'h2C, COUT);
             axil_read(6'h28, r_run_k);
             axil_read(6'h2C, r_run_cout);
-            if(r_run_k !== K)
-                $fatal(1,"RUN_K reads %0d after writing %0d: build is K=%0d",r_run_k,K,KB);
+            if(r_run_k !== KP)
+                $fatal(1,"RUN_K reads %0d after writing %0d, expected %0d: build is K=%0d",
+                       r_run_k,K,KP,KB);
             if(r_run_cout !== COUT)
                 $fatal(1,"RUN_COUT reads %0d after writing %0d: build is COUT=%0d",
                        r_run_cout,COUT,CB);
@@ -176,13 +185,13 @@ module tb_axis_wrapper;
         // core out of reset, cfg_mode=1, reset the configuration walker
         axil_write(6'h00, 32'h22);
         for(ci=0;ci<COUT;ci=ci+1)
-            for(t=0;t<K;t=t+1)
-                push({24'd0, weights[ci*K+t]}, 0);
+            for(t=0;t<KP;t=t+1)
+                push({24'd0, (t<K) ? weights[ci*K+t] : 8'd0}, 0);
         for(ci=0;ci<COUT;ci=ci+1)
             push(biases[ci], 0);
         axil_read(6'h20, r_cfgcount);
-        if(r_cfgcount !== COUT*K+COUT)
-            $fatal(1,"configuration accepted %0d items, expected %0d",r_cfgcount,COUT*K+COUT);
+        if(r_cfgcount !== COUT*KP+COUT)
+            $fatal(1,"configuration accepted %0d items, expected %0d",r_cfgcount,COUT*KP+COUT);
 
         // ---- run ----
         axil_write(6'h04, NWIN);
@@ -219,8 +228,8 @@ module tb_axis_wrapper;
             $fatal(1,"CYCLES=%0d but the core bench measured %0d for this configuration",
                    r_cycles,EXPECT_CYCLES);
 
-        $display("PASS ALL checked_values=%0d windows=%0d cycles=%0d in_stall=%0d out_stall=%0d K=%0d COUT=%0d KB=%0d CB=%0d RUNTIME_GEOM=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d MODE_SEQ=%0d IN_GAP=%0d OUT_GAP=%0d",
-                 checked, win_out, r_cycles, r_instl, r_outstl, K, COUT, KB, CB, RUNTIME_GEOM, P, DEPTH, IMPL, T, MODE_SEQ, IN_GAP, OUT_GAP);
+        $display("PASS ALL checked_values=%0d windows=%0d cycles=%0d in_stall=%0d out_stall=%0d K=%0d COUT=%0d KB=%0d CB=%0d RUNTIME_GEOM=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d MODE_SEQ=%0d IN_GAP=%0d OUT_GAP=%0d W=%0d KP=%0d",
+                 checked, win_out, r_cycles, r_instl, r_outstl, K, COUT, KB, CB, RUNTIME_GEOM, P, DEPTH, IMPL, T, MODE_SEQ, IN_GAP, OUT_GAP, W, KP);
         $finish;
     end
 

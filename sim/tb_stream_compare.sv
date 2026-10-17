@@ -8,9 +8,11 @@
 // cannot simply hold start_ready low and are measured on the same stream.
 // Cycle metric per window: start-accept edge and last-output-accept edge, both
 // as posedge indices. The stream total is end[last]-start[0].
+// W=4 (IMPL=3, T=4 only) sends a window as K/4 beats of four activations, tap
+// 4r+j in lane j; the vectors must already be padded so that K is a multiple of 4.
 module tb_stream_compare;
     parameter integer K=27,COUT=9,P=2,DEPTH=2,N=8,IMPL=2;
-    parameter integer STALL_LEN=0,PATTERN=0,INPUT_GAPS=0,MODE_SEQ=2,RESET_TEST=0,T=1;
+    parameter integer STALL_LEN=0,PATTERN=0,INPUT_GAPS=0,MODE_SEQ=2,RESET_TEST=0,T=1,W=1;
     localparam integer KW=(K<2 ? 1:$clog2(K)),CW=(COUT<2 ? 1:$clog2(COUT));
     localparam integer NWIN=(MODE_SEQ==2) ? 2*N : N;
     localparam integer GROUPS=(COUT+P-1)/P;
@@ -35,7 +37,7 @@ module tb_stream_compare;
     reg [CW-1:0] cfg_channel=0;
     reg [KW-1:0] cfg_tap=0;
     reg signed [31:0] cfg_data=0;
-    reg [6:0] s_data=0;
+    reg [7*W-1:0] s_data=0;
     wire signed [31:0] m_data;wire [CW-1:0] m_channel;
     wire issue,tap_issue;wire [31:0] issue_pos;
     generate if(IMPL==0) begin: v1
@@ -66,7 +68,7 @@ module tb_stream_compare;
         end
     end else begin: v4
         banked_window_mac #(.K(K),.COUT(COUT),.P(P),.DEPTH(DEPTH),.T(T),
-                            .RUNTIME_GEOM(RUNTIME_GEOM)) dut(.*);
+                            .RUNTIME_GEOM(RUNTIME_GEOM),.W(W)) dut(.*);
         assign issue=dut.issue;assign tap_issue=dut.tap_issue;assign issue_pos=dut.issue_pos;
         always @(posedge clk) if(rst_n) begin
             if(dut.d_valid && dut.d_last && dut.slot_ready[dut.d_slot]) $fatal(1,"overwriting an unconsumed result");
@@ -76,12 +78,15 @@ module tb_stream_compare;
             if(dut.c_valid && dut.c_last && dut.slot_ready[dut.c_slot]) $fatal(1,"overwriting an unconsumed result");
             if(dut.head>=DEPTH || dut.tail>=DEPTH) $fatal(1,"FIFO pointer outside depth");
             // Bank ownership: never write the bank being issued, never issue an unloaded bank.
-            if(dut.store_input && dut.issue && dut.load_bank==dut.run_bank) $fatal(1,"tuple bank read/write collision");
+            if((W==1 ? dut.store_input : |dut.st_w) && dut.issue && dut.load_bank==dut.run_bank)
+                $fatal(1,"tuple bank read/write collision");
             if(dut.take_start && dut.busy[dut.load_bank]) $fatal(1,"start accepted into a busy bank");
             if(dut.issue && !dut.loaded[dut.run_bank]) $fatal(1,"issue from an unloaded bank");
             if(dut.take_cfg && !dut.core_idle) $fatal(1,"configuration accepted while not idle");
         end
     end endgenerate
+    initial if(W!=1 && (IMPL!=3 || T!=W || RK%W!=0))
+        $fatal(1,"W=%0d needs IMPL=3, T=W and K a multiple of W (got IMPL=%0d T=%0d K=%0d)",W,IMPL,T,RK);
     reg [7:0] weights [0:COUT*K-1];
     reg [31:0] biases [0:COUT-1];
     reg [7:0] inputs [0:N*K-1];
@@ -171,14 +176,19 @@ module tb_stream_compare;
             acc_cycle=cycle;start_valid=0;
         end
     endtask
-    // Send K beats of frame f (called at a negedge), return at the negedge after the last accept.
+    // Send `limit` activations of frame f, W per beat (called at a negedge), return
+    // at the negedge after the last accept. limit is a multiple of W.
+    integer lane;
     task send_input(input integer f,input integer limit);
         begin
             idx=0;age=0;
             while(idx<limit) begin
-                s_valid=!(INPUT_GAPS && (age%9==3 || age%9==4));s_data=inputs[f*RK+idx][6:0];
-                if(inputs[f*RK+idx]>127) $fatal(1,"input outside proof domain");
-                @(negedge clk);if(s_acc) idx=idx+1;
+                s_valid=!(INPUT_GAPS && (age%9==3 || age%9==4));
+                for(lane=0;lane<W;lane=lane+1) begin
+                    s_data[7*lane+:7]=inputs[f*RK+idx+lane][6:0];
+                    if(inputs[f*RK+idx+lane]>127) $fatal(1,"input outside proof domain");
+                end
+                @(negedge clk);if(s_acc) idx=idx+W;
                 age=age+1;
             end
             s_valid=0;
@@ -214,7 +224,7 @@ module tb_stream_compare;
             force_block=1;@(negedge clk);offer_start(0,dummy);send_input(1,RK);wait(m_valid);
             repeat(24) @(negedge clk);
             if(IMPL>=2) begin
-                @(negedge clk);offer_start(1,dummy);send_input(0,(RK>=2) ? RK/2 : 1);
+                @(negedge clk);offer_start(1,dummy);send_input(0,(RK>=2*W) ? RK/2/W*W : W);
                 repeat(8) @(negedge clk);
             end
             abort_and_reset();
@@ -238,7 +248,7 @@ module tb_stream_compare;
             send_input(win_frame(w),RK);
         end
         wait(win_out==NWIN);@(negedge clk);
-        if(input_beats!=NWIN*RK) $fatal(1,"input beat count %0d != %0d",input_beats,NWIN*RK);
+        if(input_beats!=NWIN*RK/W) $fatal(1,"input beat count %0d != %0d",input_beats,NWIN*RK/W);
         if(issues!=expect_issues) $fatal(1,"issued tap count %0d != %0d",issues,expect_issues);
         repeat(5) @(negedge clk);
         if(m_valid || !start_ready || !cfg_ready) $fatal(1,"not idle after completion");
@@ -248,8 +258,8 @@ module tb_stream_compare;
                 w,win_frame(w),win_mode(w),RK,RC,P,DEPTH,IMPL,T,nz,start_cycle[w],end_cycle[w],STALL_LEN,PATTERN,INPUT_GAPS);
         end
         $fclose(csv);
-        $display("PASS ALL checked_values=%0d windows=%0d total_cycles=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d STALL=%0d PATTERN=%0d GAPS=%0d RESET=%0d",
-                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],RK,RC,P,DEPTH,IMPL,T,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST);
+        $display("PASS ALL checked_values=%0d windows=%0d total_cycles=%0d K=%0d COUT=%0d P=%0d DEPTH=%0d IMPL=%0d T=%0d STALL=%0d PATTERN=%0d GAPS=%0d RESET=%0d W=%0d",
+                 checked,NWIN,end_cycle[NWIN-1]-start_cycle[0],RK,RC,P,DEPTH,IMPL,T,STALL_LEN,PATTERN,INPUT_GAPS,RESET_TEST,W);
         $finish;
     end
 endmodule

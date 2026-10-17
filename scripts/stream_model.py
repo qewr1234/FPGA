@@ -13,6 +13,11 @@ checked by the RTL testbench against the integer oracle.
 
 Returns [(start_edge, end_edge)] per window. end_edge is the edge at which the
 COUT-1 output of that window is accepted.
+
+w is the activations per input beat (banked core only): a window loads in k/w
+beats, so the producer and the core's load counter both count k/w. Nothing else
+changes: at w = T every beat puts at most one tuple in each bank, so the first
+`taps` beats of a window still stand for the stored ones.
 """
 
 
@@ -352,12 +357,14 @@ class V4(V3):
             self.output_channel = 0 if c['m_last'] else self.output_channel+1
 
 
-def stream_model(k, cout, p, depth, impl, taps, stall=0, pattern=0, gaps=0, limit=400000000):
-    """`taps[w]` is the per-group issue cost of window w: stored tuples for
+def stream_model(k, cout, p, depth, impl, taps, stall=0, pattern=0, gaps=0, limit=400000000, w=1):
+    """`taps[i]` is the per-group issue cost of window i: stored tuples for
     impl 0-2 (K dense, nnz sparse); for impl 3 the max over banks of the
-    tuples stored in that bank."""
-    core = {0: V1, 1: V2, 2: V3, 3: V4}[impl](k, cout, p, depth)
-    prod = Producer(k, taps, gaps)
+    tuples stored in that bank. `w` is the activations per beat (see above)."""
+    assert w == 1 or (impl == 3 and k % w == 0), (w, impl, k)
+    beats = k//w                   # load length; ready_at pattern 2 keeps the full k
+    core = {0: V1, 1: V2, 2: V3, 3: V4}[impl](beats, cout, p, depth)
+    prod = Producer(beats, taps, gaps)
     starts, ends = [], []
     e = 0
     while len(ends) < len(taps):

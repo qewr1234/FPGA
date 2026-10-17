@@ -128,29 +128,46 @@ def maxpool2(q):
 
 
 # -------------------------------------------------------------- board files ---
-def write_board_files(cfg_src, x, gold, mode_seq):
+def write_board_files(cfg_src, x, gold, mode_seq, pad4=False):
     """Lay out what run_board_xsdb.tcl loads, and say what the run will be.
 
     config.bin is copied rather than rebuilt: it is the exporter's output, and
     the one thing in this pipeline that must be byte-identical to what was
     verified. input.bin is the windows as raw bytes -- the wrapper takes four
     activations per 32-bit beat, low byte first, which is just this order.
+
+    pad4 is for a bitstream with the four-wide window port (CNN_W=4, ID bit 9),
+    which loads a window as whole beats: every window, and every channel's
+    weights, get zero taps appended up to the next multiple of 4. Zero times zero
+    adds nothing, so gold stays as it is. Only then is config.bin rebuilt, from
+    the exporter's own file, with zero words inserted after each channel.
     """
     n, k = x.shape
     cout = gold.shape[1]
-    if n*k % 4:
+    kp = -(-k//4)*4 if pad4 else k
+    if n*kp % 4:
         raise SystemExit(f'{n} windows of {k} taps is {n*k} activations, which '
                          f'does not pack into whole 32-bit beats')
     BOARD.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(cfg_src, BOARD/'config.bin')
+    if kp == k:
+        shutil.copyfile(cfg_src, BOARD/'config.bin')
+    else:
+        blob = np.frombuffer(Path(cfg_src).read_bytes(), '<i4')
+        if blob.size != cout*k + cout:
+            raise SystemExit(f'{cfg_src} holds {blob.size} words, expected {cout*k + cout} '
+                             f'for K={k} COUT={cout}')
+        wp = np.zeros((cout, kp), '<i4')
+        wp[:, :k] = blob[:cout*k].reshape(cout, k)
+        (BOARD/'config.bin').write_bytes(np.concatenate([wp.reshape(-1), blob[cout*k:]]).tobytes())
+        x = np.pad(x, ((0, 0), (0, kp-k)))
     (BOARD/'input.bin').write_bytes(np.ascontiguousarray(x, np.uint8).tobytes())
     (BOARD/'gold.bin').write_bytes(gold.astype('<i4').tobytes())
     (BOARD/'run.json').unlink(missing_ok=True)
     (BOARD/'results.bin').unlink(missing_ok=True)
-    layout = dict(split='cifar', K=int(k), COUT=int(cout),
+    layout = dict(split='cifar', K=int(kp), COUT=int(cout),
                   frames=int(n), windows=int(n), mode_seq=int(mode_seq),
                   config_words=(BOARD/'config.bin').stat().st_size//4,
-                  input_words=n*k//4, gold_words=n*cout,
+                  input_words=n*kp//4, gold_words=n*cout, zero_taps_appended=int(kp-k),
                   addresses={'config': '0x10000000', 'input': '0x10100000',
                              'result': '0x10200000', 'gold': '0x10300000'})
     (BOARD/'layout.json').write_text(json.dumps(layout, indent=2)+'\n', encoding='utf-8')

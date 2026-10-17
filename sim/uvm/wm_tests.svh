@@ -43,6 +43,8 @@ class wm_base_test extends uvm_test;
         cfg.impl = v;
         if(!uvm_config_db #(int)::get(this, "", "RUNTIME_GEOM", v)) `uvm_fatal("NOPARAM", "RUNTIME_GEOM")
         cfg.runtime_geom = (v != 0);
+        if(!uvm_config_db #(int)::get(this, "", "W", v))       `uvm_fatal("NOPARAM", "W")
+        cfg.w = v;
         uvm_config_db #(wm_cfg)::set(this, "*", "cfg", cfg);
         env = wm_env::type_id::create("env", this);
     endfunction

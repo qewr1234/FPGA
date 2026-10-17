@@ -8,7 +8,8 @@ module tb_top;
     import wm_uvm_pkg::*;
 
     // Default: a small runtime-geometry build of the core the board runs (v4).
-    parameter int KMAX=48, COUTMAX=20, P=4, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1;
+    // W=4 builds the four-wide window port (needs IMPL=3, T=4).
+    parameter int KMAX=48, COUTMAX=20, P=4, DEPTH=2, T=4, IMPL=3, RUNTIME_GEOM=1, W=1;
 
     logic clk = 1'b0;
     always #5 clk = ~clk;
@@ -23,7 +24,7 @@ module tb_top;
     wm_axis_if m_axis(clk, rst_n);
 
     window_mac_axis #(.K(KMAX), .COUT(COUTMAX), .P(P), .DEPTH(DEPTH), .T(T), .IMPL(IMPL),
-                      .RUNTIME_GEOM(RUNTIME_GEOM)) dut (
+                      .RUNTIME_GEOM(RUNTIME_GEOM), .W(W)) dut (
         .aclk(clk), .aresetn(rst_n),
         .s_axi_awaddr(axil.awaddr), .s_axi_awvalid(axil.awvalid), .s_axi_awready(axil.awready),
         .s_axi_wdata(axil.wdata), .s_axi_wstrb(axil.wstrb), .s_axi_wvalid(axil.wvalid),
@@ -48,6 +49,7 @@ module tb_top;
         uvm_config_db #(int)::set(null, "uvm_test_top", "DEPTH", DEPTH);
         uvm_config_db #(int)::set(null, "uvm_test_top", "IMPL", IMPL);
         uvm_config_db #(int)::set(null, "uvm_test_top", "RUNTIME_GEOM", RUNTIME_GEOM);
+        uvm_config_db #(int)::set(null, "uvm_test_top", "W", W);
         run_test();
     end
 

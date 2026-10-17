@@ -18,7 +18,7 @@
 
 # Bumped whenever this file changes, and printed on every run: "which version am
 # I actually running" should never need guessing.
-set WM_SCRIPT_VERSION "2026-09-20 m (plain mrd form, the one proven on this board)"
+set WM_SCRIPT_VERSION "2026-10-17 n (ID bit 9: four-wide window port needs K a multiple of 4)"
 
 # ---------------- geometry, must match export_board_data.py ----------------
 set WM_K        576
@@ -914,7 +914,11 @@ puts "DDR      : buffers at [wm_hex $ADDR_CONFIG] / [wm_hex $ADDR_INPUT] /\
       [wm_hex $ADDR_RESULT] / [wm_hex $ADDR_GOLD]"
 foreach n [wm_ps_notes] { puts "Note     : $n" }
 set impl [expr {$wm_core_id & 0xf}]
+# ID bit 9: the core takes a whole 32-bit beat, four activations, per cycle (built
+# with CNN_W=4) instead of one.
+set wm_wide [expr {($wm_core_id >> 9) & 1}]
 puts "Core     : [expr {$impl == 3 ? {v4 banked_window_mac} : {v3 overlapped_window_mac}}]\
+      [expr {$wm_wide ? {four activations/cycle} : {one activation/cycle}}]\
       K=$WM_K COUT=$WM_COUT windows=$WM_NWIN"
 set wm_fclk [wm_fclk_mhz]
 if {$wm_fclk > 0} {
@@ -981,6 +985,14 @@ if {!$has_runtime && ($WM_K != $built_k || $WM_COUT != $built_cout)} {
     error "this data is K=$WM_K COUT=$WM_COUT, the bitstream is fixed at\
            K=$built_k COUT=$built_cout and ignores RUN_K/RUN_COUT. Rebuild with\
            CNN_RUNTIME_GEOM=1, or run data of the shape it was built for."
+}
+# A four-wide port loads a window as whole beats, so every window must be padded
+# to a multiple of 4 taps (run_denoise.py --w4 does). The core would round RUN_K
+# up and the read-back below would fail anyway; this says why.
+if {$wm_wide && $WM_K % 4 != 0} {
+    error "this bitstream takes four activations per cycle (ID [wm_hex $wm_core_id], bit 9)\
+           and needs windows padded to a multiple of 4 taps, but this data is K=$WM_K.\
+           Export the layer with --w4, or run a bitstream built without CNN_W=4."
 }
 wm_wr $REG_RUN_K    $WM_K
 wm_wr $REG_RUN_COUT $WM_COUT
@@ -1153,6 +1165,7 @@ puts $rfh "  \"K\": $WM_K, \"COUT\": $WM_COUT, \"mode_seq\": $WM_MODE_SEQ,"
 puts $rfh "  \"fclk_mhz\": [format %.4f $wm_fclk],"
 puts $rfh "  \"built_k\": $built_k, \"built_cout\": $built_cout,"
 puts $rfh "  \"runtime_geometry\": [expr {$has_runtime ? {true} : {false}}],"
+puts $rfh "  \"activations_per_cycle\": [expr {$wm_wide ? 4 : 1}],"
 puts $rfh "  \"windows_expected\": $WM_NWIN, \"windows_done\": $windone,"
 puts $rfh "  \"results_expected\": $WM_RESULT_WORDS, \"results\": $outcount,"
 puts $rfh "  \"mismatches\": $bad, \"first_bad_word\": $first_bad,"

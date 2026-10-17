@@ -8,9 +8,10 @@
 #   set ::env(CNN_DEPTH) 2
 #   set ::env(CNN_T) 4         ;# v4 only
 #   set ::env(CNN_CLOCK_MHZ) 100
+#   set ::env(CNN_W) 1         ;# 4 = four activations per cycle (v4, T=4 only)
 #   source scripts/build_zedboard.tcl
 #
-# Output: build/zed_<impl>_p<P>_t<T>_<stamp>/
+# Output: build/zed_v<impl+1>_p<P>_t<T>[_w4]_<stamp>/
 #   system_wrapper.bit, system_wrapper.xsa, and the usual reports.
 #
 # This is NOT out-of-context synthesis. It is a full board design, so the reported
@@ -54,7 +55,18 @@ if {$impl != 2 && $impl != 3} { error "CNN_IMPL must be 2 (v3) or 3 (v4)" }
 set K       [env_or CNN_K 576]
 set COUT    [env_or CNN_COUT 128]
 set runtime [env_or CNN_RUNTIME_GEOM 0]
+# Activations the core takes per cycle. 1 is the build every board number so far
+# was measured on. 4 hands the banked core a whole 32-bit beat per cycle; it then
+# needs every window padded to a multiple of 4 taps (run_denoise.py --w4), reads
+# ID bit 9, and is built into its own _w4 directory so it is never mistaken for
+# the other.
+set wide    [env_or CNN_W 1]
+if {$wide != 1 && !($wide == 4 && $impl == 3 && $banks == 4)} {
+    error "CNN_W must be 1, or 4 with CNN_IMPL=3 and CNN_T=4"
+}
+if {$K % 4 != 0} { error "CNN_K must be a multiple of 4: the wrapper packs four activations per beat" }
 set tag "v[expr {$impl+1}]_p${parallel}_t${banks}"
+if {$wide != 1} { append tag "_w$wide" }
 set dest [file join $root build "zed_${tag}_[clock seconds]"]
 file mkdir $dest
 
@@ -182,7 +194,7 @@ puts $f "    input  wire        m_axis_tready,"
 puts $f "    output wire        m_axis_tlast"
 puts $f ");"
 puts $f "    window_mac_axis #(.K($K),.COUT($COUT),.P($parallel),.DEPTH($depth),.T($banks),.IMPL($impl),\
-                      .RUNTIME_GEOM($runtime)) u ("
+                      .RUNTIME_GEOM($runtime),.W($wide)) u ("
 puts $f "        .aclk(aclk), .aresetn(aresetn),"
 puts $f "        .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),"
 puts $f "        .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wvalid(s_axi_wvalid), .s_axi_wready(s_axi_wready),"
@@ -353,7 +365,8 @@ file copy -force [file join $dest system.runs impl_1 system_wrapper.bit] \
                  [file join $dest system_wrapper.bit]
 
 puts ""
-puts "Core: [expr {$impl==2 ? {overlapped_window_mac (v3)} : {banked_window_mac (v4)}}]  P=$parallel DEPTH=$depth T=$banks"
+puts "Core: [expr {$impl==2 ? {overlapped_window_mac (v3)} : {banked_window_mac (v4)}}]  P=$parallel DEPTH=$depth T=$banks W=$wide"
+puts "Built for: K<=$K COUT<=$COUT, runtime geometry [expr {$runtime ? {on} : {off}}]"
 puts "Fabric clock: $clkmhz MHz   WNS: $wns ns"
 if {$wns < 0} {
     puts "TIMING NOT MET. Lower CNN_CLOCK_MHZ and rebuild; a bitstream that misses timing"
