@@ -15,10 +15,12 @@ Every output is rebuilt from the seed-0 noise the PSNR tables use, and each
 image's PSNR is checked against the stored value before its SSIM is kept: the
 integer models run through the board driver's host emulation
 (scripts/run_denoise.py, the arithmetic the board reproduces bit for bit) and
-must match int_eval.json to 1e-5 dB (exports written before the quantizer and
-the driver shared common.to_image can differ at a rounding tie of the final
-float step from accumulator to pixel, about 1e-6 dB; the largest gap is
-recorded per model); BM3D must match baselines.json (clipped
+must match int_eval.json to 1e-5 dB (common.psnr averages in float32 and
+another PC's numpy rounds that sum differently, by up to about 2e-6 dB with
+identical images, as checked pixel for pixel on dn_d10_c45_us_fx_qat's Set12;
+the check alone would not catch a single 1-LSB pixel; the largest gap is
+recorded per model);
+BM3D must match baselines.json (clipped
 7-bit input) and bm3d_protocol.json (unclipped) to 1e-3 dB; DnCNN-S must match
 dncnn_s_protocol.json to 1e-3 dB.
 """
@@ -49,7 +51,9 @@ SIGMA = 25
 SETS = ('Set12', 'BSD68')
 MODELS = ['dn_d7_c32_es', 'dn_d10_c64_us_es', 'dn_d10_c64_us_es_qat',
           'dn_d10_c32_us_fx', 'dn_d10_c32_us_fx_qat', 'dn_d10_c32_us_mo_fx', 'dn_d10_c32_us_mo_fx_qat',
-          'dn_d10_c32_us_avg_fx', 'dn_d10_c32_us_avg_fx_qat', 'dn_d10_c32_us_mo_es_qat']
+          'dn_d10_c32_us_avg_fx', 'dn_d10_c32_us_avg_fx_qat', 'dn_d10_c32_us_mo_es_qat',
+          'dn_d10_c32_us_fx_s2_qat', 'dn_d10_c32_us_fx_s3_qat', 'dn_d10_c32_us_mo_fx_s2_qat', 'dn_d10_c32_us_mo_fx_s3_qat',
+          'dn_d10_c32_us_avg_fx_s2_qat', 'dn_d10_c45_us_fx_qat']
 DNCNN_WEIGHTS = Path('/home/user/tools/DnCNN/TrainingCodes/dncnn_pytorch/models/DnCNN_sigma25/model.pth')
 OUT = HERE/'ssim_eval.json'
 
