@@ -166,6 +166,52 @@ rem 예측과 비교, denoise\w4_measured.json에 기록
 python denoise\compare_w4.py
 ```
 
+### 2값/사이클 포트 (W=2) — 보드 측정 전
+
+1값과 4값 사이의 세 번째 점이다. 사이클 모델은 2값에서 두 전환이 서로 다른 폭에서 일어난다고 예측한다: 합치기는 2값부터 공짜가 아니게 되지만(maxout ÷ ReLU 1.55), B는 아직 A보다 빠르다(B ÷ A 0.82; 4값에서 1.19). 이 숫자는 W=2 하드웨어를 만들기 전에 커밋되어 있었다(`wider_ports.json`, 55f13b4). 보드 실행은 아직 없다.
+
+- **바뀐 것:**
+  - 코어(`rtl/banked_window_mac.sv`): W는 T의 약수면 된다. W=2(T=4)에서 beat q는 탭 2q, 2q+1을 싣고, 짝수 beat는 뱅크 0·1, 홀수 beat는 같은 행의 뱅크 2·3에 들어간다(새 레지스터 `in_ph`). 뱅크마다 사이클당 튜플 하나라는 구조는 그대로이고, 창 적재는 K/2+1 사이클이다. W=1과 W=4의 코어와 래퍼 데이터 경로는 그대로다(검토에서 옛 RTL과 같은 자극으로 매 사이클 비교한 lockstep 시뮬레이션에서 차이 0; 그 뒤 바뀐 것은 아래의 IN_STALL 카운터뿐).
+  - 래퍼(`rtl/window_mac_axis.sv`): 사이클마다 beat의 절반을 넘기고, RUN_K를 2의 배수로 올리며, ID 비트 10이 W=2를 표시한다. K가 4의 배수가 아니면 창이 beat 중간에서 끝나고 다음 창은 그 beat의 뒷절반에서 시작한다(A의 첫 층 K=9 → 10, 마지막 층 297 → 298).
+  - 호스트: `run_denoise.py --w2`(창과 가중치를 2의 배수로 0 패딩, 실행마다 ID 확인), `run_board_xsdb.tcl`(ID 비트 9·10으로 폭 판별, K % W 검사, `run.json`의 `activations_per_cycle`), `build_zedboard.tcl`(CNN_W=2 → `_w2` 폴더), `RUN_W2_DENOISE.cmd`.
+- **검토에서 고친 것 (비트스트림 전):**
+  - IN_STALL이 창 경계의 DMA 대기를 세지 않았다(W=1부터 있던 문제). 창과 창 사이에는 코어가 입력을 요청하지 않으므로, 첫 beat가 늦어 시작이 밀린 사이클이 CYCLES에만 들어가고 IN_STALL은 0이었다. 이제 그 사이클도 센다(`start_starved`; CYCLES와 출력은 그대로). `run_axis_checks.py`는 스로틀한 모든 실행에서 'CYCLES − 스로틀 없는 CYCLES ≤ IN_STALL + OUT_STALL'을 요구하며, 옛 카운터는 이를 어긴다(W=1, IN_GAP=5: 45 사이클 늘었는데 IN_STALL 38). W=4 보드 숫자는 옛 카운터로 쟀지만, 층마다의 차이가 채움·비움 규칙과 정확히 맞으므로 숨은 대기는 없었다.
+  - 층별 정확한 사이클 규칙의 상수는 19가 아니라 3 + 마지막 16-레인 그룹의 채널 수다(COUT 32·64에서 19, 45에서 16). 그때까지 잰 층은 모두 COUT 32·64라 구별되지 않았고, 45채널 망의 RTL에서 드러났다. `w2_prediction.json`에서 45채널 망 은닉층의 정확한 값 24개만 3씩 줄었다.
+  - `compare_w2.py`: 대기가 있는 층은 '정확한 값 ≤ CYCLES ≤ 정확한 값 + IN_STALL + OUT_STALL'로만 보고 표시한다(계산에 가려지는 대기가 있으므로). 망 전체 기준은 논문의 네 망이 모두 있을 때만 판정한다.
+- **시뮬레이션 검증 (보드 아님):**
+  - 코어 단독(`run_stream_checks.py --suite smoke`): W=2 20개 사례를 포함한 179개에서 모든 출력이 정수 오라클과 같고, 창마다 시작·끝 사이클이 모델과 정확히 같다.
+  - 래퍼(`run_axis_checks.py` smoke·geom·real): W=2 사례(창이 beat 중간에서 끝나는 K=9·297 포함)에서 래퍼 비용 0, 느린 DMA 사례에서 위의 대기 부등식 성립.
+  - 실제 창(`python denoise/sim_w4_layers.py --widths 2 --windows 512 --out denoise/w2_rtl_sim.json`): 네 망의 모든 층(37개)에서 05.png의 창 512개씩, 보드 빌드 설정으로 모든 출력이 정확하다. 사이클은 계수와 층마다 12–308 차이이고, W=1·W=4에서 읽어 낸 채움·비움 규칙이 은닉층과 마지막 층 33개 모두에서 정확히 맞았다(`w4_gaps.py`, 보지 않은 데이터).
+
+*W=2 예측 (Set12 05.png, sparse 모드, 사이클/px; 80장 범위는 `test_set_ratios.json`)*
+
+| 망 | W=1 보드 | W=2 예측 | W=4 (보드, 45채널은 계수) |
+|---|---|---|---|
+| A `dn_d7_c32_es` | 1,775.0 | 907.0 | 572.5 |
+| B + QAT `dn_d10_c64_us_es_qat` | 1,323.3 | 741.3 | 683.4 |
+| B-32 maxout + QAT `…_mo_fx_qat` | 675.3 | 523.5 | 503.3 |
+| B-32 ReLU + QAT `…_fx_qat` | 668.5 | 338.8 | 202.8 |
+| 10 × 45 ReLU + QAT `…_c45_us_fx_qat` | (933.8, 계수) | 474.8 | (361.9) |
+| B ÷ A | 0.745 | 0.817 (80장 0.813–0.856) | 1.194 |
+| maxout ÷ ReLU | 1.010 | 1.546 (80장·시드 쌍 1.478–1.673) | 2.482 |
+| 45채널 ÷ maxout | 1.383 | 0.907 (0.838–0.949) | 0.719 |
+
+판정 기준(`compare_w2.py`, 실행 전에 고정): W=2 ID(비트 10)와 전 층 비트 일치가 있어야 측정으로 친다. 망 총합이 계수의 0.01% 안. 첫 층을 뺀 모든 층에서 대기가 없으면 CYCLES가 정확한 값과 같다. B ÷ A < 1, maxout ÷ ReLU > 1.5(05.png·시드 1 기준이며, 80장 × 시드 쌍 720개 중 9개는 1.48–1.50), 45채널 ÷ maxout < 1. 45채널 망은 W=1에서도 보드에 올린 적이 없다.
+
+실행(옛 PC, Vivado와 보드가 있는 곳):
+
+```
+set CNN_K=1152
+set CNN_COUT=128
+set CNN_RUNTIME_GEOM=1
+rem build\zed_v4_p16_t4_w2_STAMP 폴더에 비트스트림, 약 1시간
+RUN_BUILD_ZED.cmd 3 16 4 100 2
+rem 다섯 망을 05.png로 50 MHz에서, 결과는 denoise\board_runs\MODEL_05_w2.json
+RUN_W2_DENOISE.cmd
+rem 예측과 비교, denoise\w2_measured.json에 기록
+python denoise\compare_w2.py
+```
+
 ## 실행 순서
 
 ```

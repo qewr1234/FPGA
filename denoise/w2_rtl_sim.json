@@ -13,12 +13,12 @@
   "mode": "sparse (MODE_SEQ=1)",
   "windows_per_layer": 512,
   "sampling": "four contiguous blocks centred at 1/8, 3/8, 5/8, 7/8 of the layer",
-  "rtl_commit": "2227c7711a32d85bc66a0492820245fac78bde9c",
+  "rtl_commit": "b37f971a575dc02322d1814ce643f08c86db5b8e",
   "rtl_sources_modified_since_commit": false,
   "rtl_sha256": {
     "rtl/overlapped_window_mac.sv": "e8a04972b5a4540b1756c3034950dfd6831a9cda0582df339a32673b4925e311",
     "rtl/banked_window_mac.sv": "d1cff4eedd5fb6fd54ba565cc393a2a692f775e8a2d3a96f428c7917db0c305b",
-    "rtl/window_mac_axis.sv": "1c90c95d6850bba7f204198dc17f2d8c231808c469d24e1d2f4878bef2a19ad4",
+    "rtl/window_mac_axis.sv": "34bd8a3db5e3c216ce3b9a5fa0d0278cde7a78380e286e9c71ac17cbfc6b763d",
     "sim/tb_axis_wrapper.sv": "cd49cc0b2d879cdd58b97698eb4fc38111a6e2549c4000e81aae7e53fa801be9"
   },
   "networks": {

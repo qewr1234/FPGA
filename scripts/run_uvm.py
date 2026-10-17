@@ -357,6 +357,11 @@ def run_build(sim, build, tests, seeds, layers, out_root, src_root, timeout, qui
                     extra += f"  <- {r.get('first_error', '')}"
                 print(f"  [{build}] {test:<22} seed {seed:<4} {r['result']}  {s:6.1f}s  {extra}",
                       flush=True)
+    # The compiled model is about 0.6 GB per build and nothing reads it after the
+    # runs; 21 mutants plus two UVM libraries kept it all and filled the disk once.
+    # The logs stay.
+    if (dest/'obj').exists():
+        shutil.rmtree(dest/'obj')
     return rows
 
 
