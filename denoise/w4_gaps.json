@@ -1,0 +1,832 @@
+{
+  "rule": "gap - in_stall = min(load, last) + c; c = 19 (hidden), COUT + 3 (last layer)",
+  "networks": {
+    "A": {
+      "model": "dn_d7_c32_es",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 9,
+          "COUT": 32,
+          "kind": "first",
+          "w1": {
+            "gap": 15,
+            "in_stall": 0,
+            "load": 10,
+            "last": 4,
+            "rest": 11
+          },
+          "w4": {
+            "gap": 9,
+            "in_stall": 0,
+            "load": 4,
+            "last": 4,
+            "rest": 5
+          }
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 63,
+            "in_stall": 0,
+            "load": 289,
+            "last": 44,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 63,
+            "in_stall": 0,
+            "load": 73,
+            "last": 44,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 289,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 73,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 289,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 73,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 57,
+            "in_stall": 0,
+            "load": 289,
+            "last": 38,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 57,
+            "in_stall": 0,
+            "load": 73,
+            "last": 38,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 59,
+            "in_stall": 0,
+            "load": 289,
+            "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 59,
+            "in_stall": 0,
+            "load": 73,
+            "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv7",
+          "K": 297,
+          "COUT": 1,
+          "kind": "last",
+          "w1": {
+            "gap": 27,
+            "in_stall": 0,
+            "load": 298,
+            "last": 23,
+            "rest": 4,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 27,
+            "in_stall": 0,
+            "load": 76,
+            "last": 23,
+            "rest": 4,
+            "rule_holds": true
+          }
+        }
+      ]
+    },
+    "B + QAT": {
+      "model": "dn_d10_c64_us_es_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "kind": "first",
+          "w1": {
+            "gap": 44,
+            "in_stall": 0,
+            "load": 37,
+            "last": 16,
+            "rest": 28
+          },
+          "w4": {
+            "gap": 17,
+            "in_stall": 0,
+            "load": 10,
+            "last": 16,
+            "rest": 7
+          }
+        },
+        {
+          "name": "conv2",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 187,
+            "in_stall": 0,
+            "load": 577,
+            "last": 168,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 168,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv3",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 167,
+            "in_stall": 0,
+            "load": 577,
+            "last": 148,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 148,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv4",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 171,
+            "in_stall": 0,
+            "load": 577,
+            "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv5",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 199,
+            "in_stall": 0,
+            "load": 577,
+            "last": 180,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 180,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv6",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 175,
+            "in_stall": 0,
+            "load": 577,
+            "last": 156,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 156,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv7",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 159,
+            "in_stall": 0,
+            "load": 577,
+            "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 159,
+            "in_stall": 0,
+            "load": 145,
+            "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv8",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 159,
+            "in_stall": 0,
+            "load": 577,
+            "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 159,
+            "in_stall": 0,
+            "load": 145,
+            "last": 140,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv9",
+          "K": 576,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 171,
+            "in_stall": 0,
+            "load": 577,
+            "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 164,
+            "in_stall": 0,
+            "load": 145,
+            "last": 152,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv10",
+          "K": 612,
+          "COUT": 4,
+          "kind": "last",
+          "w1": {
+            "gap": 53,
+            "in_stall": 0,
+            "load": 613,
+            "last": 46,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 53,
+            "in_stall": 0,
+            "load": 154,
+            "last": 46,
+            "rest": 7,
+            "rule_holds": true
+          }
+        }
+      ]
+    },
+    "B-32 maxout + QAT": {
+      "model": "dn_d10_c32_us_mo_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 64,
+          "kind": "first",
+          "w1": {
+            "gap": 44,
+            "in_stall": 0,
+            "load": 37,
+            "last": 16,
+            "rest": 28
+          },
+          "w4": {
+            "gap": 17,
+            "in_stall": 0,
+            "load": 10,
+            "last": 16,
+            "rest": 7
+          }
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 143,
+            "in_stall": 0,
+            "load": 289,
+            "last": 124,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 124,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 123,
+            "in_stall": 0,
+            "load": 289,
+            "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 127,
+            "in_stall": 0,
+            "load": 289,
+            "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 119,
+            "in_stall": 0,
+            "load": 289,
+            "last": 100,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 100,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 131,
+            "in_stall": 0,
+            "load": 289,
+            "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 131,
+            "in_stall": 0,
+            "load": 289,
+            "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 112,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 123,
+            "in_stall": 0,
+            "load": 289,
+            "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 104,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 64,
+          "kind": "hidden",
+          "w1": {
+            "gap": 127,
+            "in_stall": 0,
+            "load": 289,
+            "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 92,
+            "in_stall": 0,
+            "load": 73,
+            "last": 108,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "kind": "last",
+          "w1": {
+            "gap": 41,
+            "in_stall": 0,
+            "load": 325,
+            "last": 34,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 41,
+            "in_stall": 0,
+            "load": 82,
+            "last": 34,
+            "rest": 7,
+            "rule_holds": true
+          }
+        }
+      ]
+    },
+    "B-32 ReLU + QAT": {
+      "model": "dn_d10_c32_us_fx_qat",
+      "layers": [
+        {
+          "name": "conv1",
+          "K": 36,
+          "COUT": 32,
+          "kind": "first",
+          "w1": {
+            "gap": 39,
+            "in_stall": 0,
+            "load": 37,
+            "last": 8,
+            "rest": 31
+          },
+          "w4": {
+            "gap": 17,
+            "in_stall": 0,
+            "load": 10,
+            "last": 8,
+            "rest": 9
+          }
+        },
+        {
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 289,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 73,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 289,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 73,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 69,
+            "in_stall": 0,
+            "load": 289,
+            "last": 50,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 69,
+            "in_stall": 0,
+            "load": 73,
+            "last": 50,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 289,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 77,
+            "in_stall": 12,
+            "load": 73,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 289,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 65,
+            "in_stall": 0,
+            "load": 73,
+            "last": 46,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv7",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 289,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 61,
+            "in_stall": 0,
+            "load": 73,
+            "last": 42,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv8",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 59,
+            "in_stall": 0,
+            "load": 289,
+            "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 59,
+            "in_stall": 0,
+            "load": 73,
+            "last": 40,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv9",
+          "K": 288,
+          "COUT": 32,
+          "kind": "hidden",
+          "w1": {
+            "gap": 73,
+            "in_stall": 0,
+            "load": 289,
+            "last": 54,
+            "rest": 19,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 73,
+            "in_stall": 0,
+            "load": 73,
+            "last": 54,
+            "rest": 19,
+            "rule_holds": true
+          }
+        },
+        {
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "kind": "last",
+          "w1": {
+            "gap": 35,
+            "in_stall": 0,
+            "load": 325,
+            "last": 28,
+            "rest": 7,
+            "rule_holds": true
+          },
+          "w4": {
+            "gap": 35,
+            "in_stall": 0,
+            "load": 82,
+            "last": 28,
+            "rest": 7,
+            "rule_holds": true
+          }
+        }
+      ]
+    }
+  },
+  "rule_holds": "66/66"
+}
