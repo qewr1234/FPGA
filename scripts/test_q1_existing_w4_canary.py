@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from q1_existing_w4_canary import verify_live_report
-from q1_fpga_triplet import verify_existing_w4_canary
+from q1_fpga_triplet import verify_existing_w4_canary, summarize
 
 CORE="0x4d410303"
 MODEL="dn_d10_c32_us_fx_qat"
@@ -67,6 +67,27 @@ class CanaryTests(unittest.TestCase):
         self.write_report()
         with self.assertRaises(ValueError):
             self.live()
+
+    def test_triplet_summary_separates_conv2to9_and_stalls(self):
+        rows=[
+            dict(rep=1,cycles={"original":1000,"frozen":900,"multistart":850},
+                 inner_cycles={"original":800,"frozen":720,"multistart":680},
+                 in_stall={"original":12,"frozen":0,"multistart":1},
+                 out_stall={"original":0,"frozen":0,"multistart":0}),
+            dict(rep=2,cycles={"original":1000,"frozen":905,"multistart":845},
+                 inner_cycles={"original":800,"frozen":725,"multistart":675},
+                 in_stall={"original":0,"frozen":0,"multistart":0},
+                 out_stall={"original":0,"frozen":0,"multistart":0}),
+        ]
+        result=summarize(self.root,rows,50)
+        self.assertAlmostEqual(result["frozen_conv2to9_pct_saved"],9.6875)
+        self.assertAlmostEqual(result["multistart_conv2to9_pct_saved"],15.3125)
+        self.assertAlmostEqual(result["frozen_total_pct_saved"],9.75)
+        self.assertAlmostEqual(result["multistart_total_pct_saved"],15.25)
+        self.assertEqual(result["repeat_rows"][0]["in_stall"]["original"],12)
+        md=(self.root/"triplet_summary.md").read_text(encoding="utf-8")
+        self.assertIn("Conv2",md)
+        self.assertIn("DMA stall",md)
 
     def test_triplet_rejects_fabricated_or_deviating_canary(self):
         obj=self.make_canary()
