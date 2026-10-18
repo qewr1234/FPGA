@@ -144,6 +144,14 @@ def checked_physical(trial: Path, image: str):
                     or entry.get("in_stall",{}).get(model) != sum(int(t["in_stall"]) for t in row["layers"])
                     or entry.get("out_stall",{}).get(model) != sum(int(t["out_stall"]) for t in row["layers"])):
                 return None
+        # Independent final PNG byte equality; QAT oracle pass by itself
+        # does not prove the permuted models have the same intended image.
+        stem=Path(image).stem
+        pngs=[rep/model/f"{stem}_denoised.png" for model in ("original","frozen","multistart")]
+        if not all(p.is_file() for p in pngs):
+            return None
+        if len({hashlib.sha256(p.read_bytes()).digest() for p in pngs}) != 1:
+            return None
         for pair in ("original_vs_frozen.json","original_vs_multistart.json","frozen_vs_multistart.json"):
             c=read_json(rep/pair)
             if not isinstance(c,dict) or c.get("status")!="PHYSICAL_W4_CORE_CYCLE_COMPARISON" or c.get("bit_exact_mismatches")!=0:
@@ -309,14 +317,9 @@ def main():
             sha=verify_board(args.xsdb.resolve())
         except (RuntimeError,ValueError,OSError) as exc:
             ap.error(str(exc))
-        print("\nWARNING: PHYSICAL FPGA FLASH + DDR DMA; operator must confirm same tested board/cabling.",flush=True)
-        print("Bitstream SHA256:",sha,flush=True)
-        print("Number of board model runs:",len(images)*9,flush=True)
-        if not sys.stdin.isatty():
-            ap.error("Refusing noninteractive physical FPGA programming")
-        consent=input("Type SAME_PHYSICAL_BOARD_W4_CANARY_VERIFIED to approve: ").strip()
-        if consent!=APPROVAL:
-            ap.error("Operator did not approve real board programming")
+        # Fail fast on invalid hardware inputs, but defer physical operator
+        # approval until JUST BEFORE programming (GPU stages can take hours).
+        print("FPGA preflight: canary/.bit SHA256 verified. Operator approval will be requested just before hardware execution.",flush=True)
     output=new_dir(BATCH_ROOT/args.batch_id)
     output.mkdir(parents=True,exist_ok=False)
     print("AUDIT DIRECTORY:",output)
@@ -356,6 +359,18 @@ def main():
                     stages[kind]=dict(status="COMPLETED",directory=str(p))
                 write_status(output,stages,args.stage)
         if args.stage in ("all","fpga"):
+            # GPU preparation may have taken hours; re-check SHA and require
+            # a fresh, interactive confirmation right before actual flashing.
+            sha=verify_board(args.xsdb.resolve())
+            print("\nWARNING: THIS WILL REPROGRAM YOUR CONNECTED FPGA.",flush=True)
+            print("Keep the EXACT previously canary-verified physical board and cabling.",flush=True)
+            print("Verified bitstream SHA256:",sha,flush=True)
+            print("Physical CNN runs:",len(images)*9,flush=True)
+            if not sys.stdin.isatty():
+                raise RuntimeError("Refusing noninteractive physical FPGA programming")
+            consent=input("Type SAME_PHYSICAL_BOARD_W4_CANARY_VERIFIED to approve: ").strip()
+            if consent!=APPROVAL:
+                raise RuntimeError("Operator did not approve physical FPGA programming")
             observed=[]
             for image in images:
                 found=find_physical_reusable(image)
