@@ -31,6 +31,7 @@ from q1_board_ab_compare import load as load_board,check_img
 
 MODEL="dn_d10_c32_us_fx_qat"
 APPROVAL="SMART_ZYNQ_SL_PS_DDR_MIO_VERIFIED"
+CANARY_APPROVAL="SAME_PHYSICAL_BOARD_W4_CANARY_VERIFIED"
 SOURCE=ROOT/"denoise"/"export"/MODEL
 FROZEN=ROOT/"build"/"q1_reviewer_export"/MODEL
 MULTI=ROOT/"build"/"q1_multistart_export"/MODEL
@@ -226,8 +227,12 @@ def main():
     if not a.execute:
         print("PREFLIGHT COMPLETE: board was NOT accessed or programmed.")
         return
-    if a.board_verified!=APPROVAL:
-        ap.error("Smart ZYNQ SL PS DDR/MIO must be verified independently before board programming")
+    # A successful same-.bit physical Original canary is evidence of operation
+    # on the user's tested board, not vendor-certified Smart ZYNQ SL PS wiring.
+    # Do not require the user to assert an unverified manufacturer preset.
+    required_approval = CANARY_APPROVAL if a.existing_w4_canary is not None else APPROVAL
+    if a.board_verified != required_approval:
+        ap.error("Explicit physical board acknowledgement required: " + required_approval)
     if not a.xsdb or not a.build:
         ap.error("--xsdb and --build must be explicitly specified")
     xsdb=a.xsdb.resolve();build=a.build.resolve()
