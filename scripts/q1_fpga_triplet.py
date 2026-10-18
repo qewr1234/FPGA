@@ -181,30 +181,60 @@ def summarize(out,results,clock):
     for r in results:
         o,f,m=(r["cycles"][k] for k in ("original","frozen","multistart"))
         lines.append(f"| {r['rep']} | {o:,} | {f:,} | {m:,} | {saved(o,f):+.5f} | {saved(o,m):+.5f} |")
-        summary.append(dict(rep=r["rep"],baseline=o,frozen=f,multistart=m,
-                            frozen_saved_pct=saved(o,f),
-                            multistart_saved_pct=saved(o,m),
-                            multi_vs_frozen_pct=saved(f,m)))
-    def agg(label):
-        orig=sum(r["cycles"]["original"] for r in results)
-        other=sum(r["cycles"][label] for r in results)
+        row=dict(rep=r["rep"],baseline=o,frozen=f,multistart=m,
+                 frozen_saved_pct=saved(o,f),
+                 multistart_saved_pct=saved(o,m),
+                 multi_vs_frozen_pct=saved(f,m))
+        if "inner_cycles" in r:
+            inner=r["inner_cycles"]
+            row.update(conv2to9_original=inner["original"],
+                       conv2to9_frozen=inner["frozen"],
+                       conv2to9_multistart=inner["multistart"],
+                       frozen_conv2to9_pct_saved=saved(inner["original"],inner["frozen"]),
+                       multistart_conv2to9_pct_saved=saved(inner["original"],inner["multistart"]))
+        row["in_stall"]=r.get("in_stall")
+        row["out_stall"]=r.get("out_stall")
+        summary.append(row)
+    def agg(label,group="cycles"):
+        orig=sum(r[group]["original"] for r in results)
+        other=sum(r[group][label] for r in results)
         return 100*(orig-other)/orig
+    have_inner=all("inner_cycles" in r for r in results)
     res=dict(status="PHYSICAL_3WAY_W4_CORE_CYCLE_COMPARISON",
              fclk_mhz=clock,replicates=len(results),
              frozen_total_pct_saved=agg("frozen"),
              multistart_total_pct_saved=agg("multistart"),
+             frozen_conv2to9_pct_saved=agg("frozen","inner_cycles") if have_inner else None,
+             multistart_conv2to9_pct_saved=agg("multistart","inner_cycles") if have_inner else None,
              repeat_rows=summary,
              caveats=[
-                 "True physical core cycles with the specified bitstream; only useful with validated Smart ZYNQ SL PS DDR/MIO.",
-                 "Not a measurement of PS im2col, JTAG setup, host postprocessing, end-to-end video latency, or power.",
-                 "Per-run counter includes DMA stalls; report raw stall counters separately.",
-                 "Measurement is for Set12 one image and noise seed0, not all 612 GPU conditions.",
-                 "Do not compare full 10-layer measured savings against Conv2-9 modeled estimates as if denominators match."
+                 "Measured physical W4 core cycles on the explicitly selected, functioning board.",
+                 "The canary does not certify manufacturer PS DDR/MIO presets.",
+                 "Not a measurement of PS im2col, JTAG, host processing, end-to-end video latency, or energy.",
+                 "Core cycles include DMA stalls; inspect per-run input/output stall counters.",
+                 "Set12 05.png with noise seed0, not all 612 GPU conditions.",
+                 "Keep Conv1–10 full-core and Conv2–9 estimates separate."
              ])
-    lines+=["",f"**Measured Frozen full-core saving**: {res['frozen_total_pct_saved']:+.5f}%.",
-            f"**Measured Multi-start full-core saving**: {res['multistart_total_pct_saved']:+.5f}%.",
-            "Interpret only after validating all per-layer board oracle checks.",
-            ""]
+    lines+=["", f"**Frozen all Conv saving**: {res['frozen_total_pct_saved']:+.5f}%.",
+             f"**Multi-start all Conv saving**: {res['multistart_total_pct_saved']:+.5f}%."]
+    if have_inner:
+        lines+=["", "## Conv2–9 physical cycles",
+                "| Rep | Original | Frozen | Multi-start | Frozen saved (%) | Multi saved (%) |",
+                "|---:|---:|---:|---:|---:|---:|"]
+        for r in results:
+            x=r["inner_cycles"]
+            lines.append(f"| {r['rep']} | {x['original']:,} | {x['frozen']:,} | {x['multistart']:,} | {saved(x['original'],x['frozen']):+.5f} | {saved(x['original'],x['multistart']):+.5f} |")
+        lines+=["", f"**Frozen Conv2–9 saving**: {res['frozen_conv2to9_pct_saved']:+.5f}%.",
+                 f"**Multi-start Conv2–9 saving**: {res['multistart_conv2to9_pct_saved']:+.5f}%."]
+    if all("in_stall" in r and "out_stall" in r for r in results):
+        lines+=["", "## DMA stall cycles (IN/OUT)",
+                "| Rep | Original | Frozen | Multi-start |",
+                "|---:|---:|---:|---:|"]
+        for r in results:
+            def pair(name):
+                return f"{r['in_stall'][name]:,}/{r['out_stall'][name]:,}"
+            lines.append(f"| {r['rep']} | {pair('original')} | {pair('frozen')} | {pair('multistart')} |")
+    lines+=["", "Each hardware run must pass all ten layer integer oracles.", ""]
     (out/"triplet_summary.json").write_text(json.dumps(res,indent=2)+"\n",encoding="utf-8")
     (out/"triplet_summary.md").write_text("\n".join(lines),encoding="utf-8")
     return res
@@ -276,12 +306,19 @@ def main():
         comp["frozen"]=compare_one(d,reports["original"],reports["frozen"],d/"original_vs_frozen.json")
         comp["multistart"]=compare_one(d,reports["original"],reports["multistart"],d/"original_vs_multistart.json")
         comp["multi_vs_frozen"]=compare_one(d,reports["frozen"],reports["multistart"],d/"frozen_vs_multistart.json")
-        cycles={}
+        cycles,inner_cycles,in_stall,out_stall={},{},{},{}
         for name,path in reports.items():
             rr=load_board(path)
             data=check_img(rr,path)
-            cycles[name]=sum(int(z["cycles"]) for z in data["layers"])
-        measurements.append(dict(rep=rep,run_order=order,cycles=cycles))
+            layers=data["layers"]
+            cycles[name]=sum(int(z["cycles"]) for z in layers)
+            inner_cycles[name]=sum(int(z["cycles"]) for z in layers if z["name"] in {
+                f"conv{i}" for i in range(2,10)})
+            in_stall[name]=sum(int(z["in_stall"]) for z in layers)
+            out_stall[name]=sum(int(z["out_stall"]) for z in layers)
+        measurements.append(dict(rep=rep,run_order=order,cycles=cycles,
+                                 inner_cycles=inner_cycles,in_stall=in_stall,
+                                 out_stall=out_stall))
     summary=summarize(out,measurements,a.fclk)
     summary["physical_bitstream_sha256"]=bitstream_sha256
     summary["build_path"]=str(build)
