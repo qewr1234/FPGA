@@ -112,6 +112,32 @@ def preflight():
     print("All three models are kept separate. NO FPGA/JTAG/DDR access has occurred.")
 
 
+def verify_existing_w4_canary(canary_path, build):
+    """A real original-only run on the exact .bit, NOT an inferred board name."""
+    rec = json.loads(canary_path.read_text(encoding="utf-8"))
+    if rec.get("status") != "PHYSICAL_ORIGINAL_W4_CANARY_PASS":
+        raise ValueError("Existing W4 .bit requires successful physical canary")
+    if rec.get("physical_board_test_performed") is not True:
+        raise ValueError("Canary does not attest physical FPGA testing")
+    if Path(rec.get("build_path", "")).resolve() != build.resolve():
+        raise ValueError("Canary refers to a different .bit build directory")
+    actual = hashlib.sha256((build / "system_wrapper.bit").read_bytes()).hexdigest()
+    if rec.get("bitstream_sha256") != actual:
+        raise ValueError("Current .bit SHA256 differs from physical canary")
+    if (rec.get("core_id") != "0x4d410303"
+            or rec.get("fclk_mhz") != 50.0
+            or rec.get("bitexact_mismatches") != 0
+            or rec.get("model") != MODEL
+            or rec.get("image") != "05.png"
+            or rec.get("sigma") != 25
+            or rec.get("mode") != 1
+            or rec.get("historical_baseline_cycles") != 13289042):
+        raise ValueError("Physical canary model/clock/core/baseline does not match")
+    if not isinstance(rec.get("delta_pct"), (int, float)) or abs(rec["delta_pct"]) > 2:
+        raise ValueError("Physical original-only canary exceeds 2% cycle drift")
+    return actual
+
+
 def board_one(label,directory,build,xsdb,image,clock):
     path={"original":SOURCE,"frozen":FROZEN,"multistart":MULTI}[label]
     cmd=[
@@ -189,6 +215,8 @@ def main():
     ap.add_argument("--board-verified",default="")
     ap.add_argument("--xsdb",type=Path)
     ap.add_argument("--build",type=Path)
+    ap.add_argument("--existing-w4-canary",type=Path,default=None,
+                    help="physical Original-only canary for the exact existing zed_v W4 build")
     ap.add_argument("--image",default="05.png")
     ap.add_argument("--fclk",type=float,default=50.0)
     ap.add_argument("--run-id",default="trial_01")
@@ -205,8 +233,23 @@ def main():
     xsdb=a.xsdb.resolve();build=a.build.resolve()
     if not xsdb.is_file() or not (build/"system_wrapper.bit").is_file():
         ap.error("Explicit xsdb path or approved W4 build/system_wrapper.bit missing")
-    if any(word in str(build).lower() for word in ("zed_v","zedboard")):
-        ap.error("Legacy ZedBoard-named build refused for Smart ZYNQ SL")
+    legacy = any(word in str(build).lower() for word in ("zed_v","zedboard"))
+    bitstream_sha256 = hashlib.sha256((build / "system_wrapper.bit").read_bytes()).hexdigest()
+    if legacy:
+        if a.existing_w4_canary is None:
+            ap.error("Legacy-named W4 requires a verified physical original-only "
+                     "canary on the exact bitstream; refusing untested use")
+        try:
+            verified_sha = verify_existing_w4_canary(a.existing_w4_canary.resolve(),build)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            ap.error("Legacy W4 canary verification failed: " + str(exc))
+        if verified_sha != bitstream_sha256:
+            ap.error("Canary and current .bit SHA differ")
+        print("Legacy-named build permitted ONLY after passed physical W4 canary:",
+              a.existing_w4_canary.resolve())
+    elif a.existing_w4_canary is not None:
+        ap.error("Existing-W4 canary option is only for explicitly audited legacy build")
+
     if not 3<=a.repeats<=9:ap.error("Use 3-9 physical A/B/C repetitions")
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,48}",a.run_id):
         ap.error("Unsafe run-id")
@@ -235,6 +278,10 @@ def main():
             cycles[name]=sum(int(z["cycles"]) for z in data["layers"])
         measurements.append(dict(rep=rep,run_order=order,cycles=cycles))
     summary=summarize(out,measurements,a.fclk)
+    summary["physical_bitstream_sha256"]=bitstream_sha256
+    summary["build_path"]=str(build)
+    summary["original_only_canary"]=str(a.existing_w4_canary.resolve()) if legacy else None
+    (out/"triplet_summary.json").write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")
     print("PHYSICAL FPGA 3-WAY COMPLETE:",out/"triplet_summary.md")
     print("Measured Frozen full-network PL core cycles saved:",summary["frozen_total_pct_saved"])
     print("Measured Multi-start full-network PL core cycles saved:",summary["multistart_total_pct_saved"])
