@@ -29,8 +29,11 @@ echo Physical canary will be checked with .bit SHA256 before programming.
 echo Historical build BoardPart is ZC702; do NOT use on an unverified board.
 echo.
 set "APPROVAL="
-set /p "APPROVAL=Type SMART_ZYNQ_SL_PS_DDR_MIO_VERIFIED only after actual validation: "
-if not "%APPROVAL%"=="SMART_ZYNQ_SL_PS_DDR_MIO_VERIFIED" goto cancelled
+echo The completed Original-only physical canary confirms operation on this tested board.
+echo It does NOT certify a manufacturer-specific PS DDR/MIO preset.
+echo Only continue if the same FPGA board and cabling remain in use.
+set /p "APPROVAL=Type SAME_PHYSICAL_BOARD_W4_CANARY_VERIFIED only if confirmed: "
+if not "%APPROVAL%"=="SAME_PHYSICAL_BOARD_W4_CANARY_VERIFIED" goto cancelled
 python -u scripts\q1_fpga_triplet.py --execute --board-verified "%APPROVAL%" --existing-w4-canary "%CANARY%" --xsdb "%XSDB%" --build "%BUILD%" --run-id "%TRIAL_ID%" --repeats 3 --image 05.png --fclk 50
 if errorlevel 1 goto failed
 echo.
