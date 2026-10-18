@@ -1,0 +1,28 @@
+name: Existing W4 physical canary safety checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/q1_existing_w4_canary.py
+      - scripts/test_q1_existing_w4_canary.py
+      - scripts/q1_fpga_triplet.py
+      - scripts/q1_w4_provenance_audit.py
+      - scripts/test_q1_w4_provenance_audit.py
+      - .github/workflows/q1_existing_w4_canary_check.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-canary-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify program syntax (no FPGA)
+        run: python -m py_compile scripts/q1_existing_w4_canary.py scripts/q1_fpga_triplet.py scripts/q1_w4_provenance_audit.py
+      - name: Negative tests for board canary and bitstream SHAs (no FPGA)
+        run: python -m unittest discover -s scripts -p test_q1_existing_w4_canary.py -v
+      - name: Nested Vivado PS settings regression (no FPGA)
+        run: python -m unittest discover -s scripts -p test_q1_w4_provenance_audit.py -v
