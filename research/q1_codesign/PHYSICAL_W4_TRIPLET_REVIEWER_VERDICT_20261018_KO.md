@@ -123,3 +123,31 @@ GitHub after git pull origin main:
 - rep_01.zip: 9dfb82a867a10a2c6dac43092bd9500005f44e7a10859fb465ccd75d37743d5c
 
 보드 bitstream SHA256: 11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6.
+
+
+## 9. 제3자 독립 재현용 코드
+
+- 계산 코드: scripts/q1_physical_mechanism_replay.py
+- GitHub 링크: https://github.com/qewr1234/FPGA/blob/main/scripts/q1_physical_mechanism_replay.py
+- 오프라인 Python/numpy synthetic selftest CI 통과: https://github.com/qewr1234/FPGA/actions/runs/39119857368
+- 1회차 raw zip에는 3종 모델 각각 10개 layer 물리 report, 9 hidden map + input, PS Core 로그, 최종 PNG가 들어 있음. 본 문서의 표는 이 ZIP을 1차 독립 분석한 값이며, 스크립트는 동일 ZIP에 대해 새로 생성한 감사 출력을 저장하는 재현용 구현이다.
+
+예시 실행 (Windows PC, 원본 zip 경로는 실제 저장 위치로 바꿀 것):
+
+    cd /d C:\fpga\FPGA
+    git pull origin main
+    python scripts\q1_physical_mechanism_replay.py --triplet build\q1_bank_fpga_triplet\trial_01\triplet_summary.json --zip "FULL_PATH_TO_REP_01.zip" --out build\q1_physical_mechanism_replay\trial_01
+
+재현 실행 성공 시 저장 위치:
+- C:\fpga\FPGA\build\q1_physical_mechanism_replay\trial_01\audit.json
+- C:\fpga\FPGA\build\q1_physical_mechanism_replay\trial_01\audit.md
+- C:\fpga\FPGA\build\q1_physical_mechanism_replay\trial_01\layers.csv
+
+### 다음 held-out 영상 물리 검증
+
+기존 board·canary·bitstream 유지 시 optional image 인자가 추가된 runner 사용 가능:
+
+    RUN_FPGA_Q1_TRIPLET_EXISTING_W4.cmd "C:\Vivado\2026.1\Vivado\bin\xsdb.bat" canary_01 trial_set12_04 04.png
+
+04.png은 Set12 01/02/03 calibration 영상과 다른 후보. FPGA 실제 재프로그래밍 명령이므로 동일 보드/전원/배선 확인 후 인터랙티브 확인 절차를 통과해야 함.
+성공 시 결과 위치: C:\fpga\FPGA\build\q1_bank_fpga_triplet\trial_set12_04\triplet_summary.json
