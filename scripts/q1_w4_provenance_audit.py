@@ -107,11 +107,17 @@ def inspect_candidate_build(build: Path) -> dict:
     else:
         result["BoardPart"] = None
     if files["block_diagram"].is_file():
-        bd = files["block_diagram"].read_text(encoding="utf-8", errors="replace")
+        # Vivado .bd is structured JSON. PS parameters are objects like
+        # {"PCW_...": {"value": "100"}}, not flat scalar JSON fields.
+        # Regex would falsely read the opening brace as the setting ("{").
+        bd = json.loads(files["block_diagram"].read_text(encoding="utf-8"))
+        ps = (bd.get("design", {}).get("components", {})
+              .get("processing_system7_0", {}).get("parameters", {}))
         for key in ("PCW_FPGA0_PERIPHERAL_FREQMHZ", "PCW_UIPARAM_DDR_PARTNO",
                     "PCW_UIPARAM_DDR_FREQ_MHZ", "PCW_DDR_RAM_HIGHADDR"):
-            m = re.search(r'"' + key + r'"\s*:\s*"?([^",}\s]+)', bd)
-            result[key] = m.group(1) if m else None
+            param = ps.get(key)
+            val = param.get("value") if isinstance(param, dict) else param
+            result[key] = str(val) if val is not None else None
     result["same_binary_as_historical_run_proven"] = False
     result["hardware_safety_status"] = "NOT_AUTOMATICALLY_APPROVED"
     result["notice"] = (
