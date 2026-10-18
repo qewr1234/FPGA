@@ -1,0 +1,542 @@
+{
+ "images": [
+  "Set12 05.png",
+  "BSD68 test001.png"
+ ],
+ "noise": "sigma of the network, test_noise seed 0",
+ "orders": "bankperm/perms.json networks.<label>.orders",
+ "networks": {
+  "A": {
+   "model": "dn_d7_c32_es",
+   "q1_reviewer_export_reference": {
+    "applies": false,
+    "why": "q1_reviewer_export supports graph manifests with plain ReLU only"
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "60044a64f00423ea462acd84db64d5b3281face05620b02eb801e363f4f629ef",
+     "psnr_original": 29.82990043469384,
+     "psnr_permuted": 29.82990043469384,
+     "psnr_int_eval": 29.82990043469384,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 7,
+     "layers_with_input_permuted": 5,
+     "layers_with_output_permuted": 5,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "282b95b7296baa680f9679a1fb7926f66bc68d873b386cdeee18b39e24076731",
+     "psnr_original": 25.737069972890026,
+     "psnr_permuted": 25.737069972890026,
+     "psnr_int_eval": 25.737069593984074,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 7,
+     "layers_with_input_permuted": 5,
+     "layers_with_output_permuted": 5,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 85.1
+  },
+  "B + QAT": {
+   "model": "dn_d10_c64_us_es_qat",
+   "q1_reviewer_export_reference": {
+    "applies": true,
+    "files_compared": 11,
+    "byte_identical": true,
+    "differing": []
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "9a841dfe9c162e2232eaf8748fbac112845f610baeedfe224c15ffc69aa50bc6",
+     "psnr_original": 30.058906860796153,
+     "psnr_permuted": 30.058906860796153,
+     "psnr_int_eval": 30.058906860796153,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "95a653749f4555bab214dae75df4627e46f66cb3bf49ee1e322a837a66a5d2b1",
+     "psnr_original": 25.799106663683986,
+     "psnr_permuted": 25.799106663683986,
+     "psnr_int_eval": 25.799107048041286,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 132.2
+  },
+  "B-32 ReLU + QAT s1": {
+   "model": "dn_d10_c32_us_fx_qat",
+   "q1_reviewer_export_reference": {
+    "applies": true,
+    "files_compared": 11,
+    "byte_identical": true,
+    "differing": []
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "a174fb23dfae2957a9e6178d96c2222150d91b806c3556352304afcd8a2d711d",
+     "psnr_original": 29.536220128469942,
+     "psnr_permuted": 29.536220128469942,
+     "psnr_int_eval": 29.536220128469942,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "3db49203de743e716c0d9aade7c482d7aaf3d949409c0faf09b7805fd9c766f4",
+     "psnr_original": 25.600777367795896,
+     "psnr_permuted": 25.600777367795896,
+     "psnr_int_eval": 25.600777367795896,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 28.8
+  },
+  "B-32 ReLU + QAT s2": {
+   "model": "dn_d10_c32_us_fx_s2_qat",
+   "q1_reviewer_export_reference": {
+    "applies": true,
+    "files_compared": 11,
+    "byte_identical": true,
+    "differing": []
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "7e0d2de9ba83ec2b159faae333029509a281f7fd15a16cf7a3aee2e7efe9ba4c",
+     "psnr_original": 29.8899575879356,
+     "psnr_permuted": 29.8899575879356,
+     "psnr_int_eval": 29.8899575879356,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "7e04bc954f942a8e80108b381aecb4c22711b2b8acfec67366341e7cf29998d7",
+     "psnr_original": 25.74418521101648,
+     "psnr_permuted": 25.74418521101648,
+     "psnr_int_eval": 25.744184831489243,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 28.3
+  },
+  "B-32 ReLU + QAT s3": {
+   "model": "dn_d10_c32_us_fx_s3_qat",
+   "q1_reviewer_export_reference": {
+    "applies": true,
+    "files_compared": 11,
+    "byte_identical": true,
+    "differing": []
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "0057f06e0d5ff40acffd6799433b571a76b6590c7462c742e6f402a8086099e6",
+     "psnr_original": 29.837197591791302,
+     "psnr_permuted": 29.837197591791302,
+     "psnr_int_eval": 29.837197104807863,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "89fb117fbabc8b87aaba1350f32833c0556c47ec99f5aa7d1366210d222bc2af",
+     "psnr_original": 25.730842194953677,
+     "psnr_permuted": 25.730842194953677,
+     "psnr_int_eval": 25.730842573316703,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 29.2
+  },
+  "B-32 maxout + QAT s1": {
+   "model": "dn_d10_c32_us_mo_fx_qat",
+   "q1_reviewer_export_reference": {
+    "applies": false,
+    "why": "q1_reviewer_export supports graph manifests with plain ReLU only"
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "efc316e7f1eae1e365c2af6e0732748c5c697186bddc9b05d458abc61b85d3d1",
+     "psnr_original": 29.93615038832912,
+     "psnr_permuted": 29.93615038832912,
+     "psnr_int_eval": 29.93615038832912,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "c063579f2becad45e4827faec8a2140859bdc7edf7d72add4d34d620efb1630b",
+     "psnr_original": 25.763938155364464,
+     "psnr_permuted": 25.763938155364464,
+     "psnr_int_eval": 25.763938155364464,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 49.6
+  },
+  "B-32 maxout + QAT s2": {
+   "model": "dn_d10_c32_us_mo_fx_s2_qat",
+   "q1_reviewer_export_reference": {
+    "applies": false,
+    "why": "q1_reviewer_export supports graph manifests with plain ReLU only"
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "56c861787d8710bdc277cfc3bd723dca6ad5d69179ad1e6a62f38c8923dde697",
+     "psnr_original": 29.850954238063938,
+     "psnr_permuted": 29.850954238063938,
+     "psnr_int_eval": 29.850954238063938,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "65c17386b7f29579f0d1ea14f7200c91cea4fa2dd3e4da14a3ee62ec18ca1ad4",
+     "psnr_original": 25.740909987522727,
+     "psnr_permuted": 25.740909987522727,
+     "psnr_int_eval": 25.74091036676389,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 50.0
+  },
+  "B-32 maxout + QAT s3": {
+   "model": "dn_d10_c32_us_mo_fx_s3_qat",
+   "q1_reviewer_export_reference": {
+    "applies": false,
+    "why": "q1_reviewer_export supports graph manifests with plain ReLU only"
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "89ee32f438c0283a689b1ce27e60026e668c298df39d13bfd832821d70dda966",
+     "psnr_original": 29.923975357672127,
+     "psnr_permuted": 29.923975357672127,
+     "psnr_int_eval": 29.923974860860252,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "07ce01350fb494cc407315964ca971d18e32487fbdd79e422455c2791ea42efd",
+     "psnr_original": 25.767353276402744,
+     "psnr_permuted": 25.767353276402744,
+     "psnr_int_eval": 25.767352513288195,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 51.1
+  },
+  "B-32 averaging + QAT s2": {
+   "model": "dn_d10_c32_us_avg_fx_s2_qat",
+   "q1_reviewer_export_reference": {
+    "applies": false,
+    "why": "q1_reviewer_export supports graph manifests with plain ReLU only"
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "fb3a310fc2ce5c8e6aef15538d638f740937f702fc9bd5e2a638575c663eacf3",
+     "psnr_original": 29.79409694167622,
+     "psnr_permuted": 29.79409694167622,
+     "psnr_int_eval": 29.79409694167622,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "439170dc2ed1860774c321f3c1dd6f492e22d430f7f8c02fcd758b6d715fe4ec",
+     "psnr_original": 25.6957571871055,
+     "psnr_permuted": 25.6957571871055,
+     "psnr_int_eval": 25.69575681178685,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 49.0
+  },
+  "10 x 45 ReLU + QAT": {
+   "model": "dn_d10_c45_us_fx_qat",
+   "q1_reviewer_export_reference": {
+    "applies": true,
+    "files_compared": 11,
+    "byte_identical": true,
+    "differing": []
+   },
+   "images": [
+    {
+     "set": "Set12",
+     "image": "05.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "a4a86ba28e2ab773293b6bd3a1bf3e732551ac8ac19615ed985144211e61a1f1",
+     "psnr_original": 30.010438508888218,
+     "psnr_permuted": 30.010438508888218,
+     "psnr_int_eval": 30.010438508888218,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    },
+    {
+     "set": "BSD68",
+     "image": "test001.png",
+     "output_identical": true,
+     "png_identical": true,
+     "png_sha256": "4293684de29cea049c659b9d40dc9956557f821d9f2b98eeb27d226c3c9c37a6",
+     "psnr_original": 25.785646979380935,
+     "psnr_permuted": 25.785646979380935,
+     "psnr_int_eval": 25.785646979380935,
+     "psnr_matches_int_eval": true,
+     "windows_are_column_permutation": true,
+     "accumulators_are_column_permutation": true,
+     "layers_checked": 10,
+     "layers_with_input_permuted": 8,
+     "layers_with_output_permuted": 8,
+     "cli": {
+      "exit_code": 0,
+      "png_identical": true
+     }
+    }
+   ],
+   "all_ok": true,
+   "seconds": 59.6
+  }
+ },
+ "frozen_zip": {
+  "zip": "research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip",
+  "published": "research/q1_codesign/bank_export_perm.json",
+  "config_bins_compared": 10,
+  "config_bins_byte_identical": true,
+  "differing_config_bins": [],
+  "manifest_same_content": true,
+  "manifest_byte_identical": true,
+  "int_eval_byte_identical": true,
+  "network": "B-32 ReLU + QAT s1"
+ },
+ "all_ok": true
+}

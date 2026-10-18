@@ -1,0 +1,3916 @@
+{
+ "model": "dn_d10_c32_us_fx_qat",
+ "noise": "Set12 + BSD68, sigma 25 (the manifest's), test_noise seed 0 (as int_eval)",
+ "count_rule": "window = max(ceil(K/W)+1, ceil(COUT/16)*max(1, max_b nnz_b), COUT), summed over conv1-conv10 (denoise/predict_w4.window_cycles, sparse); fill and drain left out",
+ "saving": "100 * (Original - layout) / Original of the count; pooled = over the summed counts of the images",
+ "sources": {
+  "original": "denoise/export/dn_d10_c32_us_fx_qat",
+  "frozen": "research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip",
+  "multistart": "research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip"
+ },
+ "how": "every layout's windows come from the host emulation of its own export on every image; the column-permutation check below compares them with the Original's windows permuted by the export's permutation_manifest.json",
+ "checks": {
+  "images": 80,
+  "per_layout": {
+   "frozen": {
+    "denoised_identical": "80/80",
+    "windows_are_column_permutation": "80/80",
+    "column_permuted_counts_equal": "80/80"
+   },
+   "multistart": {
+    "denoised_identical": "80/80",
+    "windows_are_column_permutation": "80/80",
+    "column_permuted_counts_equal": "80/80"
+   }
+  },
+  "original_counts_equal_denoise_test_set_counts": "80/80 images (240 counts)",
+  "image_layers_where_w1_or_w2_count_differs": 0,
+  "failures": []
+ },
+ "summaries": {
+  "all 80": {
+   "images": 80,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.1307,
+     "max": 10.9383,
+     "median": 7.226,
+     "mean": 7.4425,
+     "pooled": 7.464489
+    },
+    "w4_conv2_9": {
+     "min": 6.0154,
+     "max": 12.5926,
+     "median": 8.3985,
+     "mean": 8.6368,
+     "pooled": 8.667655
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 1,
+    "image_layers": 800
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.6179,
+     "max": 11.1944,
+     "median": 7.8573,
+     "mean": 8.0773,
+     "pooled": 8.092532
+    },
+    "w4_conv2_9": {
+     "min": 6.5865,
+     "max": 12.8669,
+     "median": 9.1307,
+     "mean": 9.3741,
+     "pooled": 9.39693
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 800
+   },
+   "multistart_below_frozen_w4": 77,
+   "frozen_below_multistart_w4": 3
+  },
+  "79 without 01.png": {
+   "images": 79,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.1307,
+     "max": 10.9383,
+     "median": 7.2221,
+     "mean": 7.4422,
+     "pooled": 7.464489
+    },
+    "w4_conv2_9": {
+     "min": 6.0154,
+     "max": 12.5926,
+     "median": 8.3907,
+     "mean": 8.6362,
+     "pooled": 8.667552
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 1,
+    "image_layers": 790
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.6179,
+     "max": 11.1944,
+     "median": 7.8773,
+     "mean": 8.0835,
+     "pooled": 8.095207
+    },
+    "w4_conv2_9": {
+     "min": 6.5865,
+     "max": 12.8669,
+     "median": 9.1434,
+     "mean": 9.381,
+     "pooled": 9.399924
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 790
+   },
+   "multistart_below_frozen_w4": 76,
+   "frozen_below_multistart_w4": 3
+  },
+  "77 without Set12 01-03": {
+   "images": 77,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.1307,
+     "max": 10.9383,
+     "median": 7.23,
+     "mean": 7.4763,
+     "pooled": 7.478436
+    },
+    "w4_conv2_9": {
+     "min": 6.0154,
+     "max": 12.5926,
+     "median": 8.4064,
+     "mean": 8.6746,
+     "pooled": 8.683271
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 1,
+    "image_layers": 770
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.6179,
+     "max": 11.1944,
+     "median": 7.8863,
+     "mean": 8.1177,
+     "pooled": 8.109103
+    },
+    "w4_conv2_9": {
+     "min": 6.5865,
+     "max": 12.8669,
+     "median": 9.1623,
+     "mean": 9.4195,
+     "pooled": 9.415544
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 770
+   },
+   "multistart_below_frozen_w4": 74,
+   "frozen_below_multistart_w4": 3
+  },
+  "Set12": {
+   "images": 12,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.8176,
+     "max": 7.911,
+     "median": 6.9618,
+     "mean": 6.9354,
+     "pooled": 6.831168
+    },
+    "w4_conv2_9": {
+     "min": 6.7973,
+     "max": 9.1851,
+     "median": 8.1057,
+     "mean": 8.0736,
+     "pooled": 7.956674
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 120
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 6.4885,
+     "max": 9.0144,
+     "median": 7.4641,
+     "mean": 7.5273,
+     "pooled": 7.38071
+    },
+    "w4_conv2_9": {
+     "min": 7.5811,
+     "max": 10.4662,
+     "median": 8.6915,
+     "mean": 8.7626,
+     "pooled": 8.596759
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 120
+   },
+   "multistart_below_frozen_w4": 12,
+   "frozen_below_multistart_w4": 0
+  },
+  "BSD68": {
+   "images": 68,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.1307,
+     "max": 10.9383,
+     "median": 7.2747,
+     "mean": 7.532,
+     "pooled": 7.568362
+    },
+    "w4_conv2_9": {
+     "min": 6.0154,
+     "max": 12.5926,
+     "median": 8.4453,
+     "mean": 8.7362,
+     "pooled": 8.78385
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 1,
+    "image_layers": 680
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.6179,
+     "max": 11.1944,
+     "median": 8.0252,
+     "mean": 8.1743,
+     "pooled": 8.20928
+    },
+    "w4_conv2_9": {
+     "min": 6.5865,
+     "max": 12.8669,
+     "median": 9.319,
+     "mean": 9.482,
+     "pooled": 9.5277
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 680
+   },
+   "multistart_below_frozen_w4": 65,
+   "frozen_below_multistart_w4": 3
+  },
+  "Set12 01-03": {
+   "images": 3,
+   "frozen": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 5.8176,
+     "max": 7.4645,
+     "median": 6.4424,
+     "mean": 6.5748,
+     "pooled": 6.581345
+    },
+    "w4_conv2_9": {
+     "min": 6.7973,
+     "max": 8.6873,
+     "median": 7.5129,
+     "mean": 7.6659,
+     "pooled": 7.67457
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 30
+   },
+   "multistart": {
+    "w1": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w2": {
+     "min": 0.0,
+     "max": 0.0,
+     "median": 0.0,
+     "mean": 0.0,
+     "pooled": 0.0
+    },
+    "w4": {
+     "min": 6.4885,
+     "max": 7.5851,
+     "median": 7.0431,
+     "mean": 7.0389,
+     "pooled": 7.043199
+    },
+    "w4_conv2_9": {
+     "min": 7.5811,
+     "max": 8.8277,
+     "median": 8.2134,
+     "mean": 8.2074,
+     "pooled": 8.213141
+    },
+    "images_with_w4_saving_le_0": 0,
+    "image_layers_worse_w4": 0,
+    "image_layers": 30
+   },
+   "multistart_below_frozen_w4": 3,
+   "frozen_below_multistart_w4": 0
+  }
+ },
+ "rank_of_05": {
+  "frozen": {
+   "saving_w4_pct": 7.022501,
+   "rank_from_smallest_saving": 34,
+   "rank_from_largest_saving": 47,
+   "of": 80
+  },
+  "multistart": {
+   "saving_w4_pct": 7.604894,
+   "rank_from_smallest_saving": 32,
+   "rank_from_largest_saving": 49,
+   "of": 80
+  }
+ },
+ "images": [
+  {
+   "set": "Set12",
+   "image": "01.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13268814,
+    "frozen": 12278368,
+    "multistart": 12262359
+   },
+   "w4_conv2_9": {
+    "original": 11401038,
+    "frozen": 10410592,
+    "multistart": 10394583
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.464465,
+     "w4_conv2_9": 8.687332
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.585116,
+     "w4_conv2_9": 8.827749
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "02.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 12959127,
+    "frozen": 12205211,
+    "multistart": 12118277
+   },
+   "w4_conv2_9": {
+    "original": 11091351,
+    "frozen": 10337435,
+    "multistart": 10250501
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.817645,
+     "w4_conv2_9": 6.797332
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.488477,
+     "w4_conv2_9": 7.581132
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "03.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13108119,
+    "frozen": 12263639,
+    "multistart": 12184907
+   },
+   "w4_conv2_9": {
+    "original": 11240343,
+    "frozen": 10395863,
+    "multistart": 10317131
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.442419,
+     "w4_conv2_9": 7.512938
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.043055,
+     "w4_conv2_9": 8.213379
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "04.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13455203,
+    "frozen": 12424026,
+    "multistart": 12318893
+   },
+   "w4_conv2_9": {
+    "original": 11587427,
+    "frozen": 10556250,
+    "multistart": 10451117
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.663779,
+     "w4_conv2_9": 8.899102
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.445135,
+     "w4_conv2_9": 9.806405
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "05.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13288456,
+    "frozen": 12355274,
+    "multistart": 12277883
+   },
+   "w4_conv2_9": {
+    "original": 11420680,
+    "frozen": 10487498,
+    "multistart": 10410107
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.022501,
+     "w4_conv2_9": 8.170985
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.604894,
+     "w4_conv2_9": 8.848624
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "06.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13465083,
+    "frozen": 12399860,
+    "multistart": 12251287
+   },
+   "w4_conv2_9": {
+    "original": 11597307,
+    "frozen": 10532084,
+    "multistart": 10383511
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.911002,
+     "w4_conv2_9": 9.185089
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.014397,
+     "w4_conv2_9": 10.466188
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "07.png",
+   "windows": 163840,
+   "w1": {
+    "original": 43810816,
+    "frozen": 43810816,
+    "multistart": 43810816
+   },
+   "w2": {
+    "original": 22200320,
+    "frozen": 22200320,
+    "multistart": 22200320
+   },
+   "w4": {
+    "original": 13411455,
+    "frozen": 12442865,
+    "multistart": 12353784
+   },
+   "w4_conv2_9": {
+    "original": 11543679,
+    "frozen": 10575089,
+    "multistart": 10486008
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.22211,
+     "w4_conv2_9": 8.390653
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.886326,
+     "w4_conv2_9": 9.162339
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "08.png",
+   "windows": 655360,
+   "w1": {
+    "original": 175243264,
+    "frozen": 175243264,
+    "multistart": 175243264
+   },
+   "w2": {
+    "original": 88801280,
+    "frozen": 88801280,
+    "multistart": 88801280
+   },
+   "w4": {
+    "original": 51976431,
+    "frozen": 48894569,
+    "multistart": 48555313
+   },
+   "w4_conv2_9": {
+    "original": 44505327,
+    "frozen": 41423465,
+    "multistart": 41084209
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.929345,
+     "w4_conv2_9": 6.924704
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.582056,
+     "w4_conv2_9": 7.686985
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "09.png",
+   "windows": 655360,
+   "w1": {
+    "original": 175243264,
+    "frozen": 175243264,
+    "multistart": 175243264
+   },
+   "w2": {
+    "original": 88801280,
+    "frozen": 88801280,
+    "multistart": 88801280
+   },
+   "w4": {
+    "original": 53751482,
+    "frozen": 49749525,
+    "multistart": 49543837
+   },
+   "w4_conv2_9": {
+    "original": 46280378,
+    "frozen": 42278421,
+    "multistart": 42072733
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.445296,
+     "w4_conv2_9": 8.6472
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.827961,
+     "w4_conv2_9": 9.091639
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "10.png",
+   "windows": 655360,
+   "w1": {
+    "original": 175243264,
+    "frozen": 175243264,
+    "multistart": 175243264
+   },
+   "w2": {
+    "original": 88801280,
+    "frozen": 88801280,
+    "multistart": 88801280
+   },
+   "w4": {
+    "original": 52435290,
+    "frozen": 48849271,
+    "multistart": 48615121
+   },
+   "w4_conv2_9": {
+    "original": 44964186,
+    "frozen": 41378167,
+    "multistart": 41144017
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.838942,
+     "w4_conv2_9": 7.975278
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.285492,
+     "w4_conv2_9": 8.496026
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "11.png",
+   "windows": 655360,
+   "w1": {
+    "original": 175243264,
+    "frozen": 175243264,
+    "multistart": 175243264
+   },
+   "w2": {
+    "original": 88801280,
+    "frozen": 88801280,
+    "multistart": 88801280
+   },
+   "w4": {
+    "original": 52664242,
+    "frozen": 49206001,
+    "multistart": 48860762
+   },
+   "w4_conv2_9": {
+    "original": 45193138,
+    "frozen": 41734897,
+    "multistart": 41389658
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.566583,
+     "w4_conv2_9": 7.652137
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.22213,
+     "w4_conv2_9": 8.416056
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "Set12",
+   "image": "12.png",
+   "windows": 655360,
+   "w1": {
+    "original": 175243264,
+    "frozen": 175243264,
+    "multistart": 175243264
+   },
+   "w2": {
+    "original": 88801280,
+    "frozen": 88801280,
+    "multistart": 88801280
+   },
+   "w4": {
+    "original": 52726755,
+    "frozen": 49088020,
+    "multistart": 48855032
+   },
+   "w4_conv2_9": {
+    "original": 45255651,
+    "frozen": 41616916,
+    "multistart": 41383928
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.901117,
+     "w4_conv2_9": 8.040399
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.342995,
+     "w4_conv2_9": 8.555226
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test001.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32924574,
+    "frozen": 30029608,
+    "multistart": 29841917
+   },
+   "w4_conv2_9": {
+    "original": 28501260,
+    "frozen": 25606294,
+    "multistart": 25418603
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.792721,
+     "w4_conv2_9": 10.157326
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.362785,
+     "w4_conv2_9": 10.815862
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test002.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32240531,
+    "frozen": 29840597,
+    "multistart": 29395431
+   },
+   "w4_conv2_9": {
+    "original": 27817217,
+    "frozen": 25417283,
+    "multistart": 24972117
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.443841,
+     "w4_conv2_9": 8.627513
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.824607,
+     "w4_conv2_9": 10.227838
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test003.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31330827,
+    "frozen": 29333692,
+    "multistart": 29109576
+   },
+   "w4_conv2_9": {
+    "original": 26907513,
+    "frozen": 24910378,
+    "multistart": 24686262
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.374345,
+     "w4_conv2_9": 7.422221
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.089666,
+     "w4_conv2_9": 8.255133
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test004.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31199763,
+    "frozen": 29290948,
+    "multistart": 29070831
+   },
+   "w4_conv2_9": {
+    "original": 26776449,
+    "frozen": 24867634,
+    "multistart": 24647517
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.118043,
+     "w4_conv2_9": 7.128709
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.823552,
+     "w4_conv2_9": 7.950763
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test005.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32924180,
+    "frozen": 29909766,
+    "multistart": 29519789
+   },
+   "w4_conv2_9": {
+    "original": 28500866,
+    "frozen": 25486452,
+    "multistart": 25096475
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.155624,
+     "w4_conv2_9": 10.57657
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.340094,
+     "w4_conv2_9": 11.944869
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test006.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31610443,
+    "frozen": 29494141,
+    "multistart": 28968131
+   },
+   "w4_conv2_9": {
+    "original": 27187129,
+    "frozen": 25070827,
+    "multistart": 24544817
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.694946,
+     "w4_conv2_9": 7.784206
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.358984,
+     "w4_conv2_9": 9.718981
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test007.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31944975,
+    "frozen": 29640902,
+    "multistart": 29428567
+   },
+   "w4_conv2_9": {
+    "original": 27521661,
+    "frozen": 25217588,
+    "multistart": 25005253
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.21263,
+     "w4_conv2_9": 8.371853
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.87732,
+     "w4_conv2_9": 9.143373
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test008.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32851472,
+    "frozen": 30039141,
+    "multistart": 29859089
+   },
+   "w4_conv2_9": {
+    "original": 28428158,
+    "frozen": 25615827,
+    "multistart": 25435775
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.560746,
+     "w4_conv2_9": 9.892765
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.108825,
+     "w4_conv2_9": 10.526123
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test009.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32341954,
+    "frozen": 29978055,
+    "multistart": 29651449
+   },
+   "w4_conv2_9": {
+    "original": 27918640,
+    "frozen": 25554741,
+    "multistart": 25228135
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.309079,
+     "w4_conv2_9": 8.467099
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.318932,
+     "w4_conv2_9": 9.636949
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test010.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31087143,
+    "frozen": 29210496,
+    "multistart": 29016901
+   },
+   "w4_conv2_9": {
+    "original": 26663829,
+    "frozen": 24787182,
+    "multistart": 24593587
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.03673,
+     "w4_conv2_9": 7.038175
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.65948,
+     "w4_conv2_9": 7.764234
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test011.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32716929,
+    "frozen": 29893838,
+    "multistart": 29741336
+   },
+   "w4_conv2_9": {
+    "original": 28293615,
+    "frozen": 25470524,
+    "multistart": 25318022
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.628839,
+     "w4_conv2_9": 9.977838
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.094964,
+     "w4_conv2_9": 10.516836
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test012.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31608594,
+    "frozen": 29323299,
+    "multistart": 29138778
+   },
+   "w4_conv2_9": {
+    "original": 27185280,
+    "frozen": 24899985,
+    "multistart": 24715464
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.22998,
+     "w4_conv2_9": 8.406369
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.813748,
+     "w4_conv2_9": 9.085123
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test013.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31237697,
+    "frozen": 29065853,
+    "multistart": 28908525
+   },
+   "w4_conv2_9": {
+    "original": 26814383,
+    "frozen": 24642539,
+    "multistart": 24485211
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.952638,
+     "w4_conv2_9": 8.099549
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.456286,
+     "w4_conv2_9": 8.686279
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test014.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31187252,
+    "frozen": 29335605,
+    "multistart": 29105708
+   },
+   "w4_conv2_9": {
+    "original": 26763938,
+    "frozen": 24912291,
+    "multistart": 24682394
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.937192,
+     "w4_conv2_9": 6.91844
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.674342,
+     "w4_conv2_9": 7.77742
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test015.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32445786,
+    "frozen": 29865097,
+    "multistart": 29581663
+   },
+   "w4_conv2_9": {
+    "original": 28022472,
+    "frozen": 25441783,
+    "multistart": 25158349
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.95385,
+     "w4_conv2_9": 9.209355
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.827411,
+     "w4_conv2_9": 10.220808
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test016.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32303003,
+    "frozen": 29606379,
+    "multistart": 29401894
+   },
+   "w4_conv2_9": {
+    "original": 27879689,
+    "frozen": 25183065,
+    "multistart": 24978580
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.347905,
+     "w4_conv2_9": 9.67236
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.980927,
+     "w4_conv2_9": 10.405816
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test017.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31414497,
+    "frozen": 29458697,
+    "multistart": 29328995
+   },
+   "w4_conv2_9": {
+    "original": 26991183,
+    "frozen": 25035383,
+    "multistart": 24905681
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.225788,
+     "w4_conv2_9": 7.24607
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.638661,
+     "w4_conv2_9": 7.726605
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test018.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30961563,
+    "frozen": 29259217,
+    "multistart": 28999167
+   },
+   "w4_conv2_9": {
+    "original": 26538249,
+    "frozen": 24835903,
+    "multistart": 24575853
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.498256,
+     "w4_conv2_9": 6.414688
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.338168,
+     "w4_conv2_9": 7.394595
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test019.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31964307,
+    "frozen": 29513037,
+    "multistart": 29386940
+   },
+   "w4_conv2_9": {
+    "original": 27540993,
+    "frozen": 25089723,
+    "multistart": 24963626
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.668773,
+     "w4_conv2_9": 8.900442
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.063266,
+     "w4_conv2_9": 9.358294
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test020.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31759001,
+    "frozen": 29411549,
+    "multistart": 29222354
+   },
+   "w4_conv2_9": {
+    "original": 27335687,
+    "frozen": 24988235,
+    "multistart": 24799040
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.391454,
+     "w4_conv2_9": 8.5875
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.987175,
+     "w4_conv2_9": 9.279617
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test021.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33479841,
+    "frozen": 30127544,
+    "multistart": 30002365
+   },
+   "w4_conv2_9": {
+    "original": 29056527,
+    "frozen": 25704230,
+    "multistart": 25579051
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.012882,
+     "w4_conv2_9": 11.537157
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.386776,
+     "w4_conv2_9": 11.967969
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test022.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32998821,
+    "frozen": 29903935,
+    "multistart": 29808717
+   },
+   "w4_conv2_9": {
+    "original": 28575507,
+    "frozen": 25480621,
+    "multistart": 25385403
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.378778,
+     "w4_conv2_9": 10.830555
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.667327,
+     "w4_conv2_9": 11.16377
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test023.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31697217,
+    "frozen": 29328753,
+    "multistart": 29097014
+   },
+   "w4_conv2_9": {
+    "original": 27273903,
+    "frozen": 24905439,
+    "multistart": 24673700
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.472151,
+     "w4_conv2_9": 8.683994
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.203253,
+     "w4_conv2_9": 9.533667
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test024.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32654024,
+    "frozen": 29855723,
+    "multistart": 29688149
+   },
+   "w4_conv2_9": {
+    "original": 28230710,
+    "frozen": 25432409,
+    "multistart": 25264835
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.569544,
+     "w4_conv2_9": 9.912259
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.082724,
+     "w4_conv2_9": 10.505846
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test025.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31843107,
+    "frozen": 29657981,
+    "multistart": 29366836
+   },
+   "w4_conv2_9": {
+    "original": 27419793,
+    "frozen": 25234667,
+    "multistart": 24943522
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.862163,
+     "w4_conv2_9": 7.969156
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.776474,
+     "w4_conv2_9": 9.030962
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test026.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31998777,
+    "frozen": 29593616,
+    "multistart": 29325545
+   },
+   "w4_conv2_9": {
+    "original": 27575463,
+    "frozen": 25170302,
+    "multistart": 24902231
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.516415,
+     "w4_conv2_9": 8.722106
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.354169,
+     "w4_conv2_9": 9.694242
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test027.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31407691,
+    "frozen": 29437274,
+    "multistart": 29180050
+   },
+   "w4_conv2_9": {
+    "original": 26984377,
+    "frozen": 25013960,
+    "multistart": 24756736
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.273677,
+     "w4_conv2_9": 7.302066
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.092661,
+     "w4_conv2_9": 8.255299
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test028.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33434492,
+    "frozen": 30714359,
+    "multistart": 30329903
+   },
+   "w4_conv2_9": {
+    "original": 29011178,
+    "frozen": 26291045,
+    "multistart": 25906589
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.135709,
+     "w4_conv2_9": 9.376155
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.285587,
+     "w4_conv2_9": 10.701354
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {
+     "conv3": -1.558915
+    },
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test029.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33770454,
+    "frozen": 30286601,
+    "multistart": 30220062
+   },
+   "w4_conv2_9": {
+    "original": 29347140,
+    "frozen": 25863287,
+    "multistart": 25796748
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.316275,
+     "w4_conv2_9": 11.871184
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.513308,
+     "w4_conv2_9": 12.097915
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test030.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30854103,
+    "frozen": 28875970,
+    "multistart": 28731112
+   },
+   "w4_conv2_9": {
+    "original": 26430789,
+    "frozen": 24452656,
+    "multistart": 24307798
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.411248,
+     "w4_conv2_9": 7.4842
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.880741,
+     "w4_conv2_9": 8.032265
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test031.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33556933,
+    "frozen": 29933624,
+    "multistart": 29963089
+   },
+   "w4_conv2_9": {
+    "original": 29133619,
+    "frozen": 25510310,
+    "multistart": 25539775
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.797497,
+     "w4_conv2_9": 12.436865
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.709691,
+     "w4_conv2_9": 12.335728
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test032.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32431902,
+    "frozen": 29405655,
+    "multistart": 29254256
+   },
+   "w4_conv2_9": {
+    "original": 28008588,
+    "frozen": 24982341,
+    "multistart": 24830942
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.331081,
+     "w4_conv2_9": 10.804711
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.797902,
+     "w4_conv2_9": 11.345256
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test033.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31949072,
+    "frozen": 29324739,
+    "multistart": 29237556
+   },
+   "w4_conv2_9": {
+    "original": 27525758,
+    "frozen": 24901425,
+    "multistart": 24814242
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.214113,
+     "w4_conv2_9": 9.534099
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.486995,
+     "w4_conv2_9": 9.850831
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test034.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31371709,
+    "frozen": 29547665,
+    "multistart": 29048518
+   },
+   "w4_conv2_9": {
+    "original": 26948395,
+    "frozen": 25124351,
+    "multistart": 24625204
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.814296,
+     "w4_conv2_9": 6.768655
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.40537,
+     "w4_conv2_9": 8.620888
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test035.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31927859,
+    "frozen": 29629869,
+    "multistart": 29391604
+   },
+   "w4_conv2_9": {
+    "original": 27504545,
+    "frozen": 25206555,
+    "multistart": 24968290
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.197445,
+     "w4_conv2_9": 8.354946
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.943705,
+     "w4_conv2_9": 9.221221
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test036.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30787327,
+    "frozen": 28737359,
+    "multistart": 28657103
+   },
+   "w4_conv2_9": {
+    "original": 26364013,
+    "frozen": 24314045,
+    "multistart": 24233789
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.65848,
+     "w4_conv2_9": 7.77563
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.919159,
+     "w4_conv2_9": 8.080045
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test037.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31901155,
+    "frozen": 29447828,
+    "multistart": 29207250
+   },
+   "w4_conv2_9": {
+    "original": 27477841,
+    "frozen": 25024514,
+    "multistart": 24783936
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.690402,
+     "w4_conv2_9": 8.928383
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.444538,
+     "w4_conv2_9": 9.803918
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test038.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31792312,
+    "frozen": 29546329,
+    "multistart": 29305124
+   },
+   "w4_conv2_9": {
+    "original": 27368998,
+    "frozen": 25123015,
+    "multistart": 24881810
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.064548,
+     "w4_conv2_9": 8.206303
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.823237,
+     "w4_conv2_9": 9.087611
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test039.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30742894,
+    "frozen": 29059044,
+    "multistart": 28853881
+   },
+   "w4_conv2_9": {
+    "original": 26319580,
+    "frozen": 24635730,
+    "multistart": 24430567
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.477201,
+     "w4_conv2_9": 6.397708
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.144552,
+     "w4_conv2_9": 7.177216
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test040.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31517803,
+    "frozen": 29306121,
+    "multistart": 29068946
+   },
+   "w4_conv2_9": {
+    "original": 27094489,
+    "frozen": 24882807,
+    "multistart": 24645632
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.017247,
+     "w4_conv2_9": 8.162848
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.769758,
+     "w4_conv2_9": 9.038211
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test041.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32458784,
+    "frozen": 29802750,
+    "multistart": 29672558
+   },
+   "w4_conv2_9": {
+    "original": 28035470,
+    "frozen": 25379436,
+    "multistart": 25249244
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.18279,
+     "w4_conv2_9": 9.473834
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.583889,
+     "w4_conv2_9": 9.938218
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test042.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31379658,
+    "frozen": 29322712,
+    "multistart": 29125164
+   },
+   "w4_conv2_9": {
+    "original": 26956344,
+    "frozen": 24899398,
+    "multistart": 24701850
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.55503,
+     "w4_conv2_9": 7.630656
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.184572,
+     "w4_conv2_9": 8.363501
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test043.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31754447,
+    "frozen": 29586367,
+    "multistart": 29353004
+   },
+   "w4_conv2_9": {
+    "original": 27331133,
+    "frozen": 25163053,
+    "multistart": 24929690
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.827642,
+     "w4_conv2_9": 7.932639
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.562541,
+     "w4_conv2_9": 8.786474
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test044.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32409557,
+    "frozen": 29525410,
+    "multistart": 29358329
+   },
+   "w4_conv2_9": {
+    "original": 27986243,
+    "frozen": 25102096,
+    "multistart": 24935015
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.899063,
+     "w4_conv2_9": 10.305588
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.414593,
+     "w4_conv2_9": 10.9026
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test045.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30348619,
+    "frozen": 28771269,
+    "multistart": 28590831
+   },
+   "w4_conv2_9": {
+    "original": 25925305,
+    "frozen": 24347955,
+    "multistart": 24167517
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.197436,
+     "w4_conv2_9": 6.08421
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.791987,
+     "w4_conv2_9": 6.780202
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test046.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32590349,
+    "frozen": 29701946,
+    "multistart": 29561687
+   },
+   "w4_conv2_9": {
+    "original": 28167035,
+    "frozen": 25278632,
+    "multistart": 25138373
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.862756,
+     "w4_conv2_9": 10.254551
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.293125,
+     "w4_conv2_9": 10.752506
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test047.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32245296,
+    "frozen": 29413294,
+    "multistart": 29347350
+   },
+   "w4_conv2_9": {
+    "original": 27821982,
+    "frozen": 24989980,
+    "multistart": 24924036
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.782683,
+     "w4_conv2_9": 10.179009
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.98719,
+     "w4_conv2_9": 10.41603
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test048.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32224933,
+    "frozen": 29812531,
+    "multistart": 29515990
+   },
+   "w4_conv2_9": {
+    "original": 27801619,
+    "frozen": 25389217,
+    "multistart": 25092676
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.486135,
+     "w4_conv2_9": 8.6772
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.406357,
+     "w4_conv2_9": 9.743832
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test049.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31577373,
+    "frozen": 29600440,
+    "multistart": 29180273
+   },
+   "w4_conv2_9": {
+    "original": 27154059,
+    "frozen": 25177126,
+    "multistart": 24756959
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.2606,
+     "w4_conv2_9": 7.280433
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.591195,
+     "w4_conv2_9": 8.827778
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test050.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32920163,
+    "frozen": 29821905,
+    "multistart": 29587471
+   },
+   "w4_conv2_9": {
+    "original": 28496849,
+    "frozen": 25398591,
+    "multistart": 25164157
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.41143,
+     "w4_conv2_9": 10.872283
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.123559,
+     "w4_conv2_9": 11.694949
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test051.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31448497,
+    "frozen": 29226268,
+    "multistart": 29136994
+   },
+   "w4_conv2_9": {
+    "original": 27025183,
+    "frozen": 24802954,
+    "multistart": 24713680
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.066249,
+     "w4_conv2_9": 8.222808
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.350122,
+     "w4_conv2_9": 8.553145
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test052.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31794080,
+    "frozen": 29592905,
+    "multistart": 29052311
+   },
+   "w4_conv2_9": {
+    "original": 27370766,
+    "frozen": 25169591,
+    "multistart": 24628997
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.923223,
+     "w4_conv2_9": 8.042066
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.62352,
+     "w4_conv2_9": 10.017144
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test053.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30627643,
+    "frozen": 28651871,
+    "multistart": 28478928
+   },
+   "w4_conv2_9": {
+    "original": 26204329,
+    "frozen": 24228557,
+    "multistart": 24055614
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.450944,
+     "w4_conv2_9": 7.539869
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.015607,
+     "w4_conv2_9": 8.199847
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test054.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31489510,
+    "frozen": 29209573,
+    "multistart": 29021612
+   },
+   "w4_conv2_9": {
+    "original": 27066196,
+    "frozen": 24786259,
+    "multistart": 24598298
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.240306,
+     "w4_conv2_9": 8.423559
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.837207,
+     "w4_conv2_9": 9.118008
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test055.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32275378,
+    "frozen": 29761678,
+    "multistart": 29544199
+   },
+   "w4_conv2_9": {
+    "original": 27852064,
+    "frozen": 25338364,
+    "multistart": 25120885
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.78829,
+     "w4_conv2_9": 9.025184
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.462113,
+     "w4_conv2_9": 9.80602
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test056.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33671096,
+    "frozen": 29988051,
+    "multistart": 30035185
+   },
+   "w4_conv2_9": {
+    "original": 29247782,
+    "frozen": 25564737,
+    "multistart": 25611871
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.938299,
+     "w4_conv2_9": 12.592562
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.798315,
+     "w4_conv2_9": 12.431408
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test057.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31754255,
+    "frozen": 29503362,
+    "multistart": 29305334
+   },
+   "w4_conv2_9": {
+    "original": 27330941,
+    "frozen": 25080048,
+    "multistart": 24882020
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.088477,
+     "w4_conv2_9": 8.235695
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.712103,
+     "w4_conv2_9": 8.960251
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test058.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30494449,
+    "frozen": 28622613,
+    "multistart": 28505491
+   },
+   "w4_conv2_9": {
+    "original": 26071135,
+    "frozen": 24199299,
+    "multistart": 24082177
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.138284,
+     "w4_conv2_9": 7.179726
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.522361,
+     "w4_conv2_9": 7.628966
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test059.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30955446,
+    "frozen": 29183463,
+    "multistart": 28974494
+   },
+   "w4_conv2_9": {
+    "original": 26532132,
+    "frozen": 24760149,
+    "multistart": 24551180
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.724301,
+     "w4_conv2_9": 6.67863
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.399365,
+     "w4_conv2_9": 7.466238
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test060.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30524240,
+    "frozen": 28847407,
+    "multistart": 28688396
+   },
+   "w4_conv2_9": {
+    "original": 26100926,
+    "frozen": 24424093,
+    "multistart": 24265082
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.493447,
+     "w4_conv2_9": 6.42442
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.014381,
+     "w4_conv2_9": 7.033636
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test061.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 31134273,
+    "frozen": 29364015,
+    "multistart": 29125427
+   },
+   "w4_conv2_9": {
+    "original": 26710959,
+    "frozen": 24940701,
+    "multistart": 24702113
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.685882,
+     "w4_conv2_9": 6.62746
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.452201,
+     "w4_conv2_9": 7.520681
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test062.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32196295,
+    "frozen": 30021601,
+    "multistart": 30071697
+   },
+   "w4_conv2_9": {
+    "original": 27772981,
+    "frozen": 25598287,
+    "multistart": 25648383
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.754485,
+     "w4_conv2_9": 7.830251
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 6.59889,
+     "w4_conv2_9": 7.649874
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test063.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32685176,
+    "frozen": 29754469,
+    "multistart": 29635537
+   },
+   "w4_conv2_9": {
+    "original": 28261862,
+    "frozen": 25331155,
+    "multistart": 25212223
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.966472,
+     "w4_conv2_9": 10.36983
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.330343,
+     "w4_conv2_9": 10.790651
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test064.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32243554,
+    "frozen": 29523717,
+    "multistart": 29345768
+   },
+   "w4_conv2_9": {
+    "original": 27820240,
+    "frozen": 25100403,
+    "multistart": 24922454
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.435289,
+     "w4_conv2_9": 9.776468
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 8.987179,
+     "w4_conv2_9": 10.416107
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test065.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 32515461,
+    "frozen": 30020176,
+    "multistart": 29988839
+   },
+   "w4_conv2_9": {
+    "original": 28092147,
+    "frozen": 25596862,
+    "multistart": 25565525
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.674149,
+     "w4_conv2_9": 8.8825
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 7.770525,
+     "w4_conv2_9": 8.994051
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test066.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 30077723,
+    "frozen": 28534512,
+    "multistart": 28387988
+   },
+   "w4_conv2_9": {
+    "original": 25654409,
+    "frozen": 24111198,
+    "multistart": 23964674
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.130744,
+     "w4_conv2_9": 6.015383
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 5.617895,
+     "w4_conv2_9": 6.586529
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test067.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 33660501,
+    "frozen": 30125488,
+    "multistart": 29991409
+   },
+   "w4_conv2_9": {
+    "original": 29237187,
+    "frozen": 25702174,
+    "multistart": 25568095
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.501962,
+     "w4_conv2_9": 12.090811
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 10.900289,
+     "w4_conv2_9": 12.549402
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  },
+  {
+   "set": "BSD68",
+   "image": "test068.png",
+   "windows": 388010,
+   "w1": {
+    "original": 103753874,
+    "frozen": 103753874,
+    "multistart": 103753874
+   },
+   "w2": {
+    "original": 52575355,
+    "frozen": 52575355,
+    "multistart": 52575355
+   },
+   "w4": {
+    "original": 34028132,
+    "frozen": 30636947,
+    "multistart": 30218896
+   },
+   "w4_conv2_9": {
+    "original": 29604818,
+    "frozen": 26213633,
+    "multistart": 25795582
+   },
+   "saving_pct": {
+    "frozen": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 9.965828,
+     "w4_conv2_9": 11.454842
+    },
+    "multistart": {
+     "w1": 0.0,
+     "w2": 0.0,
+     "w4": 11.194373,
+     "w4_conv2_9": 12.866946
+    }
+   },
+   "worse_layers_w4": {
+    "frozen": {},
+    "multistart": {}
+   }
+  }
+ ]
+}

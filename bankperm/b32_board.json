@@ -1,0 +1,1617 @@
+{
+ "model": "dn_d10_c32_us_fx_qat",
+ "image": "Set12 05.png",
+ "noise": "sigma 25 (the manifest's), test_noise seed 0",
+ "core": "P = 16 lanes, T = 4 banks, tap t in bank t % 4, sparse mode",
+ "count_rule": "window = max(ceil(K/W)+1, ceil(COUT/16)*max(1, max_b nnz_b), COUT) (denoise/predict_w4.py)",
+ "fill_drain_rule": "exact_w4 = count_w4 + min(load, last) + 3 + ((COUT-1) % 16 + 1) on conv2-conv10 (denoise/w4_gaps.py); conv1 + the measured constant 17 (denoise/w4_gaps.json, this network's conv1 board_w4 gap - in_stall)",
+ "bounds": {
+  "perfect_balance": "per-window perfect balance: every window's nonzero taps spread as evenly as possible over the 4 banks, i.e. max bank = ceil(nnz/4), window = max(ceil(K/4)+1, ceil(COUT/16)*max(1, ceil(nnz/4)), COUT). The only capacity limit is a bank's ceil(K/4) taps (72 on the hidden layers), never binding since ceil(nnz/4) <= ceil(K/4). Each window is balanced on its own, so no static channel-to-bank layout can count less (its max bank is >= ceil(nnz/4) on every window); a layout cannot in general reach it",
+  "floor": "load/COUT floor: window = max(ceil(K/4)+1, COUT), the count if no window were bound by its compute; no layout or balancing of any kind can count less on this port"
+ },
+ "status": {
+  "not a prediction": "conv1: its fill and drain is the measured constant of w4_gaps.json (this network's conv1 on the board), and its windows are the image's, the same in every layout",
+  "in sample": "Original conv2-conv10: the fill-and-drain constants (c = 3 + the channels of the last 16-lane group) were read off board gaps that include this network's earlier W=4 run of the Original (denoise/w4_gaps.py), so agreement is consistency, not prediction",
+  "out of sample": "Frozen and Multi-start conv2-conv10: the rule, with the same constants (c = 19 on hidden layers, COUT + 3 on the last), was committed in 6dc0e60 (2026-10-17 13:15 UTC), before the permuted exports (c2ad6ad, 45b4f16) and their board run; the min(load, last) term is computed from the layout's own last window"
+ },
+ "sources": {
+  "original": {
+   "path": "denoise/export/dn_d10_c32_us_fx_qat"
+  },
+  "frozen": {
+   "path": "research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip",
+   "zip_sha256": "a660c020d52d811593f97e9defd918f24039ed9ad02d8e361c4f36199d6c0022",
+   "permuted_outputs": [
+    "conv1",
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8"
+   ]
+  },
+  "multistart": {
+   "path": "research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip",
+   "zip_sha256": "6e8ea3b8485fdc7633248cd27b56d52246b24f99ab3243605dba46dc3b4b7023",
+   "permuted_outputs": [
+    "conv1",
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8"
+   ]
+  }
+ },
+ "layouts": {
+  "original": {
+   "layers": [
+    {
+     "name": "conv1",
+     "K": 36,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 578743,
+     "count": {
+      "w1": 606208,
+      "w2": 524288,
+      "w4": 524288
+     },
+     "fill_drain_w4": 17,
+     "exact_w4": 524305,
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 524288,
+     "floor_w4": 524288
+    },
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2584659,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1504687
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1504752,
+     "mean_max_bank": 45.800354,
+     "floor_bound_share": 0.03009,
+     "at_floor_share": 0.03009,
+     "perfect_balance_w4": 1315008,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2418953,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1434940
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1435005,
+     "mean_max_bank": 43.505798,
+     "floor_bound_share": 0.092407,
+     "at_floor_share": 0.092407,
+     "perfect_balance_w4": 1266016,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2310892,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1448281
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 50
+     },
+     "fill_drain_w4": 69,
+     "exact_w4": 1448350,
+     "mean_max_bank": 43.990967,
+     "floor_bound_share": 0.071716,
+     "at_floor_share": 0.071716,
+     "perfect_balance_w4": 1222180,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2434514,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1562871
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1562936,
+     "mean_max_bank": 47.584595,
+     "floor_bound_share": 0.029846,
+     "at_floor_share": 0.029846,
+     "perfect_balance_w4": 1261599,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2095315,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1369156
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1369221,
+     "mean_max_bank": 40.545105,
+     "floor_bound_share": 0.302246,
+     "at_floor_share": 0.302246,
+     "perfect_balance_w4": 1207908,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2228446,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1375380
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 42
+     },
+     "fill_drain_w4": 61,
+     "exact_w4": 1375441,
+     "mean_max_bank": 41.373169,
+     "floor_bound_share": 0.19165,
+     "at_floor_share": 0.19165,
+     "perfect_balance_w4": 1212654,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 1753611,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1288962
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1289021,
+     "mean_max_bank": 36.215637,
+     "floor_bound_share": 0.51416,
+     "at_floor_share": 0.51416,
+     "perfect_balance_w4": 1196198,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2054618,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1436403
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 54
+     },
+     "fill_drain_w4": 73,
+     "exact_w4": 1436476,
+     "mean_max_bank": 43.042419,
+     "floor_bound_share": 0.278259,
+     "at_floor_share": 0.278259,
+     "perfect_balance_w4": 1212110,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "windows": 16384,
+     "nonzeros": 2858383,
+     "count": {
+      "w1": 5324800,
+      "w2": 2670592,
+      "w4": 1343488
+     },
+     "last_window": {
+      "load": 82,
+      "compute": 28
+     },
+     "fill_drain_w4": 35,
+     "exact_w4": 1343523,
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 1343488,
+     "floor_w4": 1343488
+    }
+   ],
+   "total": {
+    "count": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 13288456
+    },
+    "fill_drain_w4": 574,
+    "exact_w4": 13289030,
+    "perfect_balance_w4": 11761449,
+    "floor_w4": 11436032,
+    "conv2_9": {
+     "count_w4": 11420680,
+     "exact_w4": 11421202
+    }
+   }
+  },
+  "frozen": {
+   "layers": [
+    {
+     "name": "conv1",
+     "K": 36,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 578743,
+     "count": {
+      "w1": 606208,
+      "w2": 524288,
+      "w4": 524288
+     },
+     "fill_drain_w4": 17,
+     "exact_w4": 524305,
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 524288,
+     "floor_w4": 524288
+    },
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2584659,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1391253
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1391312,
+     "mean_max_bank": 42.259216,
+     "floor_bound_share": 0.031555,
+     "at_floor_share": 0.031555,
+     "perfect_balance_w4": 1315008,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2418953,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1362428
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 42
+     },
+     "fill_drain_w4": 61,
+     "exact_w4": 1362489,
+     "mean_max_bank": 41.178284,
+     "floor_bound_share": 0.152466,
+     "at_floor_share": 0.152466,
+     "perfect_balance_w4": 1266016,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2310892,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1311510
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1311569,
+     "mean_max_bank": 39.575256,
+     "floor_bound_share": 0.176758,
+     "at_floor_share": 0.176758,
+     "perfect_balance_w4": 1222180,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2434514,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1387528
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 42
+     },
+     "fill_drain_w4": 61,
+     "exact_w4": 1387589,
+     "mean_max_bank": 42.090576,
+     "floor_bound_share": 0.084473,
+     "at_floor_share": 0.084473,
+     "perfect_balance_w4": 1261599,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2095315,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1275189
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1275254,
+     "mean_max_bank": 36.71991,
+     "floor_bound_share": 0.439636,
+     "at_floor_share": 0.439636,
+     "perfect_balance_w4": 1207908,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2228446,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1291265
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1291330,
+     "mean_max_bank": 38.539307,
+     "floor_bound_share": 0.296692,
+     "at_floor_share": 0.296692,
+     "perfect_balance_w4": 1212654,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 1753611,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1212690
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 36
+     },
+     "fill_drain_w4": 55,
+     "exact_w4": 1212745,
+     "mean_max_bank": 31.870239,
+     "floor_bound_share": 0.803345,
+     "at_floor_share": 0.803345,
+     "perfect_balance_w4": 1196198,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2054618,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1255635
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 44
+     },
+     "fill_drain_w4": 63,
+     "exact_w4": 1255698,
+     "mean_max_bank": 35.862732,
+     "floor_bound_share": 0.555481,
+     "at_floor_share": 0.555481,
+     "perfect_balance_w4": 1212110,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "windows": 16384,
+     "nonzeros": 2858383,
+     "count": {
+      "w1": 5324800,
+      "w2": 2670592,
+      "w4": 1343488
+     },
+     "last_window": {
+      "load": 82,
+      "compute": 28
+     },
+     "fill_drain_w4": 35,
+     "exact_w4": 1343523,
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 1343488,
+     "floor_w4": 1343488
+    }
+   ],
+   "total": {
+    "count": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 12355274
+    },
+    "fill_drain_w4": 540,
+    "exact_w4": 12355814,
+    "perfect_balance_w4": 11761449,
+    "floor_w4": 11436032,
+    "conv2_9": {
+     "count_w4": 10487498,
+     "exact_w4": 10487986
+    }
+   }
+  },
+  "multistart": {
+   "layers": [
+    {
+     "name": "conv1",
+     "K": 36,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 578743,
+     "count": {
+      "w1": 606208,
+      "w2": 524288,
+      "w4": 524288
+     },
+     "fill_drain_w4": 17,
+     "exact_w4": 524305,
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 524288,
+     "floor_w4": 524288
+    },
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2584659,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1378704
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1378763,
+     "mean_max_bank": 41.857056,
+     "floor_bound_share": 0.031738,
+     "at_floor_share": 0.031738,
+     "perfect_balance_w4": 1315008,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2418953,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1344446
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 44
+     },
+     "fill_drain_w4": 63,
+     "exact_w4": 1344509,
+     "mean_max_bank": 40.58252,
+     "floor_bound_share": 0.182739,
+     "at_floor_share": 0.182739,
+     "perfect_balance_w4": 1266016,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2310892,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1311454
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 38
+     },
+     "fill_drain_w4": 57,
+     "exact_w4": 1311511,
+     "mean_max_bank": 39.531433,
+     "floor_bound_share": 0.203125,
+     "at_floor_share": 0.203125,
+     "perfect_balance_w4": 1222180,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2434514,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1371841
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1371900,
+     "mean_max_bank": 41.602722,
+     "floor_bound_share": 0.090149,
+     "at_floor_share": 0.090149,
+     "perfect_balance_w4": 1261599,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2095315,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1272727
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 42
+     },
+     "fill_drain_w4": 61,
+     "exact_w4": 1272788,
+     "mean_max_bank": 36.78125,
+     "floor_bound_share": 0.448059,
+     "at_floor_share": 0.448059,
+     "perfect_balance_w4": 1207908,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2228446,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1281362
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 46
+     },
+     "fill_drain_w4": 65,
+     "exact_w4": 1281427,
+     "mean_max_bank": 38.116516,
+     "floor_bound_share": 0.335571,
+     "at_floor_share": 0.335571,
+     "perfect_balance_w4": 1212654,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 1753611,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1207160
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 40
+     },
+     "fill_drain_w4": 59,
+     "exact_w4": 1207219,
+     "mean_max_bank": 31.648376,
+     "floor_bound_share": 0.849487,
+     "at_floor_share": 0.849487,
+     "perfect_balance_w4": 1196198,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "windows": 16384,
+     "nonzeros": 2054618,
+     "count": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1242413
+     },
+     "last_window": {
+      "load": 73,
+      "compute": 42
+     },
+     "fill_drain_w4": 61,
+     "exact_w4": 1242474,
+     "mean_max_bank": 35.102295,
+     "floor_bound_share": 0.611511,
+     "at_floor_share": 0.611511,
+     "perfect_balance_w4": 1212110,
+     "floor_w4": 1196032
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "windows": 16384,
+     "nonzeros": 2858383,
+     "count": {
+      "w1": 5324800,
+      "w2": 2670592,
+      "w4": 1343488
+     },
+     "last_window": {
+      "load": 82,
+      "compute": 28
+     },
+     "fill_drain_w4": 35,
+     "exact_w4": 1343523,
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0,
+     "perfect_balance_w4": 1343488,
+     "floor_w4": 1343488
+    }
+   ],
+   "total": {
+    "count": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 12277883
+    },
+    "fill_drain_w4": 536,
+    "exact_w4": 12278419,
+    "perfect_balance_w4": 11761449,
+    "floor_w4": 11436032,
+    "conv2_9": {
+     "count_w4": 10410107,
+     "exact_w4": 10410591
+    }
+   }
+  }
+ },
+ "checks": {
+  "conv1_windows_identical": {
+   "frozen": true,
+   "multistart": true
+  },
+  "denoised_identical": {
+   "frozen": true,
+   "multistart": true
+  },
+  "nonzeros_per_layer_equal": {
+   "frozen": true,
+   "multistart": true
+  }
+ },
+ "savings_pct": {
+  "frozen": {
+   "count": {
+    "w1": 0.0,
+    "w2": 0.0,
+    "w4": 7.022501
+   },
+   "exact_w4": 7.022454,
+   "conv2_9_count_w4": 8.170985,
+   "per_layer_count_w4": {
+    "conv1": 0.0,
+    "conv2": 7.538711,
+    "conv3": 5.053312,
+    "conv4": 9.443678,
+    "conv5": 11.219288,
+    "conv6": 6.863133,
+    "conv7": 6.115764,
+    "conv8": 5.91732,
+    "conv9": 12.584769,
+    "conv10": 0.0
+   }
+  },
+  "multistart": {
+   "count": {
+    "w1": 0.0,
+    "w2": 0.0,
+    "w4": 7.604894
+   },
+   "exact_w4": 7.604852,
+   "conv2_9_count_w4": 8.848624,
+   "per_layer_count_w4": {
+    "conv1": 0.0,
+    "conv2": 8.372705,
+    "conv3": 6.306466,
+    "conv4": 9.447545,
+    "conv5": 12.223018,
+    "conv6": 7.042952,
+    "conv7": 6.835784,
+    "conv8": 6.346347,
+    "conv9": 13.505263,
+    "conv10": 0.0
+   }
+  }
+ },
+ "mechanism": {
+  "what": "per layer: mean_max_bank = mean over windows of the largest bank's nonzero taps; floor_bound_share = share of windows whose W=4 compute ceil(COUT/16)*max(1, max bank) <= the load ceil(K/4)+1; at_floor_share = the same against max(load, COUT), the window's floor (differs only on conv1, whose floor is COUT = 32 > load = 10)",
+  "layers": {
+   "conv1": {
+    "original": {
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0
+    },
+    "frozen": {
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0
+    },
+    "multistart": {
+     "mean_max_bank": 8.903748,
+     "floor_bound_share": 0.000244,
+     "at_floor_share": 1.0
+    }
+   },
+   "conv2": {
+    "original": {
+     "mean_max_bank": 45.800354,
+     "floor_bound_share": 0.03009,
+     "at_floor_share": 0.03009
+    },
+    "frozen": {
+     "mean_max_bank": 42.259216,
+     "floor_bound_share": 0.031555,
+     "at_floor_share": 0.031555
+    },
+    "multistart": {
+     "mean_max_bank": 41.857056,
+     "floor_bound_share": 0.031738,
+     "at_floor_share": 0.031738
+    }
+   },
+   "conv3": {
+    "original": {
+     "mean_max_bank": 43.505798,
+     "floor_bound_share": 0.092407,
+     "at_floor_share": 0.092407
+    },
+    "frozen": {
+     "mean_max_bank": 41.178284,
+     "floor_bound_share": 0.152466,
+     "at_floor_share": 0.152466
+    },
+    "multistart": {
+     "mean_max_bank": 40.58252,
+     "floor_bound_share": 0.182739,
+     "at_floor_share": 0.182739
+    }
+   },
+   "conv4": {
+    "original": {
+     "mean_max_bank": 43.990967,
+     "floor_bound_share": 0.071716,
+     "at_floor_share": 0.071716
+    },
+    "frozen": {
+     "mean_max_bank": 39.575256,
+     "floor_bound_share": 0.176758,
+     "at_floor_share": 0.176758
+    },
+    "multistart": {
+     "mean_max_bank": 39.531433,
+     "floor_bound_share": 0.203125,
+     "at_floor_share": 0.203125
+    }
+   },
+   "conv5": {
+    "original": {
+     "mean_max_bank": 47.584595,
+     "floor_bound_share": 0.029846,
+     "at_floor_share": 0.029846
+    },
+    "frozen": {
+     "mean_max_bank": 42.090576,
+     "floor_bound_share": 0.084473,
+     "at_floor_share": 0.084473
+    },
+    "multistart": {
+     "mean_max_bank": 41.602722,
+     "floor_bound_share": 0.090149,
+     "at_floor_share": 0.090149
+    }
+   },
+   "conv6": {
+    "original": {
+     "mean_max_bank": 40.545105,
+     "floor_bound_share": 0.302246,
+     "at_floor_share": 0.302246
+    },
+    "frozen": {
+     "mean_max_bank": 36.71991,
+     "floor_bound_share": 0.439636,
+     "at_floor_share": 0.439636
+    },
+    "multistart": {
+     "mean_max_bank": 36.78125,
+     "floor_bound_share": 0.448059,
+     "at_floor_share": 0.448059
+    }
+   },
+   "conv7": {
+    "original": {
+     "mean_max_bank": 41.373169,
+     "floor_bound_share": 0.19165,
+     "at_floor_share": 0.19165
+    },
+    "frozen": {
+     "mean_max_bank": 38.539307,
+     "floor_bound_share": 0.296692,
+     "at_floor_share": 0.296692
+    },
+    "multistart": {
+     "mean_max_bank": 38.116516,
+     "floor_bound_share": 0.335571,
+     "at_floor_share": 0.335571
+    }
+   },
+   "conv8": {
+    "original": {
+     "mean_max_bank": 36.215637,
+     "floor_bound_share": 0.51416,
+     "at_floor_share": 0.51416
+    },
+    "frozen": {
+     "mean_max_bank": 31.870239,
+     "floor_bound_share": 0.803345,
+     "at_floor_share": 0.803345
+    },
+    "multistart": {
+     "mean_max_bank": 31.648376,
+     "floor_bound_share": 0.849487,
+     "at_floor_share": 0.849487
+    }
+   },
+   "conv9": {
+    "original": {
+     "mean_max_bank": 43.042419,
+     "floor_bound_share": 0.278259,
+     "at_floor_share": 0.278259
+    },
+    "frozen": {
+     "mean_max_bank": 35.862732,
+     "floor_bound_share": 0.555481,
+     "at_floor_share": 0.555481
+    },
+    "multistart": {
+     "mean_max_bank": 35.102295,
+     "floor_bound_share": 0.611511,
+     "at_floor_share": 0.611511
+    }
+   },
+   "conv10": {
+    "original": {
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0
+    },
+    "frozen": {
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0
+    },
+    "multistart": {
+     "mean_max_bank": 49.463501,
+     "floor_bound_share": 1.0,
+     "at_floor_share": 1.0
+    }
+   }
+  }
+ },
+ "headroom_w4": {
+  "what": "W=4 count of the bounds against the Original's count (fill and drain left out); the bounds depend only on each window's nonzero count, the same in every layout (checked)",
+  "original_count_w4": 13288456,
+  "perfect_balance": {
+   "count_w4": 11761449,
+   "same_in_every_layout": true,
+   "saving_pct": 11.49123,
+   "per_layer": {
+    "conv1": 524288,
+    "conv2": 1315008,
+    "conv3": 1266016,
+    "conv4": 1222180,
+    "conv5": 1261599,
+    "conv6": 1207908,
+    "conv7": 1212654,
+    "conv8": 1196198,
+    "conv9": 1212110,
+    "conv10": 1343488
+   }
+  },
+  "floor": {
+   "count_w4": 11436032,
+   "same_in_every_layout": true,
+   "saving_pct": 13.9401,
+   "per_layer": {
+    "conv1": 524288,
+    "conv2": 1196032,
+    "conv3": 1196032,
+    "conv4": 1196032,
+    "conv5": 1196032,
+    "conv6": 1196032,
+    "conv7": 1196032,
+    "conv8": 1196032,
+    "conv9": 1196032,
+    "conv10": 1343488
+   }
+  },
+  "share_of_perfect_balance_saving": {
+   "frozen": 0.611118,
+   "multistart": 0.6618
+  }
+ },
+ "transcription_check": {
+  "file": "bankperm/board_transcribed.json",
+  "status": "transcribed from markdown; the raw report.json files are not in the repository",
+  "sources_checked": 82,
+  "integers_checked": 70,
+  "all_found": true,
+  "missing": []
+ },
+ "board_vs_prediction": {
+  "original_canary_layers": [
+   {
+    "name": "conv1",
+    "board": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "not a prediction"
+   },
+   {
+    "name": "conv2",
+    "board": 1504752,
+    "in_stall": 0,
+    "predicted": 1504752,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv3",
+    "board": 1435005,
+    "in_stall": 0,
+    "predicted": 1435005,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv4",
+    "board": 1448350,
+    "in_stall": 0,
+    "predicted": 1448350,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv5",
+    "board": 1562936,
+    "in_stall": 0,
+    "predicted": 1562936,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv6",
+    "board": 1369221,
+    "in_stall": 0,
+    "predicted": 1369221,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv7",
+    "board": 1375441,
+    "in_stall": 0,
+    "predicted": 1375441,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv8",
+    "board": 1289021,
+    "in_stall": 0,
+    "predicted": 1289021,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv9",
+    "board": 1436476,
+    "in_stall": 0,
+    "predicted": 1436476,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv10",
+    "board": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   }
+  ],
+  "original_canary_total": {
+   "board": 13289030,
+   "in_stall": 0,
+   "predicted": 13289030,
+   "board_minus_in_stall_minus_predicted": 0,
+   "status": "in sample"
+  },
+  "original_rep1_layers": [
+   {
+    "name": "conv1",
+    "board": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "not a prediction"
+   },
+   {
+    "name": "conv2",
+    "board": 1504752,
+    "in_stall": 0,
+    "predicted": 1504752,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv3",
+    "board": 1435005,
+    "in_stall": 0,
+    "predicted": 1435005,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv4",
+    "board": 1448350,
+    "in_stall": 0,
+    "predicted": 1448350,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv5",
+    "board": 1562936,
+    "in_stall": 0,
+    "predicted": 1562936,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv6",
+    "board": 1369221,
+    "in_stall": 0,
+    "predicted": 1369221,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv7",
+    "board": 1375441,
+    "in_stall": 0,
+    "predicted": 1375441,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv8",
+    "board": 1289021,
+    "in_stall": 0,
+    "predicted": 1289021,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv9",
+    "board": 1436476,
+    "in_stall": 0,
+    "predicted": 1436476,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   {
+    "name": "conv10",
+    "board": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   }
+  ],
+  "multistart_rep1_layers": [
+   {
+    "name": "conv1",
+    "board": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "not a prediction"
+   },
+   {
+    "name": "conv2",
+    "board": 1378763,
+    "in_stall": 0,
+    "predicted": 1378763,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv3",
+    "board": 1344509,
+    "in_stall": 0,
+    "predicted": 1344509,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv4",
+    "board": 1311511,
+    "in_stall": 0,
+    "predicted": 1311511,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv5",
+    "board": 1371900,
+    "in_stall": 0,
+    "predicted": 1371900,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv6",
+    "board": 1272788,
+    "in_stall": 0,
+    "predicted": 1272788,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv7",
+    "board": 1281427,
+    "in_stall": 0,
+    "predicted": 1281427,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv8",
+    "board": 1207219,
+    "in_stall": 0,
+    "predicted": 1207219,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv9",
+    "board": 1242474,
+    "in_stall": 0,
+    "predicted": 1242474,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   },
+   {
+    "name": "conv10",
+    "board": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "out of sample"
+   }
+  ],
+  "repeats": [
+   {
+    "rep": 1,
+    "original": {
+     "total": {
+      "board": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     },
+     "conv2_9": {
+      "board": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     }
+    },
+    "frozen": {
+     "total": {
+      "board": 12355814,
+      "in_stall": 0,
+      "predicted": 12355814,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv1_plus_conv10_derived": {
+      "board": 1867828,
+      "in_stall": 0,
+      "predicted": 1867828,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "conv1 not a prediction; conv10 out of sample"
+     }
+    },
+    "multistart": {
+     "total": {
+      "board": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     }
+    }
+   },
+   {
+    "rep": 2,
+    "original": {
+     "total": {
+      "board": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     },
+     "conv2_9": {
+      "board": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     }
+    },
+    "frozen": {
+     "total": {
+      "board": 12355814,
+      "in_stall": 0,
+      "predicted": 12355814,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv1_plus_conv10_derived": {
+      "board": 1867828,
+      "in_stall": 0,
+      "predicted": 1867828,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "conv1 not a prediction; conv10 out of sample"
+     }
+    },
+    "multistart": {
+     "total": {
+      "board": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     }
+    }
+   },
+   {
+    "rep": 3,
+    "original": {
+     "total": {
+      "board": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     },
+     "conv2_9": {
+      "board": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "in sample"
+     }
+    },
+    "frozen": {
+     "total": {
+      "board": 12355826,
+      "in_stall": 12,
+      "predicted": 12355814,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv1_plus_conv10_derived": {
+      "board": 1867840,
+      "in_stall": 12,
+      "predicted": 1867828,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "conv1 not a prediction; conv10 out of sample"
+     }
+    },
+    "multistart": {
+     "total": {
+      "board": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     },
+     "conv2_9": {
+      "board": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "board_minus_in_stall_minus_predicted": 0,
+      "status": "out of sample"
+     }
+    }
+   }
+  ],
+  "earlier_committed_run": {
+   "source": "denoise/w4_measured.json",
+   "total": {
+    "board": 13289042,
+    "in_stall": 12,
+    "predicted": 13289030,
+    "board_minus_in_stall_minus_predicted": 0,
+    "status": "in sample"
+   },
+   "layers": [
+    {
+     "name": "conv1",
+     "board": 524305,
+     "in_stall": 0,
+     "predicted": 524305,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "not a prediction"
+    },
+    {
+     "name": "conv2",
+     "board": 1504752,
+     "in_stall": 0,
+     "predicted": 1504752,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv3",
+     "board": 1435005,
+     "in_stall": 0,
+     "predicted": 1435005,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv4",
+     "board": 1448350,
+     "in_stall": 0,
+     "predicted": 1448350,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv5",
+     "board": 1562948,
+     "in_stall": 12,
+     "predicted": 1562936,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv6",
+     "board": 1369221,
+     "in_stall": 0,
+     "predicted": 1369221,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv7",
+     "board": 1375441,
+     "in_stall": 0,
+     "predicted": 1375441,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv8",
+     "board": 1289021,
+     "in_stall": 0,
+     "predicted": 1289021,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv9",
+     "board": 1436476,
+     "in_stall": 0,
+     "predicted": 1436476,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    },
+    {
+     "name": "conv10",
+     "board": 1343523,
+     "in_stall": 0,
+     "predicted": 1343523,
+     "board_minus_in_stall_minus_predicted": 0,
+     "status": "in sample"
+    }
+   ],
+   "matches_transcribed": true
+  },
+  "savings_rep1": {
+   "frozen": {
+    "board": 933216,
+    "predicted_exact": 933216,
+    "count_only": 933182,
+    "fill_drain_difference": 34,
+    "board_pct": 7.022454
+   },
+   "multistart": {
+    "board": 1010611,
+    "predicted_exact": 1010611,
+    "count_only": 1010573,
+    "fill_drain_difference": 38,
+    "board_pct": 7.604852
+   }
+  },
+  "summary": {
+   "comparisons": 63,
+   "exact": 63,
+   "out_of_sample_comparisons": 21,
+   "out_of_sample_exact": 21,
+   "largest_abs_difference": 0
+  }
+ }
+}

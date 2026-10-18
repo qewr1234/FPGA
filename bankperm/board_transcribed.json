@@ -1,0 +1,431 @@
+{
+ "status": "transcribed from markdown; the raw report.json files are not in the repository",
+ "what": "W=4 board numbers GPT reported for B-32 ReLU + QAT s1 (dn_d10_c32_us_fx_qat) on Set12 05.png, Original (canary run, then three repeats), Frozen and Multi-start layouts (three repeats, alternating). Every value cites [file, line, quote]: quote is text on that 1-based line of that file (bankperm/b32_board.py checks every one, and that each integer of 1000 or more in an entry appears in one of its quotes). Cycles are the core cycle counter (CYCLES) per layer, which includes IN_STALL.",
+ "conditions": {
+  "model": "dn_d10_c32_us_fx_qat",
+  "image": "Set12 05.png",
+  "sigma": 25,
+  "noise_seed": 0,
+  "port": "W=4, sparse mode 1",
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 8, "dn_d10_c32_us_fx_qat; Set12 05.png; sigma25; noise seed0; W4 sparse mode=1"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 7, "dn_d10_c32_us_fx_qat, Set12 05.png, AWGN sigma25 / seed0"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 7, "W4 sparse mode=1"]
+  ]
+ },
+ "core_id": {
+  "value": "0x4d410303",
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 10, "0x4d410303"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 7, "core ID 0x4d410303"],
+   ["research/q1_codesign/COACTIVATION_NOVELTY_GATE_20261018_KO.md", 14, "Core ID `0x4d410303`"]
+  ]
+ },
+ "fclk_mhz": {
+  "value": 50,
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 9, "cycles at 50 MHz"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 7, "50MHz"],
+   ["research/q1_codesign/COACTIVATION_NOVELTY_GATE_20261018_KO.md", 14, "50 MHz"]
+  ]
+ },
+ "bitstream_sha256": {
+  "value": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+  "note": "the triplet document says the .bit file was not in the uploaded ZIP, so this digest is summary metadata there (line 165); the canary document gives it for the programmed build (line 36)",
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 36, "Bitstream SHA256: 11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 7, "SHA256 11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 125, "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 165, "11641ab..."],
+   ["research/q1_codesign/NOVELTY_PRIOR_ART_TARGET_JOURNALS_20261018_KO.md", 8, "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"],
+   ["research/q1_codesign/W4_EXISTING_HARDWARE_CANARY_PROTOCOL_20261018_KO.md", 13, "Candidate .bit SHA256: 11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"]
+  ]
+ },
+ "png_sha256": {
+  "value": null,
+  "note": "not given: the documents state only that 05_clean.png, 05_noisy.png and 05_denoised.png have the same SHA-256 in the three layouts of repeat 1 (line 51) and in every repeat (line 162); no digest is printed",
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 51, "05_clean.png, 05_noisy.png, 05_denoised.png"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 162, "PNG"]
+  ]
+ },
+ "evidence_sha256": {
+  "triplet_summary.json": {
+   "value": "cb1f7274e9fc59a467cbff3cc39a51986353921c1d8f6292c1552b2d8bceb5e2",
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 121, "cb1f7274e9fc59a467cbff3cc39a51986353921c1d8f6292c1552b2d8bceb5e2"]
+   ]
+  },
+  "triplet_summary.md": {
+   "value": "c8178026b3e4fb613118e8bc8d3d5afdf24823040a76d315817f9e3094f72ce4",
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 122, "c8178026b3e4fb613118e8bc8d3d5afdf24823040a76d315817f9e3094f72ce4"]
+   ]
+  },
+  "rep_01.zip": {
+   "value": "9dfb82a867a10a2c6dac43092bd9500005f44e7a10859fb465ccd75d37743d5c",
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 123, "9dfb82a867a10a2c6dac43092bd9500005f44e7a10859fb465ccd75d37743d5c"]
+   ]
+  },
+  "trial_01.zip": {
+   "value": "3b326c80bbc46d3a16d9afe7690e085345fdd5c2eccc99cffde9f1b425076e8b",
+   "bytes": 151998070,
+   "members": 313,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 157, "151,998,070 bytes, SHA256 3b326c80bbc46d3a16d9afe7690e085345fdd5c2eccc99cffde9f1b425076e8b"],
+    ["research/q1_codesign/COACTIVATION_NOVELTY_GATE_20261018_KO.md", 19, "3b326c80bbc46d3a16d9afe7690e085345fdd5c2eccc99cffde9f1b425076e8b"]
+   ]
+  },
+  "note": "digests of files uploaded to ChatGPT; none of these files is in the repository"
+ },
+ "oracle": {
+  "value": "0 mismatches on all 90 layer runs (3 repeats x 3 layouts x 10 layers); 89 XSDB logs RESULT: PASS and 1 (repeat 3, Frozen, conv10) VALUES OK, MEASUREMENT DMA BOUND",
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 103, "90"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 159, "89"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 159, "RESULT: VALUES OK, MEASUREMENT DMA BOUND"]
+  ]
+ },
+ "original_canary": {
+  "what": "the canary run of the Original export alone, before the three repeats; earlier = the W=4 run committed in denoise/w4_measured.json",
+  "layers": [
+   {
+    "name": "conv1",
+    "cycles": 524305,
+    "in_stall": 0,
+    "earlier": 524305,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 21, "| Conv1 | 524,305 | 524,305 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv2",
+    "cycles": 1504752,
+    "in_stall": 0,
+    "earlier": 1504752,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 22, "| Conv2 | 1,504,752 | 1,504,752 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv3",
+    "cycles": 1435005,
+    "in_stall": 0,
+    "earlier": 1435005,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 23, "| Conv3 | 1,435,005 | 1,435,005 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv4",
+    "cycles": 1448350,
+    "in_stall": 0,
+    "earlier": 1448350,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 24, "| Conv4 | 1,448,350 | 1,448,350 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv5",
+    "cycles": 1562936,
+    "in_stall": 0,
+    "earlier": 1562948,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 25, "| Conv5 | 1,562,948 | 1,562,936 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv6",
+    "cycles": 1369221,
+    "in_stall": 0,
+    "earlier": 1369221,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 26, "| Conv6 | 1,369,221 | 1,369,221 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv7",
+    "cycles": 1375441,
+    "in_stall": 0,
+    "earlier": 1375441,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 27, "| Conv7 | 1,375,441 | 1,375,441 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv8",
+    "cycles": 1289021,
+    "in_stall": 0,
+    "earlier": 1289021,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 28, "| Conv8 | 1,289,021 | 1,289,021 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv9",
+    "cycles": 1436476,
+    "in_stall": 0,
+    "earlier": 1436476,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 29, "| Conv9 | 1,436,476 | 1,436,476 | 0 |"]
+    ]
+   },
+   {
+    "name": "conv10",
+    "cycles": 1343523,
+    "in_stall": 0,
+    "earlier": 1343523,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 30, "| Conv10 | 1,343,523 | 1,343,523 | 0 |"]
+    ]
+   }
+  ],
+  "total": {
+   "cycles": 13289030,
+   "in_stall": 0,
+   "earlier": 13289042,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 31, "| **Total** | **13,289,042** | **13,289,030** | **0** |"],
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 9, "13,289,030 cycles at 50 MHz"],
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 11, "13,289,042"]
+   ]
+  },
+  "in_stall": {
+   "canary": 0,
+   "earlier": 12,
+   "out_stall": 0,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 12, "IN_STALL 12"],
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 12, "IN_STALL 0"],
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 12, "OUT_STALL 0"]
+   ]
+  },
+  "conv2_9": {
+   "cycles": 11421202,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 15, "11,421,202"]
+   ]
+  },
+  "conv5_change": {
+   "earlier": 1562948,
+   "canary": 1562936,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 13, "1,562,948"],
+    ["research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md", 13, "1,562,936"]
+   ]
+  }
+ },
+ "triplet_rep1_layers": {
+  "what": "repeat 1, per layer: Original and Multi-start (the document gives no per-layer Frozen board numbers)",
+  "layers": [
+   {
+    "name": "conv1",
+    "original": 524305,
+    "multistart": 524305,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 34, "| Conv1 | 524,305 | 524,305 |"]
+    ]
+   },
+   {
+    "name": "conv2",
+    "original": 1504752,
+    "multistart": 1378763,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 35, "| Conv2 | 1,504,752 | 1,378,763 |"]
+    ]
+   },
+   {
+    "name": "conv3",
+    "original": 1435005,
+    "multistart": 1344509,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 36, "| Conv3 | 1,435,005 | 1,344,509 |"]
+    ]
+   },
+   {
+    "name": "conv4",
+    "original": 1448350,
+    "multistart": 1311511,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 37, "| Conv4 | 1,448,350 | 1,311,511 |"]
+    ]
+   },
+   {
+    "name": "conv5",
+    "original": 1562936,
+    "multistart": 1371900,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 38, "| Conv5 | 1,562,936 | 1,371,900 |"]
+    ]
+   },
+   {
+    "name": "conv6",
+    "original": 1369221,
+    "multistart": 1272788,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 39, "| Conv6 | 1,369,221 | 1,272,788 |"]
+    ]
+   },
+   {
+    "name": "conv7",
+    "original": 1375441,
+    "multistart": 1281427,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 40, "| Conv7 | 1,375,441 | 1,281,427 |"]
+    ]
+   },
+   {
+    "name": "conv8",
+    "original": 1289021,
+    "multistart": 1207219,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 41, "| Conv8 | 1,289,021 | 1,207,219 |"]
+    ]
+   },
+   {
+    "name": "conv9",
+    "original": 1436476,
+    "multistart": 1242474,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 42, "| Conv9 | 1,436,476 | 1,242,474 |"]
+    ]
+   },
+   {
+    "name": "conv10",
+    "original": 1343523,
+    "multistart": 1343523,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 43, "| Conv10 | 1,343,523 | 1,343,523 |"]
+    ]
+   }
+  ],
+  "total": {
+   "original": 13289030,
+   "multistart": 12278419,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 44, "| **Total** | **13,289,030** | **12,278,419** |"]
+   ]
+  },
+  "conv1_conv10_same": {
+   "value": "conv1 and conv10 have the same cycles in all three layouts in repeat 1",
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 28, "Conv1"]
+   ]
+  }
+ },
+ "triplet_repeats": [
+  {
+   "rep": 1,
+   "original": 13289030,
+   "frozen": 12355814,
+   "multistart": 12278419,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 11, "| 1 | 13,289,030 | 12,355,814 | 12,278,419 |"],
+    ["research/q1_codesign/COACTIVATION_NOVELTY_GATE_20261018_KO.md", 15, "Original 13,289,030, Frozen 12,355,814, Multi-start 12,278,419"],
+    ["research/q1_codesign/NOVELTY_PRIOR_ART_TARGET_JOURNALS_20261018_KO.md", 7, "Original 13,289,030 cycles, Frozen 12,355,814"],
+    ["research/q1_codesign/NOVELTY_PRIOR_ART_TARGET_JOURNALS_20261018_KO.md", 7, "Multi 12,278,419"]
+   ],
+   "conv2_9": {
+    "original": 11421202,
+    "frozen": 10487986,
+    "multistart": 10410591,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 24, "| 1 | 11,421,202 | 10,487,986 | 10,410,591 |"]
+    ]
+   },
+   "in_stall": {
+    "original": 0,
+    "frozen": 0,
+    "multistart": 0,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "IN_STALL=12"],
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "out-stall"]
+    ]
+   }
+  },
+  {
+   "rep": 2,
+   "original": 13289030,
+   "frozen": 12355814,
+   "multistart": 12278419,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 12, "| 2 | 13,289,030 | 12,355,814 | 12,278,419 |"]
+   ],
+   "conv2_9": {
+    "original": 11421202,
+    "frozen": 10487986,
+    "multistart": 10410591,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 25, "| 2 | 11,421,202 | 10,487,986 | 10,410,591 |"]
+    ]
+   },
+   "in_stall": {
+    "original": 0,
+    "frozen": 0,
+    "multistart": 0,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "IN_STALL=12"],
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "out-stall"]
+    ]
+   }
+  },
+  {
+   "rep": 3,
+   "original": 13289030,
+   "frozen": 12355826,
+   "multistart": 12278419,
+   "src": [
+    ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 13, "| 3 | 13,289,030 | 12,355,826 | 12,278,419 |"]
+   ],
+   "conv2_9": {
+    "original": 11421202,
+    "frozen": 10487986,
+    "multistart": 10410591,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 26, "| 3 | 11,421,202 | 10,487,986 | 10,410,591 |"]
+    ]
+   },
+   "in_stall": {
+    "original": 0,
+    "frozen": 12,
+    "multistart": 0,
+    "src": [
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "IN_STALL=12"],
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 18, "out-stall"],
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 160, "rep_03 / frozen / conv10"],
+     ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 160, "IN_STALL=12, OUT_STALL=0, MISMATCHES=0, CYCLES=1,343,535"]
+    ]
+   }
+  }
+ ],
+ "in_stall_note": "per-repeat IN_STALL: line 18 says that only Frozen in repeat 3 waited on the DMA (IN_STALL 12, core cycles +12) and that OUT_STALL was 0 in all three repeats; line 160 puts those 12 cycles on conv10. The zeros of the other eight runs are read from that sentence, not from a table.",
+ "frozen_rep3_conv10": {
+  "cycles": 1343535,
+  "in_stall": 12,
+  "out_stall": 0,
+  "normal": 1343523,
+  "src": [
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 160, "IN_STALL=12, OUT_STALL=0, MISMATCHES=0, CYCLES=1,343,535"],
+   ["research/q1_codesign/PHYSICAL_W4_TRIPLET_REVIEWER_VERDICT_20261018_KO.md", 160, "1,343,523"]
+  ]
+ },
+ "earlier_committed_run": {
+  "what": "the earlier W=4 board run of the Original export committed in the repository (denoise/w4_measured.json, from denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json); a committed JSON, not a transcription",
+  "total": 13289042,
+  "in_stall": 12,
+  "in_stall_layer": "conv5",
+  "conv5": 1562948,
+  "core_id": "0x4d410303",
+  "fclk_mhz": 50,
+  "src": [
+   ["denoise/w4_measured.json", 411, "\"measured_total\": 13289042"],
+   ["denoise/w4_measured.json", 422, "\"in_stall\": 12"],
+   ["denoise/w4_measured.json", 479, "\"measured\": 1562948"],
+   ["denoise/w4_measured.json", 483, "\"in_stall\": 12"],
+   ["denoise/w4_measured.json", 406, "\"0x4d410303\""],
+   ["denoise/w4_measured.json", 409, "50.0"],
+   ["research/q1_codesign/W4_EXISTING_HARDWARE_CANARY_PROTOCOL_20261018_KO.md", 11, "Previous physical cycles: **13,289,042**. IN_STALL=12, OUT_STALL=0"]
+  ]
+ }
+}
