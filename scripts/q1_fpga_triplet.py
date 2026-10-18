@@ -164,7 +164,7 @@ def compare_one(root,ref,new,output):
     return json.loads(output.read_text(encoding="utf-8"))
 
 
-def summarize(out,results,clock):
+def summarize(out,results,clock,image="05.png"):
     if not results:raise ValueError("No board measurements")
     lines=[
         "# Actual physical FPGA W4 core cycle A/B/C measurements",
@@ -201,7 +201,7 @@ def summarize(out,results,clock):
         return 100*(orig-other)/orig
     have_inner=all("inner_cycles" in r for r in results)
     res=dict(status="PHYSICAL_3WAY_W4_CORE_CYCLE_COMPARISON",
-             fclk_mhz=clock,replicates=len(results),
+             fclk_mhz=clock,image=image,set="Set12",noise_seed=0,replicates=len(results),
              frozen_total_pct_saved=agg("frozen"),
              multistart_total_pct_saved=agg("multistart"),
              frozen_conv2to9_pct_saved=agg("frozen","inner_cycles") if have_inner else None,
@@ -212,7 +212,7 @@ def summarize(out,results,clock):
                  "The canary does not certify manufacturer PS DDR/MIO presets.",
                  "Not a measurement of PS im2col, JTAG, host processing, end-to-end video latency, or energy.",
                  "Core cycles include DMA stalls; inspect per-run input/output stall counters.",
-                 "Set12 05.png with noise seed0, not all 612 GPU conditions.",
+                 f"Set12 {image} with noise seed0, not all 612 GPU conditions.",
                  "Keep Conv1–10 full-core and Conv2–9 estimates separate."
              ])
     lines+=["", f"**Frozen all Conv saving**: {res['frozen_total_pct_saved']:+.5f}%.",
@@ -319,7 +319,7 @@ def main():
         measurements.append(dict(rep=rep,run_order=order,cycles=cycles,
                                  inner_cycles=inner_cycles,in_stall=in_stall,
                                  out_stall=out_stall))
-    summary=summarize(out,measurements,a.fclk)
+    summary=summarize(out,measurements,a.fclk,a.image)
     summary["physical_bitstream_sha256"]=bitstream_sha256
     summary["build_path"]=str(build)
     summary["original_only_canary"]=str(a.existing_w4_canary.resolve()) if legacy else None
