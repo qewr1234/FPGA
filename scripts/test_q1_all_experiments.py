@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import json
 import tempfile
+import zipfile
 import unittest
 from pathlib import Path
 
 from q1_all_experiments import (
-    DEFAULT_IMAGES, aggregate_physical, checked_physical, new_dir,
+    DEFAULT_IMAGES, aggregate_physical, checked_physical, new_dir, package_evidence,
     parse_images, select_gpu_output, valid_gpu_summary,
 )
 
@@ -82,6 +83,33 @@ class Q1CampaignSafetyTests(unittest.TestCase):
         self.assertAlmostEqual(x["pooled_multistart_saved_pct"],100*210/1100)
         self.assertEqual(x["clean_image_n"],2)
         self.assertTrue((out/"physical_per_image.csv").exists())
+
+
+    def test_bundle_contains_verified_summary_and_no_checkpoint_weights(self):
+        output=self.root/"campaign"
+        output.mkdir()
+        (output/"status.json").write_text('{"status":"partial"}',encoding="utf-8")
+        gpu=self.root/"gpu"
+        gpu.mkdir()
+        (gpu/"summary.json").write_text('{"complete":true}',encoding="utf-8")
+        (gpu/"per_condition.csv").write_text("a,b\n1,2\n",encoding="utf-8")
+        (gpu/"model.pt").write_bytes(b"PRIVATE_MODEL_WEIGHTS")
+        stages=dict(controls=dict(status="COMPLETED",directory=str(gpu)),
+                    second_cnn=dict(status="NOT_IMPLEMENTED"))
+        evidence=package_evidence(output,stages)
+        self.assertTrue(evidence.is_file())
+        with zipfile.ZipFile(evidence) as z:
+            self.assertIsNone(z.testzip())
+            names=set(z.namelist())
+            self.assertIn("status.json",names)
+            self.assertIn("gpu/controls/summary.json",names)
+            self.assertIn("gpu/controls/per_condition.csv",names)
+            self.assertIn("evidence_manifest.json",names)
+            self.assertFalse(any(x.endswith(".pt") for x in names))
+            manifest=json.loads(z.read("evidence_manifest.json"))
+            self.assertTrue(manifest["model_estimates_are_not_fpga_measurements"])
+        with self.assertRaises(RuntimeError):
+            package_evidence(output,stages)
 
 
 if __name__ == "__main__":
