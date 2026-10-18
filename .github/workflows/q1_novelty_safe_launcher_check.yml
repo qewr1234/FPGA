@@ -1,0 +1,24 @@
+name: Q1 novelty smoke/full safe launcher
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/q1_novelty_bsd68_launcher.py
+      - scripts/test_q1_novelty_bsd68_launcher.py
+      - RUN_GPU_Q1_NOVELTY_BSD68.cmd
+      - .github/workflows/q1_novelty_safe_launcher_check.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax check
+        run: python -m py_compile scripts/q1_novelty_bsd68_launcher.py scripts/test_q1_novelty_bsd68_launcher.py
+      - name: Run completed / partial / fresh output selection unit tests (no GPU or FPGA)
+        run: python -m unittest discover -s scripts -p test_q1_novelty_bsd68_launcher.py -v
