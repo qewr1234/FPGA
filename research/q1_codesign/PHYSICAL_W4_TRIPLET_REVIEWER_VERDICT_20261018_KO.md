@@ -1,6 +1,6 @@
 # Q1 FPGA 실제 측정: Bank-Aware Channel Permutation 3종 실측 및 리뷰어 판정
 
-**날짜:** 2026-10-18. **근거:** 사용자가 업로드한 triplet_summary.json, triplet_summary.md, rep_01.zip. 1회차 ZIP의 103개 멤버 전체 CRC 검사 성공, 3모델 원본 report.json 및 로그·PNG·NPZ를 독립 재집계함. 2~3회차는 종합 보고서만 제공됐으며 원시 로그 ZIP은 아직 없음.
+**날짜:** 2026-10-18. **근거:** 사용자가 업로드한 triplet_summary.json, triplet_summary.md, rep_01.zip에 이어 **전체 trial_01.zip(151,998,070 bytes, 313 members)**까지 추가 원시 감사함. 3회 × 3모델 × 10 Conv = 90개 물리 레이어의 report/XSDB 로그/최종 PNG/중간 활성화 자료를 독립 교차 확인했음. 2·3회차 원시 로그 미제공이라는 이전 한계는 해소됨.
 
 ## 1. 최초 핵심 증거: 실물 W4 가속 효과
 
@@ -100,7 +100,7 @@ Conv9+Conv5가 첫 반복 절감량의 **38.10%**를 제공. Conv2~9 전부 개�
 
 ## 7. 다음 우선 실험
 
-1. **rep_02.zip / rep_03.zip 또는 3모델 raw report.json 6개** 확보하여 2·3회 raw oracle/출력 이미지를 독립 감사. 현재는 rep_01.zip만 제공됨.
+1. **완료:** 전체 trial_01.zip에 포함된 rep_02/rep_03 원시 보고서, XSDB 로그, Conv10 결과 바이너리, PNG, activation NPZ 독립 감사. 90개 레이어 모두 정수 Oracle 불일치 0. 별도 추가 획득 불필요.
 2. Calibration으로 사용했던 Set12 01/02/03을 피하고 **Set12 04.png, 06.png 등 미사용 영상을 여러 개 물리 측정**. 같은 W4 bitstream, A/B/C, 50MHz, seed0, 3 repeats, exact oracle, 함께 기록할 것.
 3. 가능하면 BSD68 일부와 노이즈 강도 σ15/50까지 실물 확장. 현재 실행기는 기본 σ25이며 다른 σ 실험은 입력/참조/메타를 분리해 새 안전 검증이 필요.
 4. 선택편향 없는 정적 채널 무작위 대조군과 equal budget Greedy를 FPGA 코어 사이클로 비교. 1개 lucky layout로 우월성을 주장하지 않음.
@@ -151,3 +151,18 @@ GitHub after git pull origin main:
 
 04.png은 Set12 01/02/03 calibration 영상과 다른 후보. FPGA 실제 재프로그래밍 명령이므로 동일 보드/전원/배선 확인 후 인터랙티브 확인 절차를 통과해야 함.
 성공 시 결과 위치: C:\fpga\FPGA\build\q1_bank_fpga_triplet\trial_set12_04\triplet_summary.json
+
+## 10. trial_01.zip 전체 3회차 원시 로그 감사 및 DMA 예외 (추가)
+
+- ZIP: 151,998,070 bytes, SHA256 3b326c80bbc46d3a16d9afe7690e085345fdd5c2eccc99cffde9f1b425076e8b, 총 313 멤버, ZIP CRC 이상 없음.
+- 9회의 W4 실제 physical board report, 90개의 layer별 XSDB 로그를 재집계: 모든 `cycles`/`mismatches`/`in_stall`/`out_stall`이 보고서 및 종합 summary와 일치.
+- 로그 판정: **89개 RESULT: PASS**, **1개 RESULT: VALUES OK, MEASUREMENT DMA BOUND**. 계산값 검증 실패 또는 FPGA 프로그램 실패는 없음.
+- 정확히 **rep_03 / frozen / conv10**에서 IN_STALL=12, OUT_STALL=0, MISMATCHES=0, CYCLES=1,343,535. 과거 정상 반복 Conv10 cycle=1,343,523, 차이=12 cycles. XSDB는 `core waited 12 cycles for memory`라고 설명함.
+- 9개 Conv10의 최종 DMA output binary (`gold.bin` vs `results.bin`) 9/9 바이트 일치.
+- 매 반복마다 세 모델의 noisy/denoised/clean PNG 파일 SHA256 일치. 서로 다른 반복에서도 해당 파일 SHA 동일.
+- Conv1~9 중간 활성화의 채널별 SHA multiset 비교: 같은 반복에서 original 대 frozen/multistart 60/60 비교 통과, 동일 모델의 반복 간 60/60 비교 통과.
+- Multi-start 총 Conv1~10 감소율 7.6048515%, Conv2~9 감소율 8.848552%; Frozen 3회차의 12-cycle stall을 제외하면 각 모델의 순수 core cycle이 모두 반복 일치.
+- 별도 W4 `.bit` 파일은 업로드 ZIP에 없어 bitstream SHA `11641ab...`는 summary 메타데이터 값이며, 이전 실물 Canary 측정에서 해당 bitstream이 실제 동작한 사실은 별도 근거로 확인됐음.
+
+**연구상 의미:** DMA 입력 stall 12회는 연산 결과 오류가 아닌 한 번의 전송 대기 이벤트. 분석 시 core-bound cycle과 관측 stall 포함 cycles를 분리 보고하며, 모든 입력/데이터셋에 대한 일반화 증거로 3회 반복을 사용하지 않음.
+
