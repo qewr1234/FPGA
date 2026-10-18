@@ -217,6 +217,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--model', default='dn_d7_c32', help='denoise/export/<model>/')
+    ap.add_argument('--export-dir', type=Path, help='optional explicit integer export directory; never replaces the original model')
     ap.add_argument('--set', default='Set12', choices=['Set12', 'BSD68'])
     ap.add_argument('--images', help='comma separated file names (default: all of the set)')
     ap.add_argument('--emulate', action='store_true')
@@ -241,8 +242,12 @@ def main():
         raise SystemExit('give --xsdb to run on the board, or --emulate for the host side alone')
     run_cifar.BOARD = args.board_dir.resolve()
 
-    export = ROOT/'denoise'/'export'/args.model
+    export = args.export_dir.resolve() if args.export_dir is not None else ROOT/'denoise'/'export'/args.model
+    if not (export/'manifest.json').is_file():
+        raise SystemExit(f'missing export manifest: {export}')
     man, layers = load_layers(export)
+    if man.get('model') != args.model:
+        raise SystemExit(f'--model {args.model} disagrees with manifest model {man.get("model")} at {export}')
     int_eval = json.loads((export/'int_eval.json').read_text())[args.set]['per_image']
     tests = test_noise(load_set(args.set), man['sigma'], seed=0)
     if args.images:
@@ -284,7 +289,8 @@ def main():
         rows.append(row)
         print(f'  PSNR {p_noisy:.2f} dB -> {p_out:.2f} dB   (matches int_eval.json)\n')
 
-    report = dict(emulated=bool(args.emulate), model=man['model'], set=args.set, sigma=man['sigma'],
+    report = dict(emulated=bool(args.emulate), model=man['model'], export_dir=str(export.resolve()),
+                  set=args.set, sigma=man['sigma'],
                   mode_seq=args.mode, activations_per_cycle=port_width(args), images=rows,
                   mean_psnr_noisy=float(np.mean([r['psnr_noisy'] for r in rows])),
                   mean_psnr_denoised=float(np.mean([r['psnr_denoised'] for r in rows])),

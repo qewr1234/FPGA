@@ -1,0 +1,26 @@
+name: Check equal-budget research benchmark
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/q1_fair_budget.py"
+      - "RUN_GPU_Q1_FAIR_BUDGET.cmd"
+      - ".github/workflows/q1_fair_budget_check.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install only CPU self-test dependencies
+        run: python3 -m pip install "numpy==1.26.4" "Pillow>=10,<12"
+      - name: Syntax and equal-evaluation-count deterministic selftest
+        run: |
+          python3 -m py_compile scripts/q1_fair_budget.py
+          python3 scripts/q1_fair_budget.py --selftest
+      - name: Verify reference model files exist
+        run: |
+          test -s denoise/export/dn_d10_c32_us_fx_qat/manifest.json
+          test -s denoise/export/dn_d10_c32_us_fx_qat/conv9_config.bin

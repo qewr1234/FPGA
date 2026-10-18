@@ -1,0 +1,34 @@
+name: W4 Read-only Provenance
+on:
+  push:
+    paths:
+      - scripts/q1_w4_provenance_audit.py
+      - scripts/test_q1_w4_provenance_audit.py
+      - .github/workflows/q1_w4_provenance_check.yml
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline unit tests
+        run: python -m unittest discover -s scripts -p test_q1_w4_provenance_audit.py -v
+      - name: Verify historical FPGA W4 run (no hardware)
+        run: python scripts/q1_w4_provenance_audit.py --out build/ci_w4_provenance
+      - name: Confirm actual past cycles; never infer current .bit identity
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path("build/ci_w4_provenance/audit.json").read_text())
+          assert d["historical"]["total_cycles"] == 13289042
+          assert d["historical"]["core_id"] == "0x4d410303"
+          assert d["historical"]["bitexact_mismatches"] == 0
+          assert d["historical"]["historical_bitstream_sha256"] is None
+          assert not d["automatic_hardware_approval"]
+          assert not d["physical_fpga_programming_performed"]
+          print("PASS: historical physical W4 validated; current bitstream identity remains unproved")
+          PY

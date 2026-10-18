@@ -1,0 +1,33 @@
+{
+  "status": "PASS_ALL_CHECKED",
+  "images_conditions_checked": 720,
+  "images_conditions_expected": 720,
+  "experiment_complete": true,
+  "total_mismatched_pixels": 0,
+  "config": {
+    "model": "dn_d10_c32_us_fx_qat",
+    "sets": [
+      "BSD68",
+      "Set12"
+    ],
+    "sigmas": [
+      15,
+      25,
+      50
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "max_images": 0,
+    "original_sha256": "92219fc12fdb4edfc010dd6d7109c8e944ddc54b2b54a71e177c00844963ee60",
+    "candidate_sha256": "f361cc4cd4192442bba413786d07dbfae1c26a32c8b565fa0dc4cebcef02a4ef"
+  },
+  "warnings": [
+    "Exactness is only final 8-bit image output equality in two CPU/GPU computation graphs.",
+    "Each layer has a sampled independent INT32 oracle, not every internal accumulator.",
+    "Physical FPGA hardware, bitstream and DDR traffic were not tested.",
+    "The CNN is σ25-trained, even where σ15 and σ50 were evaluated."
+  ]
+}
