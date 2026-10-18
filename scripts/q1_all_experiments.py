@@ -370,6 +370,58 @@ def package_evidence(output: Path, stages) -> Path:
     return dest
 
 
+
+def ensure_frozen_calibration_report():
+    """Rehydrate ONLY historical Frozen channel groups, never refit on BSD68."""
+    from q1_fpga_bank_ab import verify_archive
+    verify_archive()   # checks published archive SHA256SUMS and exact permutation orders
+    frozen_manifest=ROOT/"research"/"q1_codesign"/"bank_export_perm.json"
+    spec=read_json(frozen_manifest)
+    if not isinstance(spec,dict) or spec.get("model")!="dn_d10_c32_us_fx_qat":
+        raise RuntimeError("Malformed published Frozen permutation definitions")
+    orders=spec.get("orders")
+    if not isinstance(orders,dict) or set(orders)!={f"conv{i}" for i in range(1,9)}:
+        raise RuntimeError("Frozen published manifest must have 8 exact predecessor orders")
+    layers=[]
+    for li in range(1,9):
+        order=orders[f"conv{li}"]
+        if len(order)!=32 or sorted(order)!=list(range(32)):
+            raise RuntimeError("Published Frozen permutation is not a valid 32-channel order")
+        group=[None]*32
+        for j,ch in enumerate(order):
+            group[ch]=j%4
+        if [group.count(i) for i in range(4)]!=[8]*4:
+            raise RuntimeError("Published Frozen bank groups are not balanced")
+        layers.append(dict(layer=f"conv{li+1}",original_channel_order=order,
+                           group_of_original_channel=group))
+    if FROZEN.is_file():
+        current=read_json(FROZEN)
+        if (not isinstance(current,dict) or current.get("model")!="dn_d10_c32_us_fx_qat"
+                or not isinstance(current.get("layers"),list)):
+            raise RuntimeError("Existing Frozen calibration report is corrupt; refusing overwrite")
+        existing={t["layer"]:t for t in current["layers"]}
+        if set(existing)!={t["layer"] for t in layers}:
+            raise RuntimeError("Existing Frozen layer list incompatible with published mapping")
+        for t in layers:
+            actual=existing[t["layer"]]
+            if (actual.get("group_of_original_channel")!=t["group_of_original_channel"]
+                    or actual.get("original_channel_order")!=t["original_channel_order"]):
+                raise RuntimeError("Existing Frozen report differs from published, bit-exact FPGA-approved mapping")
+        print("PASS original Frozen calibration report matches published verified artifact",flush=True)
+    else:
+        # The original source script may not have been run on this particular
+        # PC, even though all weights/perm groups are already in GitHub.
+        # Recreate its minimal immutable mapping record, NO new search or score.
+        FROZEN.parent.mkdir(parents=True,exist_ok=True)
+        obj=dict(model="dn_d10_c32_us_fx_qat",data_set="Set12",
+                 calib_images=["01.png"],layers=layers,
+                 source="RECONSTRUCTED_EXACT_HISTORICAL_FROZEN_PERMUTATION_FROM_VERIFIED_ARCHIVE",
+                 caveat="Only historical bank assignments reconstructed. No model training/search/performance estimated by this file.")
+        FROZEN.write_text(json.dumps(obj,indent=2)+"\n",encoding="utf-8")
+        print("PASS historical Frozen bank groups restored without refitting:",FROZEN,flush=True)
+    return FROZEN
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stage",choices=("plan","gpu","fpga","all"),default="plan")
@@ -404,9 +456,7 @@ def main():
     write_status(output,stages,args.stage)
     try:
         if args.stage in ("all","gpu"):
-            if not FROZEN.is_file():
-                raise RuntimeError("Missing original frozen calibration report: "+str(FROZEN)
-                                   +". Run the existing RUN_GPU_Q1_REVIEW.cmd first; original files preserved.")
+            ensure_frozen_calibration_report()
             action,folder,_,_=select_output(ROOT/"build","full",False)
             if action=="reuse":
                 stages["joint_marginal_bsd68"]=dict(status="VERIFIED_REUSED",directory=str(folder))
