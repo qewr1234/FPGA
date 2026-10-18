@@ -38,6 +38,7 @@ import json
 import re
 import subprocess
 import sys
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -293,6 +294,82 @@ def aggregate_physical(output: Path, observations):
     (output/"physical_summary.json").write_text(json.dumps(recap,indent=2)+"\n",encoding="utf-8")
 
 
+
+def package_evidence(output: Path, stages) -> Path:
+    """Small, auditable one-file bundle: no images, huge NPZ, bitstream or weights.
+
+    Reports remain on the experiment PC; this ZIP is a *summary evidence bundle*,
+    not a full archival replacement for raw board data.
+    """
+    dest=output/"Q1_EVIDENCE_BUNDLE.zip"
+    if dest.exists():
+        raise RuntimeError("Refusing to overwrite existing evidence bundle")
+    picks={}
+    for filename in ("status.json","physical_per_image.csv","physical_summary.json"):
+        path=output/filename
+        if path.is_file():
+            picks[filename]=path
+    for name in ("joint_marginal_bsd68","controls","fair","mechanism"):
+        entry=stages.get(name)
+        if not entry or entry.get("status") not in ("COMPLETED","VERIFIED_REUSED"):
+            continue
+        d=Path(entry["directory"])
+        for filename in ("summary.json","per_condition.csv","per_image.csv",
+                         "method_summary.csv","fair_paired.csv","per_image_layer.csv",
+                         "groups.json","run_config.json","method_config.json"):
+            p=d/filename
+            if p.is_file():
+                picks["gpu/"+name+"/"+filename]=p
+    for stage,entry in stages.items():
+        if not stage.startswith("fpga_") or entry.get("status") not in ("COMPLETED","VERIFIED_REUSED"):
+            continue
+        d=Path(entry["directory"])
+        runid=d.name
+        for filename in ("triplet_summary.json","triplet_summary.md"):
+            p=d/filename
+            if p.is_file():
+                picks["physical/"+runid+"/"+filename]=p
+        for rep in range(1,4):
+            for name in ("original","frozen","multistart"):
+                p=d/f"rep_{rep:02}"/name/"report.json"
+                if p.is_file():
+                    picks["physical/"+runid+f"/rep_{rep:02}/"+name+"/report.json"]=p
+            for filename in ("original_vs_frozen.json","original_vs_multistart.json",
+                             "frozen_vs_multistart.json"):
+                p=d/f"rep_{rep:02}"/filename
+                if p.is_file():
+                    picks["physical/"+runid+f"/rep_{rep:02}/"+filename]=p
+    manifest=dict(
+        purpose="Portable Q1 experiment SUMMARY evidence bundle, not full raw data archive",
+        created_utc=datetime.now(timezone.utc).isoformat(),
+        source_paper_stages=list(stages),
+        includes_full_feature_maps=False,
+        includes_bitstream_or_model_weights=False,
+        model_estimates_are_not_fpga_measurements=True,
+        members={},
+    )
+    with zipfile.ZipFile(dest,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=6) as z:
+        for arcname,p in sorted(picks.items()):
+            if p.stat().st_size > 80*1024*1024:
+                # Large intermediate artifacts should be preserved at their
+                # original locations, not silently used as evidence.
+                manifest["members"][arcname]=dict(included=False,
+                                    reason="larger than 80 MiB",source=str(p))
+                continue
+            data=p.read_bytes()
+            z.writestr(arcname,data)
+            manifest["members"][arcname]=dict(
+                included=True,sha256=hashlib.sha256(data).hexdigest(),
+                bytes=len(data),source=str(p))
+        z.writestr("evidence_manifest.json",json.dumps(manifest,indent=2,ensure_ascii=False)+"\n")
+    with zipfile.ZipFile(dest) as z:
+        bad=z.testzip()
+        if bad is not None:
+            raise RuntimeError("Evidence bundle failed ZIP CRC verification: "+bad)
+    print("ONE FILE TO SHARE:",dest,flush=True)
+    return dest
+
+
 def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stage",choices=("plan","gpu","fpga","all"),default="plan")
@@ -404,12 +481,17 @@ def main():
         stages["e2e"]=dict(status="NOT_IMPLEMENTED",
                     reason="No PS-DDR-PL total latency/energy instrumentation integrated")
         write_status(output,stages,args.stage)
+        package_evidence(output,stages)
         print("BATCH FINISHED, completed supported stages. Additional development gates remain.")
         print("AUDIT:",output/"status.json")
         return 0
     except (RuntimeError,ValueError,OSError,subprocess.SubprocessError) as exc:
         stages["campaign_failure"]=dict(status="FAILED",reason=str(exc))
         write_status(output,stages,args.stage)
+        try:
+            package_evidence(output,stages)
+        except (OSError,ValueError,RuntimeError) as packaging_error:
+            print("Partial evidence bundle was not created:",packaging_error,file=sys.stderr)
         print("STOPPED SAFELY:",exc,file=sys.stderr,flush=True)
         print("Earlier completed results kept intact; audit:",output/"status.json",file=sys.stderr)
         return 1
