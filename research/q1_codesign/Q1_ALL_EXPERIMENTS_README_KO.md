@@ -56,6 +56,12 @@ GPU 4종의 개선은 **실제 FPGA 측정이 아닌 분석 사이클 추정**. 
     C:\fpga\FPGA\build\q1_all_experiments\campaign\physical_summary.json
     C:\fpga\FPGA\build\q1_all_experiments\campaign\logs\...
 
+**자동 증거 ZIP:** 캠페인이 정상 완료되면 아래 ZIP도 만들어져서, 이 파일 **하나만 업로드해도** 주요 GPU 비교와 이미지별 물리 raw report/비교 JSON을 검토할 수 있다.
+
+    C:\fpga\FPGA\build\q1_all_experiments\campaign\Q1_EVIDENCE_BUNDLE.zip
+
+실험 실패 시에도 부분 결과 ZIP을 만들려고 시도하되, status.json에 FAILED가 남는다. ZIP은 모델 weight·FPGA bitstream·대용량 중간 activation 원본을 포함하지 않는 **요약 검증 패키지**라서, 물리 실험의 완전한 원시 데이터 백업을 대체하지 않는다. ZIP 내부 evidence_manifest.json에 포함 파일의 SHA256이 기록된다.
+
 기존 campaign이 있으면 campaign_02 등으로 안전하게 새 폴더를 잡는다. 각 물리 측정 원시 로그도:
 
     C:\fpga\FPGA\build\q1_bank_fpga_triplet\q1all_set12_04\rep_01\...
