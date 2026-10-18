@@ -1,0 +1,1507 @@
+{
+ "rule": "can pay at W iff ceil(COUT/16)*ceil(K/4) > max(ceil(K/W)+1, COUT)",
+ "networks": {
+  "A": {
+   "model": "dn_d7_c32_es",
+   "can_pay": {
+    "w1": false,
+    "w2": false,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 297,
+     "COUT": 1,
+     "inputs": [
+      "conv6",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 75,
+     "floor_w1": 298,
+     "can_pay_w1": false,
+     "floor_w2": 150,
+     "can_pay_w2": false,
+     "floor_w4": 76,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B + QAT": {
+   "model": "dn_d10_c64_us_es_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 576,
+     "COUT": 64,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 576,
+     "floor_w1": 577,
+     "can_pay_w1": false,
+     "floor_w2": 289,
+     "can_pay_w2": true,
+     "floor_w4": 145,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 612,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 153,
+     "floor_w1": 613,
+     "can_pay_w1": false,
+     "floor_w2": 307,
+     "can_pay_w2": false,
+     "floor_w4": 154,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 ReLU + QAT s1": {
+   "model": "dn_d10_c32_us_fx_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": false,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 ReLU + QAT s2": {
+   "model": "dn_d10_c32_us_fx_s2_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": false,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 ReLU + QAT s3": {
+   "model": "dn_d10_c32_us_fx_s3_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": false,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 32,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 144,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": false,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 maxout + QAT s1": {
+   "model": "dn_d10_c32_us_mo_fx_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 maxout + QAT s2": {
+   "model": "dn_d10_c32_us_mo_fx_s2_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 maxout + QAT s3": {
+   "model": "dn_d10_c32_us_mo_fx_s3_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "B-32 averaging + QAT s2": {
+   "model": "dn_d10_c32_us_avg_fx_s2_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 288,
+     "COUT": 64,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 288,
+     "floor_w1": 289,
+     "can_pay_w1": false,
+     "floor_w2": 145,
+     "can_pay_w2": true,
+     "floor_w4": 73,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 324,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 81,
+     "floor_w1": 325,
+     "can_pay_w1": false,
+     "floor_w2": 163,
+     "can_pay_w2": false,
+     "floor_w4": 82,
+     "can_pay_w4": false
+    }
+   ]
+  },
+  "10 x 45 ReLU + QAT": {
+   "model": "dn_d10_c45_us_fx_qat",
+   "can_pay": {
+    "w1": false,
+    "w2": true,
+    "w4": true
+   },
+   "layers": [
+    {
+     "name": "conv2",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv1"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv3",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv2"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv4",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv3"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv5",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv4"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv6",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv5"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv7",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv6"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv8",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv7"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv9",
+     "K": 405,
+     "COUT": 45,
+     "inputs": [
+      "conv8"
+     ],
+     "permuted": true,
+     "max_compute": 306,
+     "floor_w1": 406,
+     "can_pay_w1": false,
+     "floor_w2": 204,
+     "can_pay_w2": true,
+     "floor_w4": 103,
+     "can_pay_w4": true
+    },
+    {
+     "name": "conv10",
+     "K": 441,
+     "COUT": 4,
+     "inputs": [
+      "conv9",
+      "image"
+     ],
+     "permuted": false,
+     "max_compute": 111,
+     "floor_w1": 442,
+     "can_pay_w1": false,
+     "floor_w2": 222,
+     "can_pay_w2": false,
+     "floor_w4": 112,
+     "can_pay_w4": false
+    }
+   ]
+  }
+ }
+}
