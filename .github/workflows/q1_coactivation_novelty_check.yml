@@ -1,0 +1,23 @@
+name: Q1 coactivation novelty offline smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/q1_coactivation_novelty_gate.py
+      - .github/workflows/q1_coactivation_novelty_check.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4
+      - name: Compile novelty experiment
+        run: python -m py_compile scripts/q1_coactivation_novelty_gate.py
+      - name: Run CPU-only synthetic cost and swap tests
+        run: python scripts/q1_coactivation_novelty_gate.py --selftest
