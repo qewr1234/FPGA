@@ -91,3 +91,14 @@ input columns permuted), cached per image so that a run cut short resumes where 
 stopped. A cache entry carries a digest of the L1 and L3 orders it was counted with and
 is ignored if they change. `results_2.json` is assembled from the cache only when all
 800 image counts and 10 function checks are present.
+
+## 8. Code that changed while the run was going
+
+The run (one invocation, 2 worker processes, 3,680 s wall, 2026-10-19 06:18-07:19 UTC)
+overlapped another workflow, which added a `tap_order` path to `scripts/run_denoise.py`
+and a guard to `bankperm/fold.py` (commit ce19450). Both act only on layout exports that
+carry a `tap_order`. The exports used here carry none, and `evaluate_2.py` does not
+import that workflow's files. The checks that would catch a change in the emulation all
+pass: every image's L0 and L1 totals equal `results.json`'s, B-32 ReLU s1's L0 and L2
+totals equal `skew_count.json`'s on all 80 images, and all 800 denoised PSNRs equal
+`int_eval.json`.
