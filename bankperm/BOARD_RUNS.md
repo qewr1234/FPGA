@@ -9,9 +9,9 @@ layer is predicted if CYCLES − IN_STALL equals its value exactly.
 
 | Step | Script | Prediction (committed) | Runs | Status |
 |---|---|---|---|---|
-| 0 | `RUN_COLLECT_Q1_BOARD_EVIDENCE.cmd` | — | copies the raw reports of the earlier canary and triplet runs from `build\` | to do |
-| 1 | `RUN_W4_LAYOUTS.cmd` | `board_prediction_2.json` (7312a84; PROTOCOL_2) | Original, Frozen, Multi-start, Skew × 05–08 (16 runs, ~2.5 h) | to do |
-| 2 | `RUN_W4_L3.cmd` (needs step 1 finished) | `board_prediction_3.json` (0887924, reviewed; unchanged since; PROTOCOL_2_ADDENDUM) | skew + relabeling (L3) × 05–08 (4 runs, ~40 min) | to do |
+| 0 | `RUN_COLLECT_Q1_BOARD_EVIDENCE.cmd` | — | copies the raw reports of the earlier canary and triplet runs from `build\` | done, 7ebb7ea |
+| 1 | `RUN_W4_LAYOUTS.cmd` | `board_prediction_2.json` (7312a84; PROTOCOL_2) | Original, Frozen, Multi-start, Skew × 05–08 (16 runs, ~2.5 h) | done, c18fc8f: 157/160 layers exact (`board_measured_2.json`) |
+| 2 | `RUN_W4_L3.cmd` (needs step 1 finished) | `board_prediction_3.json` (0887924, reviewed; unchanged since; PROTOCOL_2_ADDENDUM) | skew + relabeling (L3) × 05–08 (4 runs, ~40 min) | done, 1a327f7: 39/40 layers exact (`board_measured_3.json`) |
 
 The WIP commit 0887924 that first holds `board_prediction_3.json` said "not reviewed": the
 review finished afterwards and changed nothing in that file (its git blob is the same at
@@ -30,8 +30,23 @@ its recorded hash, or if the bitstream is not the canary's.
 | Skew + relabeling (L3) | 12,041,720 | 12,028,030 | 12,119,810 | 47,847,154 |
 
 On 05.png the Original, Frozen and Multi-start values equal the earlier board runs
-(transcribed: 49 comparisons; raw report: 11 comparisons; all exact). Set12 06–08, the
-skew and L3 have never run on the board.
+(raw reports in `denoise/board_runs/q1_layouts/` since 7ebb7ea; all exact). The skew and L3
+had never run on the board. Correction (2026-10-19 evening): Original, Frozen and Multi-start
+*had* run on Set12 06–08 (and 04, 09–12) in earlier triplets on the board PC, outside the
+repository; their reports came in with 7ebb7ea, their dates are not recorded, and their board
+time does not fit after these runs, so they were made before the predictions. The predictions
+did not read them (they read only the exports, the count and `w4_gaps.py`), but the
+`never_run_on_the_board` lists of the prediction files are wrong for those nine runs.
+
+## Results
+
+All 20 runs valid, no output mismatch. 176 of the 180 predicted layer counts (conv2–conv10)
+equal the prediction; the four misses are +1 cycle in conv8 with IN_STALL 0 (original 08,
+multistart 07, multistart 08, L3 07). They are exactly the four conv2–conv9 layer runs whose
+last window computes 30 cycles (the others: 32–56), so the fill-and-drain rule is one cycle
+short there (an observation after the runs, not a revision of the rule). On every image the
+cycles order L3 < L2 < Multi-start < Frozen < L0; pooled over the four images L2 saves
+8.13% and L3 8.80% against L0.
 
 ## On the board PC (C:\fpga\FPGA)
 

@@ -11,7 +11,7 @@ put in a one-column section between two column breaks so they span both
 columns, as the IEEE template does.
 
 Markdown conventions the converter understands:
-  # Title                           -> paper title (one line)
+  # Title                           -> paper title ('<br>' starts a second title line)
   a line '(저자 이름), (소속...)'    -> replaced by --authors / --affil / --email
                                        (and --author2 / --affil2 / --email2 for a second
                                        affiliation beside it, in the template's two author columns)
@@ -330,7 +330,11 @@ def main():
     blocks = list(parse_markdown(args.src.read_text(encoding='utf-8')))
     title = next(p for k, p in blocks if k == 'title')
     title_el = next(e for e in paras if style_of(e) == 'papertitle')
-    set_text(title_el, title)
+    # '<br>' in the title starts a new title paragraph (as a line break typed in Word does)
+    title_lines = [s.strip() for s in title.split('<br>')]
+    set_text(title_el, title_lines[0])
+    for line in reversed(title_lines[1:]):
+        nxt = copy.deepcopy(title_el); set_text(nxt, line); title_el.addnext(nxt)
     set_text(authors[0], args.authors)
     affil_lines = [s.strip() for s in args.affil.split(';')] + ([args.email] if args.email else [])
     for e, line in zip(affils, affil_lines + [''] * 4):

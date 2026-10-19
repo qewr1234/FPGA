@@ -158,9 +158,9 @@ def main():
     print(f'Set12 05.png: rank {board + 1} of 79 by the bound; '
           + ', '.join(f'{k[1]}: rank {sorted_keys.index(k) + 1}' for k in NEXT_BOARD))
 
-    fig, ax = plt.subplots(figsize=(8.0/2.54, 5.5/2.54), dpi=300)   # as before: 4-page limit
+    fig, ax = plt.subplots(figsize=(8.0/2.54, 5.1/2.54), dpi=300)   # 4-page limit (5.5 before the board results)
     ax.vlines(board + 1, 4, 11.1, color=MUTED, lw=0.6, ls=(0, (1, 1.5)), zorder=1)   # stops below the bound
-    ax.annotate('Set12 05.png (board)', (board + 1, 4.55), xytext=(2.5, 0), textcoords='offset points', ha='left',
+    ax.annotate('Set12 05.png', (board + 1, 4.55), xytext=(2.5, 0), textcoords='offset points', ha='left',
                 va='center', fontsize=7, color=MUTED)
     ax.plot(rank, sav['bound'][order], color=INK, lw=1.0, zorder=3)
     style = {'combo': dict(marker='D', ms=2.3, mfc=DARK, mec=DARK, mew=0.4),

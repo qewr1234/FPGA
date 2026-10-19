@@ -24,14 +24,14 @@ The folder records:
 - the paper's three figures (`figures/`, drawn from the JSON files of this folder);
 - the related work (`references.json`, `RELATED_WORK_EN.md`), the paper (`PAPER_EN.md`, built into the IWEICT Word template; its title and abstract are those of the submission form, `ABSTRACT_IWEICT.md`) and a short insert for the IWEICT paper (`IWEICT_INSERT_EN.md`).
 
-## Measured, counted, transcribed
+## Measured, counted, predicted
 
 | Kind | What | Where |
 |---|---|---|
 | Measured on the board, committed raw report | the earlier W = 4 run of the Original export of the board network on Set12 05.png (13,289,042 cycles, 12 of them IN_STALL in conv5; 315.0 s of JTAG debugger time over its ten layers) | `denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json`, `denoise/w4_measured.json` |
-| Measured on the board, **transcribed** | the canary run of the Original and three repeats of Original, Frozen and Multi-start (2026-10-18) | `board_transcribed.json`: every value with file, line and the exact quote from `research/q1_codesign/PHYSICAL_W4_*_20261018_KO.md`. The raw `report.json` files, XSDB logs and PNG digests are **not in the repository** (`denoise/board_runs/q1_layouts/`, which `RUN_COLLECT_Q1_BOARD_EVIDENCE.cmd` would create, did not exist locally or on GitHub on 2026-10-19 when the paper was rebuilt); Frozen's per-layer board cycles were never given, only its total and its conv2–9 sum |
+| Measured on the board, committed raw reports (earlier runs) | the canary run of the Original on Set12 05.png and triplets (three alternating repeats of Original, Frozen and Multi-start) on Set12 04 to 12 (12: rep 1 and one Multi-start repeat; 2026-10-18 and before the PROTOCOL_2 runs, date not recorded) | `denoise/board_runs/q1_layouts/` (7ebb7ea; `MANIFEST.json`). Every value transcribed earlier into `board_transcribed.json` (from `research/q1_codesign/PHYSICAL_W4_*_20261018_KO.md`) equals them; 758 of 770 layer counts equal the exact prediction, the 12 misses are conv8 +1 (the review of 2026-10-19 evening) |
 | Predicted exactly | per-window count + per-layer fill and drain (`denoise/w4_gaps.py`; conv1 a measured constant, 17) | `b32_board.json` `layouts.*.layers[].exact_w4`, compared in `board_vs_prediction`. Its `status` "out of sample" is by layout: Multi-start conv10 and the totals are labelled out of sample although conv1 and conv10 see the same windows in every layout (only conv1–conv8 outputs are permuted, `sources.*.permuted_outputs`), so of its 21 out-of-sample comparisons nine are independent (Multi-start conv2–conv9, Frozen conv2–9 sum) |
-| Predicted, **not yet run** | every layer of L0, Frozen, Multi-start and L2 on Set12 05–08 (PROTOCOL_2's board runs; 06–08 and the skew never ran on the board) | `board_prediction_2.json` (7312a84, before the runs). The paper only says these runs are pre-registered and under way |
+| Predicted before the runs, then measured | every layer of L0, Frozen, Multi-start and L2 (PROTOCOL_2) and of L3 (addendum) on Set12 05–08, one run each | predictions `board_prediction_2.json` (7312a84) and `board_prediction_3.json` (0887924, confirmed in 3cc95a6); runs `denoise/board_runs/q1_layouts2/` (c18fc8f) and `q1_layouts3/` (1a327f7); comparisons `board_measured_2.json` (157/160 layers exact) and `board_measured_3.json` (39/40), by `compare_board_2.py` and `compare_board_3.py`, reproduced here byte for byte. The prediction files' `never_run_on_the_board` lists are wrong for L0, Frozen and Multi-start on 06–08: the earlier triplets above had run them on the board PC, outside the repository |
 | Counted | per-window count of `denoise/predict_w4.window_cycles` (sparse mode) over the windows of the host emulation (`scripts/run_denoise.py`), fill and drain left out | everything else: `b32_testsets.json`, `results.json`, `results_2.json`, `baselines.json`, `skew_count.json`, the counts in `b32_board.json`; intervals: `results_2.json`, `stats_2.json` |
 | Timed on the x86 server, not on the board | host work per image (input, im2col, requantization) of the board network on 05.png | `host_time.json` (single-threaded medians of 5 runs; core time = exact board cycles at 50 MHz; transfer time not counted) |
 | From layer shapes only | where a layout can pay | `bounds.json` |
@@ -71,6 +71,9 @@ The paper calls them push times.
 | 2026-10-19 07:23 | d6521ec | `PROTOCOL_2_ADDENDUM.md` (L3 board runs; its prediction to be committed before them) and the form abstract `ABSTRACT_IWEICT.md` |
 | 2026-10-19 07:38 | 0887924 | work in progress, not reviewed: L3 board tooling and `board_prediction_3.json` (not used by the paper; not yet the reviewed L3 pre-registration), and Fig. 2 and 3 redrawn; its message records that the independent verification of `results_2.json`, `stats_2.json` and `host_time.json` finished |
 | 2026-10-19 08:09 / 08:24 | 22aa391 / 68c3088 | work in progress, not reviewed: the paper rewrite and L3 tooling (`l3_export_check.json`; not used by the paper) |
+| 2026-10-19 10:02 (board PC) | 7ebb7ea | the raw reports of the earlier board runs (`denoise/board_runs/q1_layouts/`, `RUN_COLLECT_Q1_BOARD_EVIDENCE.cmd`) |
+| 2026-10-19 10:09 (board PC) | c18fc8f | the PROTOCOL_2 board runs (`q1_layouts2/`, `board_measured_2.json`) |
+| 2026-10-19 10:52 (board PC) | 1a327f7 | the L3 board runs (`q1_layouts3/`, `board_measured_3.json`) |
 
 `PROTOCOL.md`, `PROTOCOL_2.md`, `bounds.py` and `bounds.json` must not be edited. The one place where
 the first protocol could not be applied word for word (the 45-channel network) is in
@@ -127,14 +130,17 @@ Percentages in the paper are the JSON values rounded half-up to the digits shown
 | Sec. IV networks: 29.54 dB, 37–55% nonzero | `denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json` `images[0].psnr_denoised`, `images[0].layers[conv2..conv9].nonzero_fraction` (0.372–0.548) |
 | Sec. IV, 79 images and paired bootstrap 95% intervals over images | `results_2.json` `headline`, `bootstrap` (10,000 resamples, `np.random.default_rng(0)`, one index matrix for every network, width and layout; `DEVIATIONS_2.md` 4); `stats_2.json` `bootstrap` (same generator, per set) |
 | Sec. IV board: WNS +0.130 ns, 11,151 LUTs, 68 RAMB36 + 6 RAMB18 (71 BRAM36-eq. of 140), no DSP | `denoise/board_runs/w4_build/routed_timing.rpt`, `routed_utilization.rpt` (top row `system_wrapper`); both written in `build/zed_v4_p16_t4_w4_1792234898`, the build `denoise/README_KO.md` l. 140 names for the 2026-10-17 runs and the canary note (`research/q1_codesign/PHYSICAL_W4_CANARY_RESULT_20261018_KO.md` l. 35–36) gives with SHA-256 11641ab… |
-| Sec. IV: 50 MHz, the preset's clock; one bitstream for all layouts | `board_transcribed.json` `fclk_mhz`, `core_id`; `denoise/w4_measured.json`; `scripts/run_board_xsdb.tcl` (comment above `WM_FCLK_MHZ`) |
-| Sec. IV: transcribed board cycles; only an earlier run of the Original committed raw | `board_transcribed.json`; `denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json`; `denoise/board_runs/q1_layouts/` absent (checked 2026-10-19) |
+| Sec. IV: 50 MHz, the preset's clock; one bitstream for all layouts | every `report.json` under `denoise/board_runs/q1_layouts*/` (`fclk_mhz` 50, core 0x4d410303 on every layer); bitstream SHA-256 11641ab3… in `q1_layouts/MANIFEST.json`, `q1_layouts2/setup.json`, `q1_layouts3/setup.json`; `scripts/run_board_xsdb.tcl` (comment above `WM_FCLK_MHZ`) |
+| Sec. IV: the pre-registered runs (L0–L3 once each on 05–08) and the earlier ones (L0, Frozen, Multi-start up to three times on 04–12; 05 after a canary), not used by any prediction | `q1_layouts2/`, `q1_layouts3/`; `q1_layouts/` (folders `q1_existing_w4_canary/canary_01`, `q1_bank_fpga_triplet/trial_01` (05), `trial_set12_04`, `q1all_set12_06` … `q1all_set12_12`); the predictions read only the exports, the count and `w4_gaps.py` (`predict_board_2.py`, `predict_board_3.py`) |
 | Sec. IV: PSNR reproduced on all 80 images | `results.json` `networks.*.psnr_checks`; `results_2.json` `networks.*.psnr_checks` |
-| Sec. IV, what was fixed when (6dc0e60, 9cf9c79, c2299e2, 951c8f1; the paper points here for the push times) | `git log` and GitHub push records (table above); "before the L3 fit and the study's counts (earlier ones: Sec. VI)": PROTOCOL_2 came after 2928d28's L2 counts and the uncommitted review counts it lists, before every other L2/L3 count and the L3 fit |
-| Sec. V-A and Table I (totals and conv2–9 sums) | `b32_board.json` `board_vs_prediction.repeats[0]` (rep 1: `{original,frozen,multistart}.{total,conv2_9}.board`, `in_stall` 0, `predicted` equal: 13,289,030 / 11,421,202; 12,355,814 / 10,487,986; 12,278,419 / 10,410,591), equal to `layouts.*.total.exact_w4` and `.total.conv2_9.exact_w4`; savings 7.02 / 7.60 (`savings_rep1.*.board_pct`) and 8.17 / 8.85 (100 · (11,421,202 − conv2–9) / 11,421,202: 8.1709, 8.8486); `repeats[]` (Frozen rep 3: 12,355,826, IN_STALL 12; `conv1_plus_conv10_derived`), `summary` (63 / 63 exact, 21 labelled out of sample, nine independent: see the table above), `earlier_committed_run`; 90 layer runs without mismatch: `board_transcribed.json` `oracle` |
-| Sec. V-A: what is in sample | fill-and-drain rule read off runs that include the Original's layers: `denoise/w4_gaps.json` `networks["B-32 ReLU + QAT"]`, commit 6dc0e60; conv1 and conv10 the same in every layout: `b32_board.json` `sources.*.permuted_outputs` |
+| Sec. IV, what was fixed when (6dc0e60, 9cf9c79, c2299e2, 951c8f1, 7312a84, 0887924; the paper points here for the push times) | `git log` and GitHub push records (table above); "before the L3 fit and the study's counts (earlier ones: Sec. VI)": PROTOCOL_2 came after 2928d28's L2 counts and the uncommitted review counts it lists, before every other L2/L3 count and the L3 fit; the board predictions before their runs: `board_prediction_2.json` `written_utc` 07:12:57Z, committed 07:21, `q1_layouts2/setup.json` pinned 07:24:27Z; `board_prediction_3.json` written 07:35:19Z, committed 07:38, the L3 runs after c18fc8f (10:09) |
+| Sec. V-A and Table I (savings against L0 on 05–08; L0 totals) | `board_measured_2.json` and `board_measured_3.json` `runs.<layout>_<image>.total.cycles` (L0 13,289,030 / 13,465,669 / 13,412,001 / 51,976,970; savings 100 · (L0 − layout) / L0: Frozen 7.022 / 7.911 / 7.222 / 5.929, Multi-start 7.605 / 9.014 / 7.886 / 6.582, L2 8.644 / 9.967 / 8.952 / 7.312, L3 9.386 / 10.676 / 9.635 / 7.945); pooled over the four images L2 8.1306%, L3 8.7982% (`board_measured_3.json` `l3_savings_pooled`: L3 against L0 8.798168%); the order L3 < L2 < Multi-start < Frozen < L0 on every image; 176/180 conv2–conv10 layers exact (`summary`), the four misses in `misses`; no output mismatch (every report's `mismatches` 0) |
+| Sec. V-A: the misses are the layers whose last window computes 30 cycles | `board_prediction_2.json` and `board_prediction_3.json` `runs.*.*.layers[].last_window.compute`: over the 160 conv2–conv9 layer runs of the 20 runs, the four misses are the four with compute 30 and every other one (32–56) is exact; conv10 (COUT 4, last 24 or 28) is exact; in the earlier triplets the 12 misses are the four distinct layers with compute 30 (the review of 2026-10-19 evening) |
+| Sec. V-A: the earlier runs (04–12: 758 of 770 exact; Frozen 5.93–7.91%, Multi-start 6.58–9.01%; repeated to the cycle, up to IN_STALL, by the pre-registered runs) | `q1_layouts/q1_bank_fpga_triplet/*/rep_NN/*/report.json` against the prediction of `predict_board_2.py`'s functions (the review of 2026-10-19 evening; its scripts are scratch); rep-1 savings 04 7.66 / 8.45, 05 7.02 / 7.60, 06 7.91 / 9.01, 07 7.22 / 7.89, 08 5.93 / 6.58, 09 7.45 / 7.83, 10 6.84 / 7.29, 11 6.57 / 7.22, 12 6.90 / 7.34 (Frozen / Multi-start; raw CYCLES, IN_STALL included); every set-1 run on 05–08 equals the set-2 run of the same layout and image layer by layer once IN_STALL is subtracted |
+| Sec. V-A: what is in sample | fill-and-drain rule read off runs of 05.png that include the Original's layers: `denoise/w4_gaps.json` `networks["B-32 ReLU + QAT"]`, commit 6dc0e60; conv1 and conv10 see the same windows in every layout (only the inputs of conv2..conv9 change); L2 and L3 never ran before (`never_run_on_the_board` is right for them) |
 | Sec. V-A: IN_STALL caveat (misses DMA starvation at window boundaries; a stall common to all layouts could be absorbed by the fill-and-drain rule) | commit b37f971 (message: the counter fixed in RTL, not in the W = 4 bitstream that ran; "their per-layer gaps fit the fill-and-drain rule exactly") |
-| Sec. V-A: board runs pre-registered and under way (no result claimed), and L3's under the addendum | `PROTOCOL_2.md` "Board runs (prospective)"; `board_prediction_2.json` (7312a84; `images` 05–08, `layouts` original, frozen, multistart, skew; `predictions`); `PROTOCOL_2_ADDENDUM.md` (d6521ec: L3 on the same four images); its prediction `board_prediction_3.json` (first in WIP 0887924, reviewed with no change, confirmed in 3cc95a6 before any L3 run; `BOARD_RUNS.md`) |
+| Sec. V-A: the pre-registration of the board runs | `PROTOCOL_2.md` "Board runs (prospective)"; `board_prediction_2.json` (7312a84); `PROTOCOL_2_ADDENDUM.md` (d6521ec); `board_prediction_3.json` (first in WIP 0887924, reviewed with no change, confirmed in 3cc95a6 before any L3 run; `BOARD_RUNS.md`) |
+| Sec. V-C: the counts' savings on the four board images equal Table I's within 0.001 points | `results_2.json` `per_image_totals["Set12/0N.png"].w4` against the board totals: largest difference 0.00035 points |
 | Sec. V-B, H0–H3 (1.09–10.80%, 3.36–7.37% on five, 0.022%; signs known for B, maxout s1, board network) | `results.json` `networks.*.summary.w{2,4}.headline_79.pooled_pct`, `verdicts.H1–H3`; H0: `perms.json` `H0`; known signs: `PROTOCOL.md` "What was known"; fold: `fold_check.json`; the 45-channel deviation: `DEVIATIONS.md`. The same L1 values are in `results_2.json` (`cross_checks`: L0 and L1 totals equal `results.json` on all 80 images) |
 | Sec. V-B, H4 | `results_2.json` `verdicts.H4.checked` (W = 1 on all ten; W = 2 on A and B-32 ReLU s1–s3; `L2_equals_L0_all_80`, `L3_equals_L0_all_80`, `every_layer_too`) |
 | Sec. V-B, H5 (0.90–2.36 points; known for the board network) | `results_2.json` `verdicts.H5.per_network.*.L2_minus_L1_pct_points` (0.8960 B-32 ReLU s3 – 2.3580 A); known: `PROTOCOL_2.md` "What was known" (`skew_count.json`, 2928d28: 9.20% on the board network, against L1's 7.46% in `results.json`) |
@@ -156,8 +162,8 @@ Percentages in the paper are the JSON values rounded half-up to the digits shown
 
 The tables of `PAPER_EN.md` were generated from these fields by hand or by
 scratch scripts that are not committed; every cell can be checked against the
-field named above. Table numbers in the current draft: Table I (board, totals and
-conv2–9 sums), Table II (eight layouts of the board network with intervals; it
+field named above. Table numbers in the current draft: Table I (board savings of
+the five layouts on Set12 05–08), Table II (eight layouts of the board network with intervals; it
 replaces the earlier nine-row baseline table: the random-layout and equal-budget
 rows went into the text or out, the L3 row and the intervals came in). Figures:
 Fig. 2 is now L1, L2 and L3 per network at W = 4 and W = 2 from `results_2.json`
@@ -178,10 +184,9 @@ The builder fills the IWEICT Word template; lines starting with `>` (the
 "Before submission" box) are dropped. Without `--authors`, `--affil` and `--ack`
 it prints the Korean IWEICT defaults, so pass them even as placeholders
 (`--authors "Lee Yoo Joon"`, the Yeungnam affiliation, `--email "(e-mail)"`, the
-advisor placeholders `--author2 "(Advisor name)"`,
-`--affil2 "(Dept. name of organization); (Name of organization); (City, Country)"`,
-`--email2 "(e-mail address)"` and the IITP `--ack`; the copy with the author's
-e-mail is kept outside the repository). With these, the three figures at 8 cm
+advisor `--author2 "*Gyu Sang Choi"` (the * is the author's), `--affil2` the same
+Yeungnam affiliation, `--email2 "(e-mail)"` and the IITP `--ack`; the copy with
+the two e-mails is kept outside the repository). With these, the three figures at 8 cm
 (`--col-fig-cm 8`) and the rewrite of 2026-10-19 (afternoon) with the fixes of
 its review, the LibreOffice build is exactly four A4 pages with no trailing page.
 Word gave five pages for that build. Two likely causes are addressed in
@@ -189,8 +194,8 @@ Word gave five pages for that build. Two likely causes are addressed in
 by the 1.15 the document defaults give Normal, about 80 pt over the three figures,
 so figure paragraphs are now single-spaced; and Times New Roman lacks ⌈ ⌉, whose
 fallback font can make a line taller, so in the English build they are Cambria Math
-runs in Body Text paragraphs of exactly 11 pt. After the cut of 2026-10-19
-(evening) page 4 of the LibreOffice build ends about 30–40 pt above the bottom
+runs in Body Text paragraphs of exactly 11 pt. With the board results (2026-10-19 evening; Fig. 2 and 3 made 0.3 and 0.4 cm
+shorter) page 4 of the LibreOffice build ends about 40 pt above the bottom
 margin in each column; figures and tables move between columns in steps, so a
 small cut does not always show on page 4. The committed `PAPER_EN.docx`
 and `PAPER_EN_preview.pdf` are built from the current `PAPER_EN.md` and figures;
