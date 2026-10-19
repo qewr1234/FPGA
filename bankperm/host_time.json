@@ -1,0 +1,871 @@
+{
+ "model": "dn_d10_c32_us_fx_qat",
+ "image": "Set12 05.png (256 x 256; 4 phases of 128 x 128, 16384 windows per layer)",
+ "noise": "sigma 25, test_noise seed 0",
+ "machine": {
+  "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39",
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "cpu_count": 4,
+  "cpus_usable": 4,
+  "cpu_model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "hypervisor": true,
+  "Core(s) per socket": "4",
+  "Socket(s)": "1",
+  "Thread(s) per core": "1",
+  "Hypervisor vendor": "KVM",
+  "L2 cache": "8 MiB (4 instances)",
+  "L3 cache": "260 MiB (1 instance)",
+  "thread_env": {
+   "OMP_NUM_THREADS": "1",
+   "OPENBLAS_NUM_THREADS": "1",
+   "MKL_NUM_THREADS": "1"
+  }
+ },
+ "load_average_before": [
+  2.12255859375,
+  1.244140625,
+  0.5322265625
+ ],
+ "load_average_after": [
+  2.43994140625,
+  1.375,
+  0.5908203125
+ ],
+ "driver": {
+  "scripts/run_denoise.py": {
+   "git_blob": "de8a243e16cbcc39dfe4f4e8092a2c6abacef35a",
+   "equals_HEAD": false
+  },
+  "scripts/run_cifar.py": {
+   "git_blob": "de0693eea2956fdad9a69c32b02edb4075247be5",
+   "equals_HEAD": true
+  },
+  "denoise/common.py": {
+   "git_blob": "d390f2ee67fba2fa367e4e55ef299008f02b5599",
+   "equals_HEAD": true
+  },
+  "HEAD": "ad9e671fda3b54ad81f008e87a5e3b63e9a9e215"
+ },
+ "runs": 5,
+ "statistic": "median of 5 runs, after one capture run (warm-up) per export",
+ "threads": "single thread: *_NUM_THREADS=1 before numpy; integer matmul and elementwise numpy are single-threaded",
+ "pinned_cpu": null,
+ "host_work": "needed: input quantization + pad + unshuffle; per layer gather + im2col; conv1-conv9 requant + layout to (C, h, w); conv10 to_image + shuffle2. No pooling and no W-padding in this network. harness_only (not needed by a deployment): oracle, serialize, nonzero_fraction; skew_gather: what the skewed layout would add if done as a column gather after im2col",
+ "timing": {
+  "original": {
+   "export": "denoise/export/dn_d10_c32_us_fx_qat",
+   "psnr_db": 29.536220128469942,
+   "psnr_equals_int_eval": true,
+   "driver_loop": {
+    "what": "run_denoise.denoise() on the image, run_layer replaced by a lookup of precomputed accumulators; includes the driver's reporting ((x != 0).mean() and a print per layer)",
+    "runs_wall_ms": [
+     56.4825,
+     72.1711,
+     56.405,
+     58.4577,
+     69.7472
+    ],
+    "median_wall_ms": 58.4577,
+    "runs_cpu_ms": [
+     56.3215,
+     72.1003,
+     56.3849,
+     57.1353,
+     68.6572
+    ],
+    "median_cpu_ms": 57.1353,
+    "cpu_over_wall": [
+     0.997,
+     0.999,
+     1.0,
+     0.977,
+     0.984
+    ],
+    "driver_functions_in_place": {
+     "im2col": {
+      "per_layer_ms": {
+       "conv1": 0.1493,
+       "conv2": 0.561,
+       "conv3": 0.6153,
+       "conv4": 0.5203,
+       "conv5": 0.5719,
+       "conv6": 0.572,
+       "conv7": 0.5949,
+       "conv8": 0.5172,
+       "conv9": 0.5944,
+       "conv10": 1.2516
+      },
+      "total_ms": 5.6505
+     },
+     "requant": {
+      "per_layer_ms": {
+       "conv1": 4.3587,
+       "conv2": 3.0085,
+       "conv3": 2.3706,
+       "conv4": 2.1121,
+       "conv5": 2.0163,
+       "conv6": 1.9335,
+       "conv7": 1.9541,
+       "conv8": 2.0482,
+       "conv9": 1.9433
+      },
+      "total_ms": 23.3012
+     },
+     "pad_mult": {
+      "total_ms": 0.1371
+     },
+     "unshuffle2": {
+      "total_ms": 0.0604
+     },
+     "to_image": {
+      "total_ms": 0.4449
+     },
+     "shuffle2": {
+      "total_ms": 0.0506
+     }
+    }
+   },
+   "per_op": {
+    "input_ms": {
+     "input_quantize": 0.0979,
+     "input_pad_unshuffle": 0.1906
+    },
+    "per_layer": {
+     "conv1": {
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0056,
+       "im2col": 0.1279,
+       "oracle": 23.3142,
+       "serialize": 0.87,
+       "nonzero_fraction": 0.4582,
+       "requant": 2.5346,
+       "layout": 0.2185
+      },
+      "needed_ms": 2.8759
+     },
+     "conv2": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0719,
+       "im2col": 0.6943,
+       "oracle": 199.6491,
+       "serialize": 9.8655,
+       "nonzero_fraction": 3.4293,
+       "skew_gather": 0.4782,
+       "requant": 2.0225,
+       "layout": 0.2267
+      },
+      "needed_ms": 3.0302
+     },
+     "conv3": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0658,
+       "im2col": 0.5982,
+       "oracle": 180.1594,
+       "serialize": 8.4822,
+       "nonzero_fraction": 3.6668,
+       "skew_gather": 0.5042,
+       "requant": 2.1804,
+       "layout": 0.2235
+      },
+      "needed_ms": 3.0725
+     },
+     "conv4": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0637,
+       "im2col": 0.994,
+       "oracle": 181.4608,
+       "serialize": 7.2305,
+       "nonzero_fraction": 3.7015,
+       "skew_gather": 0.4783,
+       "requant": 2.2478,
+       "layout": 0.2266
+      },
+      "needed_ms": 3.5816
+     },
+     "conv5": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0613,
+       "im2col": 0.6025,
+       "oracle": 177.4517,
+       "serialize": 7.6886,
+       "nonzero_fraction": 3.6557,
+       "skew_gather": 0.5857,
+       "requant": 1.9379,
+       "layout": 0.2413
+      },
+      "needed_ms": 2.8151
+     },
+     "conv6": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0659,
+       "im2col": 0.6193,
+       "oracle": 184.8906,
+       "serialize": 6.4504,
+       "nonzero_fraction": 3.5896,
+       "skew_gather": 0.5766,
+       "requant": 2.4765,
+       "layout": 0.2288
+      },
+      "needed_ms": 3.3817
+     },
+     "conv7": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0621,
+       "im2col": 0.5636,
+       "oracle": 183.4334,
+       "serialize": 6.4853,
+       "nonzero_fraction": 3.5861,
+       "skew_gather": 0.4887,
+       "requant": 2.2937,
+       "layout": 0.2298
+      },
+      "needed_ms": 3.1823
+     },
+     "conv8": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0705,
+       "im2col": 0.6207,
+       "oracle": 186.8024,
+       "serialize": 6.8561,
+       "nonzero_fraction": 3.6677,
+       "skew_gather": 0.5021,
+       "requant": 2.5651,
+       "layout": 0.2556
+      },
+      "needed_ms": 3.4998
+     },
+     "conv9": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0678,
+       "im2col": 0.6492,
+       "oracle": 192.1596,
+       "serialize": 7.0748,
+       "nonzero_fraction": 3.931,
+       "skew_gather": 0.6251,
+       "requant": 1.8974,
+       "layout": 0.2421
+      },
+      "needed_ms": 2.8709
+     },
+     "conv10": {
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0845,
+       "im2col": 0.8034,
+       "oracle": 68.7486,
+       "serialize": 7.6622,
+       "nonzero_fraction": 4.1352,
+       "output": 0.5829
+      },
+      "needed_ms": 1.473
+     }
+    },
+    "needed_by_step_ms": {
+     "gather": 0.6457,
+     "im2col": 6.1546,
+     "requant": 21.0662,
+     "layout": 2.172,
+     "output": 0.5829
+    },
+    "needed_runs_ms": [
+     31.9788,
+     30.2802,
+     30.5945,
+     30.2711,
+     33.2546
+    ],
+    "needed_median_ms": 30.5945,
+    "harness_only_median_ms": {
+     "oracle": 1596.6103,
+     "serialize": 70.5411,
+     "nonzero_fraction": 34.1869,
+     "skew_gather": 4.2109
+    }
+   }
+  },
+  "multistart": {
+   "export": "research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip",
+   "psnr_db": 29.536220128469942,
+   "psnr_equals_int_eval": true,
+   "driver_loop": {
+    "what": "run_denoise.denoise() on the image, run_layer replaced by a lookup of precomputed accumulators; includes the driver's reporting ((x != 0).mean() and a print per layer)",
+    "runs_wall_ms": [
+     65.2195,
+     80.3346,
+     59.1253,
+     58.0036,
+     74.0679
+    ],
+    "median_wall_ms": 65.2195,
+    "runs_cpu_ms": [
+     63.5661,
+     80.3067,
+     59.0208,
+     57.1449,
+     74.0615
+    ],
+    "median_cpu_ms": 63.5661,
+    "cpu_over_wall": [
+     0.975,
+     1.0,
+     0.998,
+     0.985,
+     1.0
+    ],
+    "driver_functions_in_place": {
+     "im2col": {
+      "per_layer_ms": {
+       "conv1": 0.14,
+       "conv2": 0.6062,
+       "conv3": 0.638,
+       "conv4": 0.5578,
+       "conv5": 0.5711,
+       "conv6": 0.5333,
+       "conv7": 0.6199,
+       "conv8": 0.5041,
+       "conv9": 0.5641,
+       "conv10": 1.2615
+      },
+      "total_ms": 5.9113
+     },
+     "requant": {
+      "per_layer_ms": {
+       "conv1": 4.9064,
+       "conv2": 3.3847,
+       "conv3": 2.473,
+       "conv4": 2.1343,
+       "conv5": 1.9088,
+       "conv6": 2.0141,
+       "conv7": 1.7592,
+       "conv8": 1.9147,
+       "conv9": 1.9476
+      },
+      "total_ms": 21.3125
+     },
+     "pad_mult": {
+      "total_ms": 0.1438
+     },
+     "unshuffle2": {
+      "total_ms": 0.0646
+     },
+     "to_image": {
+      "total_ms": 0.5273
+     },
+     "shuffle2": {
+      "total_ms": 0.0525
+     }
+    }
+   },
+   "per_op": {
+    "input_ms": {
+     "input_quantize": 0.1139,
+     "input_pad_unshuffle": 0.2151
+    },
+    "per_layer": {
+     "conv1": {
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0074,
+       "im2col": 0.1228,
+       "oracle": 28.0816,
+       "serialize": 1.042,
+       "nonzero_fraction": 0.5706,
+       "requant": 2.8769,
+       "layout": 0.2526
+      },
+      "needed_ms": 3.2885
+     },
+     "conv2": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0669,
+       "im2col": 0.6295,
+       "oracle": 204.3186,
+       "serialize": 10.9986,
+       "nonzero_fraction": 3.494,
+       "skew_gather": 0.4249,
+       "requant": 2.2203,
+       "layout": 0.2283
+      },
+      "needed_ms": 3.1213
+     },
+     "conv3": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0645,
+       "im2col": 0.6356,
+       "oracle": 196.5645,
+       "serialize": 8.5978,
+       "nonzero_fraction": 3.5847,
+       "skew_gather": 0.5124,
+       "requant": 2.2572,
+       "layout": 0.2434
+      },
+      "needed_ms": 3.4156
+     },
+     "conv4": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0842,
+       "im2col": 1.3243,
+       "oracle": 201.5086,
+       "serialize": 7.9902,
+       "nonzero_fraction": 3.6647,
+       "skew_gather": 0.4544,
+       "requant": 2.757,
+       "layout": 0.2243
+      },
+      "needed_ms": 4.4669
+     },
+     "conv5": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0684,
+       "im2col": 0.6368,
+       "oracle": 179.5852,
+       "serialize": 8.4064,
+       "nonzero_fraction": 3.8554,
+       "skew_gather": 0.5957,
+       "requant": 2.0021,
+       "layout": 0.2451
+      },
+      "needed_ms": 2.9396
+     },
+     "conv6": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0619,
+       "im2col": 0.5914,
+       "oracle": 182.8767,
+       "serialize": 6.6114,
+       "nonzero_fraction": 3.6339,
+       "skew_gather": 0.5488,
+       "requant": 2.3957,
+       "layout": 0.2609
+      },
+      "needed_ms": 3.2798
+     },
+     "conv7": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0648,
+       "im2col": 0.5876,
+       "oracle": 179.3085,
+       "serialize": 6.2623,
+       "nonzero_fraction": 3.4666,
+       "skew_gather": 0.4729,
+       "requant": 2.4823,
+       "layout": 0.222
+      },
+      "needed_ms": 3.3848
+     },
+     "conv8": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.062,
+       "im2col": 0.5574,
+       "oracle": 176.8018,
+       "serialize": 6.8497,
+       "nonzero_fraction": 3.4786,
+       "skew_gather": 0.4561,
+       "requant": 2.6097,
+       "layout": 0.2362
+      },
+      "needed_ms": 3.4952
+     },
+     "conv9": {
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0641,
+       "im2col": 0.6258,
+       "oracle": 179.9646,
+       "serialize": 7.0145,
+       "nonzero_fraction": 4.0533,
+       "skew_gather": 0.5669,
+       "requant": 2.1335,
+       "layout": 0.2444
+      },
+      "needed_ms": 3.0652
+     },
+     "conv10": {
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "post": "none",
+      "median_ms": {
+       "gather": 0.0829,
+       "im2col": 0.7914,
+       "oracle": 60.6411,
+       "serialize": 7.6455,
+       "nonzero_fraction": 4.1019,
+       "output": 0.5656
+      },
+      "needed_ms": 1.3752
+     }
+    },
+    "needed_by_step_ms": {
+     "gather": 0.6382,
+     "im2col": 6.6401,
+     "requant": 22.113,
+     "layout": 2.2581,
+     "output": 0.5656
+    },
+    "needed_runs_ms": [
+     34.563,
+     32.2325,
+     33.0437,
+     32.0802,
+     30.5559
+    ],
+    "needed_median_ms": 32.2325,
+    "harness_only_median_ms": {
+     "oracle": 1641.8436,
+     "serialize": 73.7202,
+     "nonzero_fraction": 33.9696,
+     "skew_gather": 4.1467
+    }
+   }
+  }
+ },
+ "core": {
+  "original": {
+   "exact_w4_cycles": 13289030,
+   "core_ms_at_50MHz": 265.7806,
+   "per_layer_cycles": {
+    "conv1": 524305,
+    "conv2": 1504752,
+    "conv3": 1435005,
+    "conv4": 1448350,
+    "conv5": 1562936,
+    "conv6": 1369221,
+    "conv7": 1375441,
+    "conv8": 1289021,
+    "conv9": 1436476,
+    "conv10": 1343523
+   },
+   "per_layer_core_ms": {
+    "conv1": 10.4861,
+    "conv2": 30.095,
+    "conv3": 28.7001,
+    "conv4": 28.967,
+    "conv5": 31.2587,
+    "conv6": 27.3844,
+    "conv7": 27.5088,
+    "conv8": 25.7804,
+    "conv9": 28.7295,
+    "conv10": 26.8705
+   },
+   "board_rep1_equals_exact_every_layer": true,
+   "board_rep1_in_stall": 0,
+   "board_repeat_totals": [
+    {
+     "board": 13289030,
+     "in_stall": 0,
+     "board_minus_in_stall": 13289030
+    },
+    {
+     "board": 13289030,
+     "in_stall": 0,
+     "board_minus_in_stall": 13289030
+    },
+    {
+     "board": 13289030,
+     "in_stall": 0,
+     "board_minus_in_stall": 13289030
+    }
+   ],
+   "board_repeats_minus_in_stall_equal_exact": true
+  },
+  "frozen": {
+   "exact_w4_cycles": 12355814,
+   "core_ms_at_50MHz": 247.1163,
+   "per_layer_cycles": {
+    "conv1": 524305,
+    "conv2": 1391312,
+    "conv3": 1362489,
+    "conv4": 1311569,
+    "conv5": 1387589,
+    "conv6": 1275254,
+    "conv7": 1291330,
+    "conv8": 1212745,
+    "conv9": 1255698,
+    "conv10": 1343523
+   },
+   "per_layer_core_ms": {
+    "conv1": 10.4861,
+    "conv2": 27.8262,
+    "conv3": 27.2498,
+    "conv4": 26.2314,
+    "conv5": 27.7518,
+    "conv6": 25.5051,
+    "conv7": 25.8266,
+    "conv8": 24.2549,
+    "conv9": 25.114,
+    "conv10": 26.8705
+   },
+   "board_repeat_totals": [
+    {
+     "board": 12355814,
+     "in_stall": 0,
+     "board_minus_in_stall": 12355814
+    },
+    {
+     "board": 12355814,
+     "in_stall": 0,
+     "board_minus_in_stall": 12355814
+    },
+    {
+     "board": 12355826,
+     "in_stall": 12,
+     "board_minus_in_stall": 12355814
+    }
+   ],
+   "board_repeats_minus_in_stall_equal_exact": true
+  },
+  "multistart": {
+   "exact_w4_cycles": 12278419,
+   "core_ms_at_50MHz": 245.5684,
+   "per_layer_cycles": {
+    "conv1": 524305,
+    "conv2": 1378763,
+    "conv3": 1344509,
+    "conv4": 1311511,
+    "conv5": 1371900,
+    "conv6": 1272788,
+    "conv7": 1281427,
+    "conv8": 1207219,
+    "conv9": 1242474,
+    "conv10": 1343523
+   },
+   "per_layer_core_ms": {
+    "conv1": 10.4861,
+    "conv2": 27.5753,
+    "conv3": 26.8902,
+    "conv4": 26.2302,
+    "conv5": 27.438,
+    "conv6": 25.4558,
+    "conv7": 25.6285,
+    "conv8": 24.1444,
+    "conv9": 24.8495,
+    "conv10": 26.8705
+   },
+   "board_rep1_equals_exact_every_layer": true,
+   "board_rep1_in_stall": 0,
+   "board_repeat_totals": [
+    {
+     "board": 12278419,
+     "in_stall": 0,
+     "board_minus_in_stall": 12278419
+    },
+    {
+     "board": 12278419,
+     "in_stall": 0,
+     "board_minus_in_stall": 12278419
+    },
+    {
+     "board": 12278419,
+     "in_stall": 0,
+     "board_minus_in_stall": 12278419
+    }
+   ],
+   "board_repeats_minus_in_stall_equal_exact": true
+  },
+  "skew_count_only": {
+   "what": "PROTOCOL_2.md L2 skew, the count without fill and drain (not a board number and not an exact prediction; bankperm/board_prediction_2.json will have that); for scale only",
+   "count_w4_cycles": 12139748,
+   "core_ms_at_50MHz": 242.795,
+   "original_count_w4_cycles": 13288456,
+   "original_count_ms_at_50MHz": 265.7691
+  }
+ },
+ "amdahl": {
+  "multistart_vs_original_host_per_op": {
+   "host_ms": 30.5945,
+   "core_orig_ms": 265.7806,
+   "core_new_ms": 245.5684,
+   "core_saving_pct": 7.6048,
+   "back_to_back": {
+    "end_to_end_orig_ms": 296.3751,
+    "end_to_end_new_ms": 276.1629,
+    "saving_pct": 6.8198,
+    "core_share_pct": 89.68
+   },
+   "perfect_overlap_over_images": {
+    "end_to_end_orig_ms": 265.7806,
+    "end_to_end_new_ms": 245.5684,
+    "saving_pct": 7.6048,
+    "bound_by": "core"
+   },
+   "per_layer_overlap": {
+    "end_to_end_orig_ms": 265.7805,
+    "end_to_end_new_ms": 245.5685,
+    "saving_pct": 7.6048,
+    "layers_host_bound": []
+   }
+  },
+  "multistart_vs_original_host_driver_loop": {
+   "host_ms": 58.4577,
+   "core_orig_ms": 265.7806,
+   "core_new_ms": 245.5684,
+   "core_saving_pct": 7.6048,
+   "back_to_back": {
+    "end_to_end_orig_ms": 324.2383,
+    "end_to_end_new_ms": 304.0261,
+    "saving_pct": 6.2337,
+    "core_share_pct": 81.97
+   },
+   "perfect_overlap_over_images": {
+    "end_to_end_orig_ms": 265.7806,
+    "end_to_end_new_ms": 245.5684,
+    "saving_pct": 7.6048,
+    "bound_by": "core"
+   }
+  },
+  "frozen_vs_original_host_per_op": {
+   "host_ms": 30.5945,
+   "core_orig_ms": 265.7806,
+   "core_new_ms": 247.1163,
+   "core_saving_pct": 7.0224,
+   "back_to_back": {
+    "end_to_end_orig_ms": 296.3751,
+    "end_to_end_new_ms": 277.7108,
+    "saving_pct": 6.2975,
+    "core_share_pct": 89.68
+   },
+   "perfect_overlap_over_images": {
+    "end_to_end_orig_ms": 265.7806,
+    "end_to_end_new_ms": 247.1163,
+    "saving_pct": 7.0224,
+    "bound_by": "core"
+   }
+  },
+  "skew_count_vs_original_host_per_op_plus_skew_gather": {
+   "what": "for scale only, not a board figure: core times from the counts of skew_count.json (Original and skew, both without fill and drain), host time plus the column gather on conv2..conv9 that the skew adds if it is not written by im2col itself",
+   "host_ms": 34.8054,
+   "core_orig_ms": 265.7691,
+   "core_new_ms": 242.795,
+   "core_saving_pct": 8.6444,
+   "back_to_back": {
+    "end_to_end_orig_ms": 300.5745,
+    "end_to_end_new_ms": 277.6004,
+    "saving_pct": 7.6434,
+    "core_share_pct": 88.42
+   },
+   "perfect_overlap_over_images": {
+    "end_to_end_orig_ms": 265.7691,
+    "end_to_end_new_ms": 242.795,
+    "saving_pct": 8.6444,
+    "bound_by": "core"
+   }
+  }
+ },
+ "jtag_harness": {
+  "source": "denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json",
+  "model": "dn_d10_c32_us_fx_qat",
+  "image": "05.png",
+  "emulated": false,
+  "activations_per_cycle": 4,
+  "fclk_mhz": [
+   50.0
+  ],
+  "core_id": [
+   "0x4d410303"
+  ],
+  "layers": 10,
+  "board_cycles": 13289042,
+  "core_seconds_at_50MHz": 0.2658,
+  "xsdb_wall_seconds_sum": 315.0,
+  "run_layer_host_seconds_sum": 340.5,
+  "per_layer_xsdb_wall_seconds": {
+   "conv1": 25.6,
+   "conv2": 32.7,
+   "conv3": 33.5,
+   "conv4": 34.7,
+   "conv5": 34.0,
+   "conv6": 33.1,
+   "conv7": 33.2,
+   "conv8": 33.3,
+   "conv9": 32.9,
+   "conv10": 22.0
+  },
+  "core_share_of_xsdb_wall_pct": 0.0844,
+  "what": "wall_seconds: one xsdb session per layer (bitstream load over JTAG, the layer's config, windows and results over JTAG, the core run, the board-side check); host_seconds: run_denoise.run_layer around it (also the oracle and the file writes); measured on the board PC (Windows), not this machine; the windows' im2col and the requantization are outside both"
+ },
+ "caveats": [
+  "host times are from this machine (see machine), not from the board PC that ran the JTAG harness nor from the ZedBoard's ARM cores; a Cortex-A9 at 667 MHz would be many times slower",
+  "transfer time is not counted: the host -> DDR copy of the windows and the results back are left out (on the JTAG harness they dominate the wall time); the core cycles include the DMA stream from DDR",
+  "host and core run on different machines; the Amdahl figures combine the two",
+  "perfect overlap over images needs a second image in flight; per-layer overlap hides a layer's host work only under the same layer's core time (layers depend on each other), streaming tiles",
+  "core time is the board cycle count at 50 MHz (exact predictions, equal to the board numbers of the repeat-1 runs for every layer of Original and Multi-start)",
+  "the driver loop also contains the driver's per-layer reporting, so it is above the per-op sum",
+  "the machine may be shared with other work: compare cpu with wall time and the load averages"
+ ],
+ "seconds": 22.4
+}

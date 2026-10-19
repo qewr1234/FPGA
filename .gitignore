@@ -15,3 +15,5 @@ denoise/*_es_train.json
 denoise/qat_*_train.json
 denoise/*_qat_train.json
 denoise/scr_*_train.json
+# The layer maps run_denoise.py keeps in --out to resume a run (tens of MB per board run):
+denoise/board_runs/**/*_maps*.npz

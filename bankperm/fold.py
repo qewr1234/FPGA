@@ -93,6 +93,11 @@ def input_order(L, orders, by_name, man):
 def fold(src, orders, dest):
     """Write the permuted export of src to dest. -> per-layer (input order, output columns)."""
     raw = json.loads((src/'manifest.json').read_text())
+    if any('tap_order' in node for node in raw['layers']):
+        # A layout export (bankperm/export_layout.py) keeps weight columns in another tap
+        # order; the fold below assumes (ky, kx, channel) and would write another function.
+        raise SystemExit(f'{src} has a tap order (a layout export): fold the export without one, then apply the '
+                         f'layout on top (bankperm/export_layout.py --orders)')
     man, layers = run_denoise.load_layers(src)
     by_name = {L['name']: L for L in layers}
     if layers[-1]['name'] in orders or 'image' in orders:

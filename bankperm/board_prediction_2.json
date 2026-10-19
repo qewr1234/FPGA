@@ -1,0 +1,4883 @@
+{
+ "what": "exact W=4 board cycles predicted for the PROTOCOL_2 board runs, written before any of them; per layer CYCLES - IN_STALL must equal \"predicted\" exactly",
+ "written_utc": "2026-10-19T06:21:32Z",
+ "script": "bankperm/predict_board_2.py",
+ "protocol": {
+  "file": "bankperm/PROTOCOL_2.md",
+  "commit": "951c8f1",
+  "sha256": "07785510d797812725226fdebf0d9f5908bdeb997661caaa89b28c4d8588206d",
+  "section": "Board runs (prospective)",
+  "test": "a layer is predicted if CYCLES - IN_STALL equals its prediction exactly; every miss is listed",
+  "identical_to_commit": true
+ },
+ "model": "dn_d10_c32_us_fx_qat",
+ "network": "B-32 ReLU + QAT s1",
+ "set": "Set12",
+ "images": [
+  "05.png",
+  "06.png",
+  "07.png",
+  "08.png"
+ ],
+ "noise": "sigma 25 (the manifest's), test_noise seed 0, the board driver's host emulation",
+ "board": {
+  "bitstream": "the existing W=4 bitstream (build zed_v4_p16_t4_w4_*)",
+  "core_id": "0x4d410303",
+  "driver_flags": "scripts/run_denoise.py --w4 --mode 1 --fclk 50",
+  "tile": 65536,
+  "board_runs_per_layer": [
+   1
+  ],
+  "padding": "none: every K (36, 288, 324) is a multiple of 4, so no zero taps and, every window being whole beats, no zero windows are added"
+ },
+ "core": "P = 16 lanes, T = 4 banks, tap t of a window in bank t % 4, sparse mode (mode 1)",
+ "rule": {
+  "count": "count_w4 = sum over windows of max(ceil(K/4) + 1, ceil(COUT/16) * max(1, max_b nnz_b), COUT) (denoise/predict_w4.py window_cycles, W = 4, sparse)",
+  "fill_drain": "conv2..conv10, per board run: min(load, last) + 3 + ((COUT-1) % 16 + 1), load = ceil(K/4) + 1, last = ceil(COUT/16) * max(1, max bank nnz) of the run's last window in the layout as sent (denoise/w4_gaps.py); conv1: the measured constant 17 per run",
+  "conv1_constant": {
+   "value": 17,
+   "source": "denoise/w4_gaps.json networks[\"B-32 ReLU + QAT\"] conv1 board_w4",
+   "gap": 17,
+   "in_stall": 0,
+   "note": "measured on the board on 05.png (the Original), not derived; conv1 reads the image, so its windows are the same in every layout (checked); used unchanged for 06-08"
+  },
+  "predicted": "count_w4 + fill_drain_w4",
+  "exactness_of_layouts": "every layout is the same function: Frozen and Multi-start relabel channels (denoised images identical, checked); the Skew permutes a window's taps and the weight columns together, |partial sum| <= K*127*128 < 2^31 in any order, and every accumulator of conv2..conv9 is the Original's (whole layers, integer oracle, checked)"
+ },
+ "layouts": {
+  "original": {
+   "path": "denoise/export/dn_d10_c32_us_fx_qat"
+  },
+  "frozen": {
+   "path": "research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip",
+   "zip_sha256": "a660c020d52d811593f97e9defd918f24039ed9ad02d8e361c4f36199d6c0022",
+   "permuted_outputs": [
+    "conv1",
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8"
+   ]
+  },
+  "multistart": {
+   "path": "research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip",
+   "zip_sha256": "6e8ea3b8485fdc7633248cd27b56d52246b24f99ab3243605dba46dc3b4b7023",
+   "permuted_outputs": [
+    "conv1",
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8"
+   ]
+  },
+  "skew": {
+   "path": "denoise/export/dn_d10_c32_us_fx_qat",
+   "how": "the Original export's windows, conv2..conv9 with their taps in bankperm/skew_count.py skew_order(288, 32): slot s*32 + (p + s) % 32 holds channel p of 3x3 position s (bank (s + p) % 4); conv1 and conv10 unchanged; the weight columns permuted the same way (their config.bin digest is given per layer)",
+   "order_288_32": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    63,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    94,
+    95,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    125,
+    126,
+    127,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    156,
+    157,
+    158,
+    159,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153,
+    154,
+    155,
+    187,
+    188,
+    189,
+    190,
+    191,
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167,
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182,
+    183,
+    184,
+    185,
+    186,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199,
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    249,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248,
+    280,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    287,
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279
+   ],
+   "order_meaning": "order[slot] = the Original tap index sent in that slot (x_skew = x[:, order])",
+   "driver_export_checked": {
+    "path": "skew_export",
+    "model": "dn_d10_c32_us_fx_qat",
+    "layout_manifest_sha256": "a4efca5db7db4ceace10e88e05275ec77fdbfd0f12c86c40e903d2e4fecd2c1a",
+    "tap_order_layers": [
+     "conv2",
+     "conv3",
+     "conv4",
+     "conv5",
+     "conv6",
+     "conv7",
+     "conv8",
+     "conv9"
+    ],
+    "tap_order_is_skew_order": {
+     "conv2": true,
+     "conv3": true,
+     "conv4": true,
+     "conv5": true,
+     "conv6": true,
+     "conv7": true,
+     "conv8": true,
+     "conv9": true
+    },
+    "how": "emulated with scripts/run_denoise.py denoise (its tap_order path) on every image; each layer's record and config.bin digest must equal the Skew's (checks.<image>.skew_export)"
+   }
+  }
+ },
+ "validation": {
+  "image": "Set12 05.png",
+  "required": {
+   "image": "05.png",
+   "exact_total": {
+    "original": 13289030,
+    "frozen": 12355814,
+    "multistart": 12278419
+   },
+   "skew_count_w4": 12139748
+  },
+  "results": {
+   "original_total": {
+    "predicted": 13289030,
+    "required": 13289030,
+    "equal": true
+   },
+   "original_layers_vs_b32_board": {
+    "equal": true,
+    "differing": []
+   },
+   "frozen_total": {
+    "predicted": 12355814,
+    "required": 12355814,
+    "equal": true
+   },
+   "frozen_layers_vs_b32_board": {
+    "equal": true,
+    "differing": []
+   },
+   "multistart_total": {
+    "predicted": 12278419,
+    "required": 12278419,
+    "equal": true
+   },
+   "multistart_layers_vs_b32_board": {
+    "equal": true,
+    "differing": []
+   },
+   "skew_count_w4": {
+    "count": 12139748,
+    "required": 12139748,
+    "skew_count_json": 12139748,
+    "equal": true
+   },
+   "original_count_w4_vs_skew_count_json": {
+    "count": 13288456,
+    "skew_count_json": 13288456,
+    "equal": true
+   }
+  },
+  "passed": true
+ },
+ "cross_checks_counts": {
+  "05.png": {
+   "b32_testsets_w4": {
+    "original": {
+     "count": 13288456,
+     "json": 13288456,
+     "equal": true
+    },
+    "frozen": {
+     "count": 12355274,
+     "json": 12355274,
+     "equal": true
+    },
+    "multistart": {
+     "count": 12277883,
+     "json": 12277883,
+     "equal": true
+    }
+   },
+   "b32_testsets_w4_conv2_9": {
+    "original": {
+     "count": 11420680,
+     "json": 11420680,
+     "equal": true
+    },
+    "frozen": {
+     "count": 10487498,
+     "json": 10487498,
+     "equal": true
+    },
+    "multistart": {
+     "count": 10410107,
+     "json": 10410107,
+     "equal": true
+    }
+   },
+   "skew_count_json": {
+    "original": {
+     "count": 13288456,
+     "json": 13288456,
+     "equal": true
+    },
+    "skew": {
+     "count": 12139748,
+     "json": 12139748,
+     "equal": true
+    }
+   }
+  },
+  "06.png": {
+   "b32_testsets_w4": {
+    "original": {
+     "count": 13465083,
+     "json": 13465083,
+     "equal": true
+    },
+    "frozen": {
+     "count": 12399860,
+     "json": 12399860,
+     "equal": true
+    },
+    "multistart": {
+     "count": 12251287,
+     "json": 12251287,
+     "equal": true
+    }
+   },
+   "b32_testsets_w4_conv2_9": {
+    "original": {
+     "count": 11597307,
+     "json": 11597307,
+     "equal": true
+    },
+    "frozen": {
+     "count": 10532084,
+     "json": 10532084,
+     "equal": true
+    },
+    "multistart": {
+     "count": 10383511,
+     "json": 10383511,
+     "equal": true
+    }
+   },
+   "skew_count_json": {
+    "original": {
+     "count": 13465083,
+     "json": 13465083,
+     "equal": true
+    },
+    "skew": {
+     "count": 12123070,
+     "json": 12123070,
+     "equal": true
+    }
+   }
+  },
+  "07.png": {
+   "b32_testsets_w4": {
+    "original": {
+     "count": 13411455,
+     "json": 13411455,
+     "equal": true
+    },
+    "frozen": {
+     "count": 12442865,
+     "json": 12442865,
+     "equal": true
+    },
+    "multistart": {
+     "count": 12353784,
+     "json": 12353784,
+     "equal": true
+    }
+   },
+   "b32_testsets_w4_conv2_9": {
+    "original": {
+     "count": 11543679,
+     "json": 11543679,
+     "equal": true
+    },
+    "frozen": {
+     "count": 10575089,
+     "json": 10575089,
+     "equal": true
+    },
+    "multistart": {
+     "count": 10486008,
+     "json": 10486008,
+     "equal": true
+    }
+   },
+   "skew_count_json": {
+    "original": {
+     "count": 13411455,
+     "json": 13411455,
+     "equal": true
+    },
+    "skew": {
+     "count": 12210792,
+     "json": 12210792,
+     "equal": true
+    }
+   }
+  },
+  "08.png": {
+   "b32_testsets_w4": {
+    "original": {
+     "count": 51976431,
+     "json": 51976431,
+     "equal": true
+    },
+    "frozen": {
+     "count": 48894569,
+     "json": 48894569,
+     "equal": true
+    },
+    "multistart": {
+     "count": 48555313,
+     "json": 48555313,
+     "equal": true
+    }
+   },
+   "b32_testsets_w4_conv2_9": {
+    "original": {
+     "count": 44505327,
+     "json": 44505327,
+     "equal": true
+    },
+    "frozen": {
+     "count": 41423465,
+     "json": 41423465,
+     "equal": true
+    },
+    "multistart": {
+     "count": 41084209,
+     "json": 41084209,
+     "equal": true
+    }
+   },
+   "skew_count_json": {
+    "original": {
+     "count": 51976431,
+     "json": 51976431,
+     "equal": true
+    },
+    "skew": {
+     "count": 48176052,
+     "json": 48176052,
+     "equal": true
+    }
+   }
+  }
+ },
+ "checks": {
+  "05.png": {
+   "skew_layers": [
+    {
+     "name": "conv2",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv3",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv4",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv5",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv6",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv7",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv8",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv9",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    }
+   ],
+   "pixels": 65536,
+   "psnr_vs_int_eval": {
+    "original": {
+     "psnr": 29.536220128469942,
+     "int_eval": 29.536220128469942,
+     "agrees_1e5": true
+    },
+    "frozen": {
+     "psnr": 29.536220128469942,
+     "int_eval": 29.536220128469942,
+     "agrees_1e5": true
+    },
+    "multistart": {
+     "psnr": 29.536220128469942,
+     "int_eval": 29.536220128469942,
+     "agrees_1e5": true
+    }
+   },
+   "conv1_windows_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "denoised_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "nonzeros_per_layer_equal": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "conv1_prediction_identical": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "skewed_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "skew_export": {
+    "predictions_identical": true,
+    "config_sha256_identical": true,
+    "denoised_identical": true,
+    "psnr_agrees_1e5": true,
+    "differing_layers": []
+   }
+  },
+  "06.png": {
+   "skew_layers": [
+    {
+     "name": "conv2",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv3",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv4",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv5",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv6",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv7",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv8",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv9",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    }
+   ],
+   "pixels": 65536,
+   "psnr_vs_int_eval": {
+    "original": {
+     "psnr": 28.495058808303973,
+     "int_eval": 28.495058808303973,
+     "agrees_1e5": true
+    },
+    "frozen": {
+     "psnr": 28.495058808303973,
+     "int_eval": 28.495058808303973,
+     "agrees_1e5": true
+    },
+    "multistart": {
+     "psnr": 28.495058808303973,
+     "int_eval": 28.495058808303973,
+     "agrees_1e5": true
+    }
+   },
+   "conv1_windows_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "denoised_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "nonzeros_per_layer_equal": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "conv1_prediction_identical": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "skewed_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "skew_export": {
+    "predictions_identical": true,
+    "config_sha256_identical": true,
+    "denoised_identical": true,
+    "psnr_agrees_1e5": true,
+    "differing_layers": []
+   }
+  },
+  "07.png": {
+   "skew_layers": [
+    {
+     "name": "conv2",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv3",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv4",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv5",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv6",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv7",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv8",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv9",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    }
+   ],
+   "pixels": 65536,
+   "psnr_vs_int_eval": {
+    "original": {
+     "psnr": 28.87729852750743,
+     "int_eval": 28.877298917920484,
+     "agrees_1e5": true
+    },
+    "frozen": {
+     "psnr": 28.87729852750743,
+     "int_eval": 28.877298917920484,
+     "agrees_1e5": true
+    },
+    "multistart": {
+     "psnr": 28.87729852750743,
+     "int_eval": 28.877298917920484,
+     "agrees_1e5": true
+    }
+   },
+   "conv1_windows_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "denoised_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "nonzeros_per_layer_equal": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "conv1_prediction_identical": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "skewed_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "skew_export": {
+    "predictions_identical": true,
+    "config_sha256_identical": true,
+    "denoised_identical": true,
+    "psnr_agrees_1e5": true,
+    "differing_layers": []
+   }
+  },
+  "08.png": {
+   "skew_layers": [
+    {
+     "name": "conv2",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv3",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv4",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv5",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv6",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv7",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv8",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    },
+    {
+     "name": "conv9",
+     "C": 32,
+     "accumulators_identical": true,
+     "config_format_rebuilt": true,
+     "nonzeros_equal": true,
+     "order_is_permutation": true
+    }
+   ],
+   "pixels": 262144,
+   "psnr_vs_int_eval": {
+    "original": {
+     "psnr": 31.653151714089148,
+     "int_eval": 31.653151344193166,
+     "agrees_1e5": true
+    },
+    "frozen": {
+     "psnr": 31.653151714089148,
+     "int_eval": 31.653151344193166,
+     "agrees_1e5": true
+    },
+    "multistart": {
+     "psnr": 31.653151714089148,
+     "int_eval": 31.653151344193166,
+     "agrees_1e5": true
+    }
+   },
+   "conv1_windows_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "denoised_identical": {
+    "frozen": true,
+    "multistart": true
+   },
+   "nonzeros_per_layer_equal": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "conv1_prediction_identical": {
+    "frozen": true,
+    "multistart": true,
+    "skew": true
+   },
+   "skewed_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "skew_export": {
+    "predictions_identical": true,
+    "config_sha256_identical": true,
+    "denoised_identical": true,
+    "psnr_agrees_1e5": true,
+    "differing_layers": []
+   }
+  }
+ },
+ "all_checks_passed": true,
+ "predictions": {
+  "original": {
+   "05.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1504752,
+     "conv3": 1435005,
+     "conv4": 1448350,
+     "conv5": 1562936,
+     "conv6": 1369221,
+     "conv7": 1375441,
+     "conv8": 1289021,
+     "conv9": 1436476,
+     "conv10": 1343523
+    },
+    "total": 13289030
+   },
+   "06.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1430915,
+     "conv3": 1332936,
+     "conv4": 1520295,
+     "conv5": 1758428,
+     "conv6": 1400728,
+     "conv7": 1416427,
+     "conv8": 1277759,
+     "conv9": 1460357,
+     "conv10": 1343519
+    },
+    "total": 13465669
+   },
+   "07.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1549562,
+     "conv3": 1471516,
+     "conv4": 1479934,
+     "conv5": 1592607,
+     "conv6": 1395388,
+     "conv7": 1337328,
+     "conv8": 1286045,
+     "conv9": 1431797,
+     "conv10": 1343519
+    },
+    "total": 13412001
+   },
+   "08.png": {
+    "layers": {
+     "conv1": 2097169,
+     "conv2": 5983661,
+     "conv3": 5747927,
+     "conv4": 5736235,
+     "conv5": 6436792,
+     "conv6": 5260095,
+     "conv7": 5188144,
+     "conv8": 4941110,
+     "conv9": 5211853,
+     "conv10": 5373983
+    },
+    "total": 51976969
+   }
+  },
+  "frozen": {
+   "05.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1391312,
+     "conv3": 1362489,
+     "conv4": 1311569,
+     "conv5": 1387589,
+     "conv6": 1275254,
+     "conv7": 1291330,
+     "conv8": 1212745,
+     "conv9": 1255698,
+     "conv10": 1343523
+    },
+    "total": 12355814
+   },
+   "06.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1298973,
+     "conv3": 1288824,
+     "conv4": 1317160,
+     "conv5": 1489586,
+     "conv6": 1317511,
+     "conv7": 1335992,
+     "conv8": 1209423,
+     "conv9": 1275115,
+     "conv10": 1343519
+    },
+    "total": 12400408
+   },
+   "07.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1434143,
+     "conv3": 1380989,
+     "conv4": 1308204,
+     "conv5": 1397545,
+     "conv6": 1284687,
+     "conv7": 1287257,
+     "conv8": 1214265,
+     "conv9": 1268487,
+     "conv10": 1343519
+    },
+    "total": 12443401
+   },
+   "08.png": {
+    "layers": {
+     "conv1": 2097169,
+     "conv2": 5489196,
+     "conv3": 5357945,
+     "conv4": 5181750,
+     "conv5": 5733454,
+     "conv6": 4938558,
+     "conv7": 5032101,
+     "conv8": 4812741,
+     "conv9": 4878194,
+     "conv10": 5373983
+    },
+    "total": 48895091
+   }
+  },
+  "multistart": {
+   "05.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1378763,
+     "conv3": 1344509,
+     "conv4": 1311511,
+     "conv5": 1371900,
+     "conv6": 1272788,
+     "conv7": 1281427,
+     "conv8": 1207219,
+     "conv9": 1242474,
+     "conv10": 1343523
+    },
+    "total": 12278419
+   },
+   "06.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1290616,
+     "conv3": 1243509,
+     "conv4": 1319136,
+     "conv5": 1444642,
+     "conv6": 1297742,
+     "conv7": 1317600,
+     "conv8": 1210305,
+     "conv9": 1260451,
+     "conv10": 1343519
+    },
+    "total": 12251825
+   },
+   "07.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1421331,
+     "conv3": 1362991,
+     "conv4": 1303610,
+     "conv5": 1376119,
+     "conv6": 1280371,
+     "conv7": 1280737,
+     "conv8": 1209586,
+     "conv9": 1251743,
+     "conv10": 1343519
+    },
+    "total": 12354312
+   },
+   "08.png": {
+    "layers": {
+     "conv1": 2097169,
+     "conv2": 5447968,
+     "conv3": 5279495,
+     "conv4": 5142808,
+     "conv5": 5616434,
+     "conv6": 4927564,
+     "conv7": 5009197,
+     "conv8": 4804930,
+     "conv9": 4856275,
+     "conv10": 5373983
+    },
+    "total": 48555823
+   }
+  },
+  "skew": {
+   "05.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1386450,
+     "conv3": 1339442,
+     "conv4": 1283807,
+     "conv5": 1337824,
+     "conv6": 1236532,
+     "conv7": 1250546,
+     "conv8": 1199363,
+     "conv9": 1238494,
+     "conv10": 1343523
+    },
+    "total": 12140286
+   },
+   "06.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1291317,
+     "conv3": 1242351,
+     "conv4": 1293933,
+     "conv5": 1438630,
+     "conv6": 1248039,
+     "conv7": 1282599,
+     "conv8": 1200205,
+     "conv9": 1258714,
+     "conv10": 1343519
+    },
+    "total": 12123612
+   },
+   "07.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1425139,
+     "conv3": 1356385,
+     "conv4": 1277778,
+     "conv5": 1343448,
+     "conv6": 1243563,
+     "conv7": 1245350,
+     "conv8": 1202253,
+     "conv9": 1249596,
+     "conv10": 1343519
+    },
+    "total": 12211336
+   },
+   "08.png": {
+    "layers": {
+     "conv1": 2097169,
+     "conv2": 5471790,
+     "conv3": 5275938,
+     "conv4": 5085446,
+     "conv5": 5514666,
+     "conv6": 4840740,
+     "conv7": 4888332,
+     "conv8": 4787676,
+     "conv9": 4840822,
+     "conv10": 5373983
+    },
+    "total": 48176562
+   }
+  }
+ },
+ "savings_vs_original": {
+  "05.png": {
+   "frozen": {
+    "predicted_cycles": 933216,
+    "predicted_pct": 7.022454,
+    "count_cycles": 933182,
+    "count_pct": 7.022501,
+    "fill_drain_difference": 34
+   },
+   "multistart": {
+    "predicted_cycles": 1010611,
+    "predicted_pct": 7.604852,
+    "count_cycles": 1010573,
+    "count_pct": 7.604894,
+    "fill_drain_difference": 38
+   },
+   "skew": {
+    "predicted_cycles": 1148744,
+    "predicted_pct": 8.644303,
+    "count_cycles": 1148708,
+    "count_pct": 8.644405,
+    "fill_drain_difference": 36
+   }
+  },
+  "06.png": {
+   "frozen": {
+    "predicted_cycles": 1065261,
+    "predicted_pct": 7.91094,
+    "count_cycles": 1065223,
+    "count_pct": 7.911002,
+    "fill_drain_difference": 38
+   },
+   "multistart": {
+    "predicted_cycles": 1213844,
+    "predicted_pct": 9.014361,
+    "count_cycles": 1213796,
+    "count_pct": 9.014397,
+    "fill_drain_difference": 48
+   },
+   "skew": {
+    "predicted_cycles": 1342057,
+    "predicted_pct": 9.966508,
+    "count_cycles": 1342013,
+    "count_pct": 9.966615,
+    "fill_drain_difference": 44
+   }
+  },
+  "07.png": {
+   "frozen": {
+    "predicted_cycles": 968600,
+    "predicted_pct": 7.22189,
+    "count_cycles": 968590,
+    "count_pct": 7.22211,
+    "fill_drain_difference": 10
+   },
+   "multistart": {
+    "predicted_cycles": 1057689,
+    "predicted_pct": 7.886139,
+    "count_cycles": 1057671,
+    "count_pct": 7.886326,
+    "fill_drain_difference": 18
+   },
+   "skew": {
+    "predicted_cycles": 1200665,
+    "predicted_pct": 8.952169,
+    "count_cycles": 1200663,
+    "count_pct": 8.952519,
+    "fill_drain_difference": 2
+   }
+  },
+  "08.png": {
+   "frozen": {
+    "predicted_cycles": 3081878,
+    "predicted_pct": 5.929315,
+    "count_cycles": 3081862,
+    "count_pct": 5.929345,
+    "fill_drain_difference": 16
+   },
+   "multistart": {
+    "predicted_cycles": 3421146,
+    "predicted_pct": 6.582042,
+    "count_cycles": 3421118,
+    "count_pct": 6.582056,
+    "fill_drain_difference": 28
+   },
+   "skew": {
+    "predicted_cycles": 3800407,
+    "predicted_pct": 7.311713,
+    "count_cycles": 3800379,
+    "count_pct": 7.311735,
+    "fill_drain_difference": 28
+   }
+  }
+ },
+ "pooled_06_08": {
+  "frozen": {
+   "original": 78854639,
+   "layout": 73738900,
+   "saving_pct": 6.487556
+  },
+  "multistart": {
+   "original": 78854639,
+   "layout": 73161960,
+   "saving_pct": 7.219206
+  },
+  "skew": {
+   "original": 78854639,
+   "layout": 72511510,
+   "saving_pct": 8.044078
+  }
+ },
+ "measured_before": {
+  "source": "bankperm/board_transcribed.json",
+  "status": "transcribed from markdown; the raw report.json files are not in the repository",
+  "core_id": "0x4d410303",
+  "fclk_mhz": 50,
+  "note": "measured before PROTOCOL_2 (2026-10-18, GPT's runs): Original canary and 3 repeats, Frozen and Multi-start 3 repeats each, all on Set12 05.png; per-layer numbers exist for the Original (canary, repeat 1) and the Multi-start (repeat 1), not for the Frozen. 06.png, 07.png, 08.png and the Skew have never run on the board.",
+  "original_canary_layers": [
+   {
+    "name": "conv1",
+    "cycles": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv2",
+    "cycles": 1504752,
+    "in_stall": 0,
+    "predicted": 1504752,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv3",
+    "cycles": 1435005,
+    "in_stall": 0,
+    "predicted": 1435005,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv4",
+    "cycles": 1448350,
+    "in_stall": 0,
+    "predicted": 1448350,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv5",
+    "cycles": 1562936,
+    "in_stall": 0,
+    "predicted": 1562936,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv6",
+    "cycles": 1369221,
+    "in_stall": 0,
+    "predicted": 1369221,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv7",
+    "cycles": 1375441,
+    "in_stall": 0,
+    "predicted": 1375441,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv8",
+    "cycles": 1289021,
+    "in_stall": 0,
+    "predicted": 1289021,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv9",
+    "cycles": 1436476,
+    "in_stall": 0,
+    "predicted": 1436476,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv10",
+    "cycles": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "cycles_minus_in_stall_minus_predicted": 0
+   }
+  ],
+  "original_canary_total": {
+   "cycles": 13289030,
+   "in_stall": 0,
+   "predicted": 13289030,
+   "cycles_minus_in_stall_minus_predicted": 0
+  },
+  "original_rep1_layers": [
+   {
+    "name": "conv1",
+    "cycles": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv2",
+    "cycles": 1504752,
+    "in_stall": 0,
+    "predicted": 1504752,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv3",
+    "cycles": 1435005,
+    "in_stall": 0,
+    "predicted": 1435005,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv4",
+    "cycles": 1448350,
+    "in_stall": 0,
+    "predicted": 1448350,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv5",
+    "cycles": 1562936,
+    "in_stall": 0,
+    "predicted": 1562936,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv6",
+    "cycles": 1369221,
+    "in_stall": 0,
+    "predicted": 1369221,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv7",
+    "cycles": 1375441,
+    "in_stall": 0,
+    "predicted": 1375441,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv8",
+    "cycles": 1289021,
+    "in_stall": 0,
+    "predicted": 1289021,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv9",
+    "cycles": 1436476,
+    "in_stall": 0,
+    "predicted": 1436476,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv10",
+    "cycles": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "cycles_minus_in_stall_minus_predicted": 0
+   }
+  ],
+  "multistart_rep1_layers": [
+   {
+    "name": "conv1",
+    "cycles": 524305,
+    "in_stall": 0,
+    "predicted": 524305,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv2",
+    "cycles": 1378763,
+    "in_stall": 0,
+    "predicted": 1378763,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv3",
+    "cycles": 1344509,
+    "in_stall": 0,
+    "predicted": 1344509,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv4",
+    "cycles": 1311511,
+    "in_stall": 0,
+    "predicted": 1311511,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv5",
+    "cycles": 1371900,
+    "in_stall": 0,
+    "predicted": 1371900,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv6",
+    "cycles": 1272788,
+    "in_stall": 0,
+    "predicted": 1272788,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv7",
+    "cycles": 1281427,
+    "in_stall": 0,
+    "predicted": 1281427,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv8",
+    "cycles": 1207219,
+    "in_stall": 0,
+    "predicted": 1207219,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv9",
+    "cycles": 1242474,
+    "in_stall": 0,
+    "predicted": 1242474,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   {
+    "name": "conv10",
+    "cycles": 1343523,
+    "in_stall": 0,
+    "predicted": 1343523,
+    "cycles_minus_in_stall_minus_predicted": 0
+   }
+  ],
+  "repeats": [
+   {
+    "rep": 1,
+    "original": {
+     "total": {
+      "cycles": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "frozen": {
+     "total": {
+      "cycles": 12355814,
+      "in_stall": 0,
+      "predicted": 12355814,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "multistart": {
+     "total": {
+      "cycles": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    }
+   },
+   {
+    "rep": 2,
+    "original": {
+     "total": {
+      "cycles": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "frozen": {
+     "total": {
+      "cycles": 12355814,
+      "in_stall": 0,
+      "predicted": 12355814,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "multistart": {
+     "total": {
+      "cycles": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    }
+   },
+   {
+    "rep": 3,
+    "original": {
+     "total": {
+      "cycles": 13289030,
+      "in_stall": 0,
+      "predicted": 13289030,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 11421202,
+      "in_stall": 0,
+      "predicted": 11421202,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "frozen": {
+     "total": {
+      "cycles": 12355826,
+      "in_stall": 12,
+      "predicted": 12355814,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10487986,
+      "in_stall": 0,
+      "predicted": 10487986,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    },
+    "multistart": {
+     "total": {
+      "cycles": 12278419,
+      "in_stall": 0,
+      "predicted": 12278419,
+      "cycles_minus_in_stall_minus_predicted": 0
+     },
+     "conv2_9": {
+      "cycles": 10410591,
+      "in_stall": 0,
+      "predicted": 10410591,
+      "cycles_minus_in_stall_minus_predicted": 0
+     }
+    }
+   }
+  ],
+  "summary": {
+   "comparisons": 49,
+   "exact": 49,
+   "largest_abs_difference": 0
+  }
+ },
+ "never_run_on_the_board": [
+  "original 06.png",
+  "original 07.png",
+  "original 08.png",
+  "frozen 06.png",
+  "frozen 07.png",
+  "frozen 08.png",
+  "multistart 06.png",
+  "multistart 07.png",
+  "multistart 08.png",
+  "skew 05.png",
+  "skew 06.png",
+  "skew 07.png",
+  "skew 08.png"
+ ],
+ "assumptions": [
+  "one board run per layer: every layer here has at most 65536 windows (16,384 on 05-07, 65,536 on 08.png, the 2x2-unshuffled image), so run_denoise.py --tile 65536 (default) runs each layer once; re-run with --tile N if another tile is used",
+  "the Skew run sends conv2..conv9 windows with their taps in skew_order(288, 32) and the same columns of the weights (config.bin digests in runs.skew); conv1 and conv10 exactly as the Original. A host path that sends other windows is not what is predicted",
+  "conv1's fill and drain is the 05.png Original's measured 17 on every image and layout (conv1 is not a prediction; its last window's load and compute are listed per image)",
+  "CYCLES - IN_STALL is compared; this bitstream's IN_STALL does not count starvation at window boundaries (PROTOCOL_2), so a miss is a miss even with IN_STALL = 0"
+ ],
+ "runs": {
+  "original": {
+   "05.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 578743,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2584659,
+      "count_w4": 1504687,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1504752,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2418953,
+      "count_w4": 1434940,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1435005,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2310892,
+      "count_w4": 1448281,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1448350,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2434514,
+      "count_w4": 1562871,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1562936,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2095315,
+      "count_w4": 1369156,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1369221,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2228446,
+      "count_w4": 1375380,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1375441,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1753611,
+      "count_w4": 1288962,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1289021,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2054618,
+      "count_w4": 1436403,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 54
+      },
+      "fill_drain_w4": 73,
+      "predicted": 1436476,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2858383,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 28
+      },
+      "fill_drain_w4": 35,
+      "predicted": 1343523,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 13288456,
+     "fill_drain_w4": 574,
+     "predicted": 13289030,
+     "conv2_9": {
+      "count_w4": 11420680,
+      "predicted": 11421202
+     }
+    },
+    "measured_before": true
+   },
+   "06.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 582601,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2396635,
+      "count_w4": 1430848,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1430915,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2209804,
+      "count_w4": 1332869,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1332936,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2359064,
+      "count_w4": 1520232,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1520295,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2635760,
+      "count_w4": 1758365,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1758428,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2223340,
+      "count_w4": 1400657,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 52
+      },
+      "fill_drain_w4": 71,
+      "predicted": 1400728,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2346291,
+      "count_w4": 1416360,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1416427,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1710333,
+      "count_w4": 1277694,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1277759,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2068467,
+      "count_w4": 1460282,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 56
+      },
+      "fill_drain_w4": 75,
+      "predicted": 1460357,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2868820,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 13465083,
+     "fill_drain_w4": 586,
+     "predicted": 13465669,
+     "conv2_9": {
+      "count_w4": 11597307,
+      "predicted": 11597845
+     }
+    },
+    "measured_before": false
+   },
+   "07.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 548758,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2659512,
+      "count_w4": 1549499,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1549562,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2461865,
+      "count_w4": 1471459,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1471516,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2307618,
+      "count_w4": 1479871,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1479934,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2469819,
+      "count_w4": 1592534,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 54
+      },
+      "fill_drain_w4": 73,
+      "predicted": 1592607,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2096319,
+      "count_w4": 1395327,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1395388,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2167961,
+      "count_w4": 1337263,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1337328,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1704322,
+      "count_w4": 1285994,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 1286045,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2036804,
+      "count_w4": 1431732,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1431797,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2809619,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 13411455,
+     "fill_drain_w4": 546,
+     "predicted": 13412001,
+     "conv2_9": {
+      "count_w4": 11543679,
+      "predicted": 11544177
+     }
+    },
+    "measured_before": false
+   },
+   "08.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 2333977,
+      "count_w4": 2097152,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 2097169,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10245848,
+      "count_w4": 5983600,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 5983661,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9554896,
+      "count_w4": 5747864,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 5747927,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9203467,
+      "count_w4": 5736166,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 5736235,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10215205,
+      "count_w4": 6436719,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 54
+      },
+      "fill_drain_w4": 73,
+      "predicted": 6436792,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7718083,
+      "count_w4": 5260032,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 5260095,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 8481755,
+      "count_w4": 5188091,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 34
+      },
+      "fill_drain_w4": 53,
+      "predicted": 5188144,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 6365722,
+      "count_w4": 4941061,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 30
+      },
+      "fill_drain_w4": 49,
+      "predicted": 4941110,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7436961,
+      "count_w4": 5211794,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 5211853,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 65536,
+      "nonzeros": 11326984,
+      "count_w4": 5373952,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 5373983,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 51976431,
+     "fill_drain_w4": 538,
+     "predicted": 51976969,
+     "conv2_9": {
+      "count_w4": 44505327,
+      "predicted": 44505817
+     }
+    },
+    "measured_before": false
+   }
+  },
+  "frozen": {
+   "05.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 578743,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "2ed21a4d27cb619e4ce4f7c02145ad4df70754edef167b3a2e0f4f700729ae46"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2584659,
+      "count_w4": 1391253,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1391312,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fe5e3d0950f7029610bde50dab17b54cb0278d57f7a5fb2619a0f56e84bdeda7"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2418953,
+      "count_w4": 1362428,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1362489,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "26f7579e2455a15fce5fbcda9d41524982be20f3144a757534848d4851877c59"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2310892,
+      "count_w4": 1311510,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1311569,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66206c90eb638067c04166d5835740c05241dbf1a3cb62f5714f1818351f04b7"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2434514,
+      "count_w4": 1387528,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1387589,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "94f7d97f9a8c3c3cde5093e3c2e7978f4a514805cdbf0fa8006bc7caa702e016"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2095315,
+      "count_w4": 1275189,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1275254,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "b4815a61d5cab4df807b9a1bb5d90ed49bd7f5ffafa4fa59fb841a6eb95b8aee"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2228446,
+      "count_w4": 1291265,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1291330,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "88c90a1720dbee2f234e00e8d7e4963d22a361db596561394f3fd3c21128896e"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1753611,
+      "count_w4": 1212690,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1212745,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "805e986fd301bce247d7d6e1c2fc000a5771ae16854c1eebead1044b1c87bc19"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2054618,
+      "count_w4": 1255635,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1255698,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "de811139d094fab2f9b6418d5beffb87065ec1f533badc2dfc26aed00ea35166"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2858383,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 28
+      },
+      "fill_drain_w4": 35,
+      "predicted": 1343523,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12355274,
+     "fill_drain_w4": 540,
+     "predicted": 12355814,
+     "conv2_9": {
+      "count_w4": 10487498,
+      "predicted": 10487986
+     }
+    },
+    "measured_before": true
+   },
+   "06.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 582601,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "2ed21a4d27cb619e4ce4f7c02145ad4df70754edef167b3a2e0f4f700729ae46"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2396635,
+      "count_w4": 1298914,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1298973,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fe5e3d0950f7029610bde50dab17b54cb0278d57f7a5fb2619a0f56e84bdeda7"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2209804,
+      "count_w4": 1288759,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1288824,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "26f7579e2455a15fce5fbcda9d41524982be20f3144a757534848d4851877c59"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2359064,
+      "count_w4": 1317101,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1317160,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66206c90eb638067c04166d5835740c05241dbf1a3cb62f5714f1818351f04b7"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2635760,
+      "count_w4": 1489525,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1489586,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "94f7d97f9a8c3c3cde5093e3c2e7978f4a514805cdbf0fa8006bc7caa702e016"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2223340,
+      "count_w4": 1317442,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1317511,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "b4815a61d5cab4df807b9a1bb5d90ed49bd7f5ffafa4fa59fb841a6eb95b8aee"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2346291,
+      "count_w4": 1335923,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1335992,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "88c90a1720dbee2f234e00e8d7e4963d22a361db596561394f3fd3c21128896e"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1710333,
+      "count_w4": 1209368,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1209423,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "805e986fd301bce247d7d6e1c2fc000a5771ae16854c1eebead1044b1c87bc19"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2068467,
+      "count_w4": 1275052,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1275115,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "de811139d094fab2f9b6418d5beffb87065ec1f533badc2dfc26aed00ea35166"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2868820,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12399860,
+     "fill_drain_w4": 548,
+     "predicted": 12400408,
+     "conv2_9": {
+      "count_w4": 10532084,
+      "predicted": 10532584
+     }
+    },
+    "measured_before": false
+   },
+   "07.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 548758,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "2ed21a4d27cb619e4ce4f7c02145ad4df70754edef167b3a2e0f4f700729ae46"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2659512,
+      "count_w4": 1434086,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1434143,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fe5e3d0950f7029610bde50dab17b54cb0278d57f7a5fb2619a0f56e84bdeda7"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2461865,
+      "count_w4": 1380926,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1380989,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "26f7579e2455a15fce5fbcda9d41524982be20f3144a757534848d4851877c59"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2307618,
+      "count_w4": 1308141,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1308204,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66206c90eb638067c04166d5835740c05241dbf1a3cb62f5714f1818351f04b7"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2469819,
+      "count_w4": 1397476,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1397545,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "94f7d97f9a8c3c3cde5093e3c2e7978f4a514805cdbf0fa8006bc7caa702e016"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2096319,
+      "count_w4": 1284618,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1284687,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "b4815a61d5cab4df807b9a1bb5d90ed49bd7f5ffafa4fa59fb841a6eb95b8aee"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2167961,
+      "count_w4": 1287198,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1287257,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "88c90a1720dbee2f234e00e8d7e4963d22a361db596561394f3fd3c21128896e"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1704322,
+      "count_w4": 1214214,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 1214265,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "805e986fd301bce247d7d6e1c2fc000a5771ae16854c1eebead1044b1c87bc19"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2036804,
+      "count_w4": 1268430,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1268487,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "de811139d094fab2f9b6418d5beffb87065ec1f533badc2dfc26aed00ea35166"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2809619,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12442865,
+     "fill_drain_w4": 536,
+     "predicted": 12443401,
+     "conv2_9": {
+      "count_w4": 10575089,
+      "predicted": 10575577
+     }
+    },
+    "measured_before": false
+   },
+   "08.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 2333977,
+      "count_w4": 2097152,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 2097169,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "2ed21a4d27cb619e4ce4f7c02145ad4df70754edef167b3a2e0f4f700729ae46"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10245848,
+      "count_w4": 5489137,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 5489196,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "fe5e3d0950f7029610bde50dab17b54cb0278d57f7a5fb2619a0f56e84bdeda7"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9554896,
+      "count_w4": 5357884,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 5357945,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "26f7579e2455a15fce5fbcda9d41524982be20f3144a757534848d4851877c59"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9203467,
+      "count_w4": 5181685,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 5181750,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66206c90eb638067c04166d5835740c05241dbf1a3cb62f5714f1818351f04b7"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10215205,
+      "count_w4": 5733389,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 5733454,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "94f7d97f9a8c3c3cde5093e3c2e7978f4a514805cdbf0fa8006bc7caa702e016"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7718083,
+      "count_w4": 4938497,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 4938558,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "b4815a61d5cab4df807b9a1bb5d90ed49bd7f5ffafa4fa59fb841a6eb95b8aee"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 8481755,
+      "count_w4": 5032044,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 5032101,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "88c90a1720dbee2f234e00e8d7e4963d22a361db596561394f3fd3c21128896e"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 6365722,
+      "count_w4": 4812690,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 4812741,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "805e986fd301bce247d7d6e1c2fc000a5771ae16854c1eebead1044b1c87bc19"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7436961,
+      "count_w4": 4878139,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4878194,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "de811139d094fab2f9b6418d5beffb87065ec1f533badc2dfc26aed00ea35166"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 65536,
+      "nonzeros": 11326984,
+      "count_w4": 5373952,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 5373983,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 48894569,
+     "fill_drain_w4": 522,
+     "predicted": 48895091,
+     "conv2_9": {
+      "count_w4": 41423465,
+      "predicted": 41423939
+     }
+    },
+    "measured_before": false
+   }
+  },
+  "multistart": {
+   "05.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 578743,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "7099f586ba3260a01fe3ad60d3549761b8b661c7a8d0a174f4f4f4d2e50d6c79"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2584659,
+      "count_w4": 1378704,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1378763,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66abfeb2c09e1b9568204134be0fe15b3108ef44eebd6b99dbe5c6d426cc4df3"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2418953,
+      "count_w4": 1344446,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1344509,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "71a4b54de6603997c8a8c8e4b62733dd8df2f9d4dc9c9a08ee8e10010351bd38"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2310892,
+      "count_w4": 1311454,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1311511,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "051baff1cacafaebcf039df6c56eaae838c7c50dcf4ab44986b2decdb56acc9d"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2434514,
+      "count_w4": 1371841,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1371900,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "36d5bd3672d8391d5ba9b224d7bcfb6fe9211a713826b30e9b72982833509c87"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2095315,
+      "count_w4": 1272727,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1272788,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "93fa94ae98655413d36c0108621d39249087ea5c69247def20a16b5eac384b78"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2228446,
+      "count_w4": 1281362,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1281427,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d03d92d422e1cf9e9638aa1dc582e2051b666c5d2e7f139be607141141972c1d"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1753611,
+      "count_w4": 1207160,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1207219,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "00837b2a1ae370a55e5e2d7e99046b8430c277019902ecbf917604d28a2ae7a0"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2054618,
+      "count_w4": 1242413,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1242474,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d926e53f64cfb7a31fe1a6bbc7d2944e29796f523531c0084cfff29c542067f6"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2858383,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 28
+      },
+      "fill_drain_w4": 35,
+      "predicted": 1343523,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12277883,
+     "fill_drain_w4": 536,
+     "predicted": 12278419,
+     "conv2_9": {
+      "count_w4": 10410107,
+      "predicted": 10410591
+     }
+    },
+    "measured_before": true
+   },
+   "06.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 582601,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "7099f586ba3260a01fe3ad60d3549761b8b661c7a8d0a174f4f4f4d2e50d6c79"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2396635,
+      "count_w4": 1290557,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1290616,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66abfeb2c09e1b9568204134be0fe15b3108ef44eebd6b99dbe5c6d426cc4df3"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2209804,
+      "count_w4": 1243450,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1243509,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "71a4b54de6603997c8a8c8e4b62733dd8df2f9d4dc9c9a08ee8e10010351bd38"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2359064,
+      "count_w4": 1319075,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1319136,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "051baff1cacafaebcf039df6c56eaae838c7c50dcf4ab44986b2decdb56acc9d"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2635760,
+      "count_w4": 1444581,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1444642,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "36d5bd3672d8391d5ba9b224d7bcfb6fe9211a713826b30e9b72982833509c87"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2223340,
+      "count_w4": 1297677,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1297742,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "93fa94ae98655413d36c0108621d39249087ea5c69247def20a16b5eac384b78"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2346291,
+      "count_w4": 1317533,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1317600,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d03d92d422e1cf9e9638aa1dc582e2051b666c5d2e7f139be607141141972c1d"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1710333,
+      "count_w4": 1210248,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1210305,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "00837b2a1ae370a55e5e2d7e99046b8430c277019902ecbf917604d28a2ae7a0"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2068467,
+      "count_w4": 1260390,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1260451,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d926e53f64cfb7a31fe1a6bbc7d2944e29796f523531c0084cfff29c542067f6"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2868820,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12251287,
+     "fill_drain_w4": 538,
+     "predicted": 12251825,
+     "conv2_9": {
+      "count_w4": 10383511,
+      "predicted": 10384001
+     }
+    },
+    "measured_before": false
+   },
+   "07.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 548758,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "7099f586ba3260a01fe3ad60d3549761b8b661c7a8d0a174f4f4f4d2e50d6c79"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2659512,
+      "count_w4": 1421276,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1421331,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66abfeb2c09e1b9568204134be0fe15b3108ef44eebd6b99dbe5c6d426cc4df3"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2461865,
+      "count_w4": 1362930,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1362991,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "71a4b54de6603997c8a8c8e4b62733dd8df2f9d4dc9c9a08ee8e10010351bd38"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2307618,
+      "count_w4": 1303543,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1303610,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "051baff1cacafaebcf039df6c56eaae838c7c50dcf4ab44986b2decdb56acc9d"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2469819,
+      "count_w4": 1376050,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1376119,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "36d5bd3672d8391d5ba9b224d7bcfb6fe9211a713826b30e9b72982833509c87"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2096319,
+      "count_w4": 1280310,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1280371,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "93fa94ae98655413d36c0108621d39249087ea5c69247def20a16b5eac384b78"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2167961,
+      "count_w4": 1280676,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1280737,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d03d92d422e1cf9e9638aa1dc582e2051b666c5d2e7f139be607141141972c1d"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1704322,
+      "count_w4": 1209537,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 30
+      },
+      "fill_drain_w4": 49,
+      "predicted": 1209586,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "00837b2a1ae370a55e5e2d7e99046b8430c277019902ecbf917604d28a2ae7a0"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2036804,
+      "count_w4": 1251686,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1251743,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d926e53f64cfb7a31fe1a6bbc7d2944e29796f523531c0084cfff29c542067f6"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2809619,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 12353784,
+     "fill_drain_w4": 528,
+     "predicted": 12354312,
+     "conv2_9": {
+      "count_w4": 10486008,
+      "predicted": 10486488
+     }
+    },
+    "measured_before": false
+   },
+   "08.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 2333977,
+      "count_w4": 2097152,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 2097169,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "7099f586ba3260a01fe3ad60d3549761b8b661c7a8d0a174f4f4f4d2e50d6c79"
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10245848,
+      "count_w4": 5447909,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 5447968,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "66abfeb2c09e1b9568204134be0fe15b3108ef44eebd6b99dbe5c6d426cc4df3"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9554896,
+      "count_w4": 5279436,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 5279495,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "71a4b54de6603997c8a8c8e4b62733dd8df2f9d4dc9c9a08ee8e10010351bd38"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9203467,
+      "count_w4": 5142745,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 5142808,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "051baff1cacafaebcf039df6c56eaae838c7c50dcf4ab44986b2decdb56acc9d"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10215205,
+      "count_w4": 5616367,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 5616434,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "36d5bd3672d8391d5ba9b224d7bcfb6fe9211a713826b30e9b72982833509c87"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7718083,
+      "count_w4": 4927511,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 34
+      },
+      "fill_drain_w4": 53,
+      "predicted": 4927564,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "93fa94ae98655413d36c0108621d39249087ea5c69247def20a16b5eac384b78"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 8481755,
+      "count_w4": 5009140,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 5009197,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d03d92d422e1cf9e9638aa1dc582e2051b666c5d2e7f139be607141141972c1d"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 6365722,
+      "count_w4": 4804881,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 30
+      },
+      "fill_drain_w4": 49,
+      "predicted": 4804930,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "00837b2a1ae370a55e5e2d7e99046b8430c277019902ecbf917604d28a2ae7a0"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7436961,
+      "count_w4": 4856220,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4856275,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "d926e53f64cfb7a31fe1a6bbc7d2944e29796f523531c0084cfff29c542067f6"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 65536,
+      "nonzeros": 11326984,
+      "count_w4": 5373952,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 5373983,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+     }
+    ],
+    "total": {
+     "count_w4": 48555313,
+     "fill_drain_w4": 510,
+     "predicted": 48555823,
+     "conv2_9": {
+      "count_w4": 41084209,
+      "predicted": 41084671
+     }
+    },
+    "measured_before": false
+   }
+  },
+  "skew": {
+   "05.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 578743,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+      "skewed": false
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2584659,
+      "count_w4": 1386391,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1386450,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "dd68ded591816aeaa937acf5aec924b099366486fc2e298ad537906cae979997"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2418953,
+      "count_w4": 1339381,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1339442,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "ba940e7bf968e83af7cae4162e8e5b3a3014c60132ebba31a1d7bd63d39cf51e"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2310892,
+      "count_w4": 1283748,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1283807,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "cd5bdf5656cf354a7547f8b4f5d521b35fb5d38778764129926465d7057235fc"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2434514,
+      "count_w4": 1337761,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1337824,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "2b2a8bfec4ce88d0ff663f3155e9eff9383e105adae2a03c2916bb071c188e99"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2095315,
+      "count_w4": 1236473,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1236532,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9e7b5638cfc0e69b7405c377e11e6bcd20f2f0893fad8fecfc9d0d8582998c67"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2228446,
+      "count_w4": 1250491,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1250546,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9d09864dcafb5e7d90077c342c6062eca6f7dad6511e216c9add0d546a4c72b0"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1753611,
+      "count_w4": 1199302,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1199363,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "a5efe19cee1314583aa8f3086ec47ec4d245f788fb7914ff3803accd0ae172cb"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2054618,
+      "count_w4": 1238425,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1238494,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "6ce938e96229cb0ebbcd096f5ecb8d6ebdf88cc7ef24a47593fab0e9e07d9ad5"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2858383,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 28
+      },
+      "fill_drain_w4": 35,
+      "predicted": 1343523,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "skewed": false
+     }
+    ],
+    "total": {
+     "count_w4": 12139748,
+     "fill_drain_w4": 538,
+     "predicted": 12140286,
+     "conv2_9": {
+      "count_w4": 10271972,
+      "predicted": 10272458
+     }
+    },
+    "measured_before": false
+   },
+   "06.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 582601,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+      "skewed": false
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2396635,
+      "count_w4": 1291260,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1291317,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "dd68ded591816aeaa937acf5aec924b099366486fc2e298ad537906cae979997"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2209804,
+      "count_w4": 1242292,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1242351,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "ba940e7bf968e83af7cae4162e8e5b3a3014c60132ebba31a1d7bd63d39cf51e"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2359064,
+      "count_w4": 1293872,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1293933,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "cd5bdf5656cf354a7547f8b4f5d521b35fb5d38778764129926465d7057235fc"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2635760,
+      "count_w4": 1438567,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1438630,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "2b2a8bfec4ce88d0ff663f3155e9eff9383e105adae2a03c2916bb071c188e99"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2223340,
+      "count_w4": 1247974,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1248039,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9e7b5638cfc0e69b7405c377e11e6bcd20f2f0893fad8fecfc9d0d8582998c67"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2346291,
+      "count_w4": 1282536,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1282599,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9d09864dcafb5e7d90077c342c6062eca6f7dad6511e216c9add0d546a4c72b0"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1710333,
+      "count_w4": 1200144,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1200205,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "a5efe19cee1314583aa8f3086ec47ec4d245f788fb7914ff3803accd0ae172cb"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2068467,
+      "count_w4": 1258649,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1258714,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "6ce938e96229cb0ebbcd096f5ecb8d6ebdf88cc7ef24a47593fab0e9e07d9ad5"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2868820,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "skewed": false
+     }
+    ],
+    "total": {
+     "count_w4": 12123070,
+     "fill_drain_w4": 542,
+     "predicted": 12123612,
+     "conv2_9": {
+      "count_w4": 10255294,
+      "predicted": 10255788
+     }
+    },
+    "measured_before": false
+   },
+   "07.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 548758,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+      "skewed": false
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2659512,
+      "count_w4": 1425082,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1425139,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "dd68ded591816aeaa937acf5aec924b099366486fc2e298ad537906cae979997"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2461865,
+      "count_w4": 1356326,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1356385,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "ba940e7bf968e83af7cae4162e8e5b3a3014c60132ebba31a1d7bd63d39cf51e"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2307618,
+      "count_w4": 1277709,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 1277778,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "cd5bdf5656cf354a7547f8b4f5d521b35fb5d38778764129926465d7057235fc"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2469819,
+      "count_w4": 1343375,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 54
+      },
+      "fill_drain_w4": 73,
+      "predicted": 1343448,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "2b2a8bfec4ce88d0ff663f3155e9eff9383e105adae2a03c2916bb071c188e99"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2096319,
+      "count_w4": 1243498,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1243563,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9e7b5638cfc0e69b7405c377e11e6bcd20f2f0893fad8fecfc9d0d8582998c67"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2167961,
+      "count_w4": 1245289,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1245350,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9d09864dcafb5e7d90077c342c6062eca6f7dad6511e216c9add0d546a4c72b0"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1704322,
+      "count_w4": 1202202,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 1202253,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "a5efe19cee1314583aa8f3086ec47ec4d245f788fb7914ff3803accd0ae172cb"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2036804,
+      "count_w4": 1249535,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1249596,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "6ce938e96229cb0ebbcd096f5ecb8d6ebdf88cc7ef24a47593fab0e9e07d9ad5"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2809619,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "skewed": false
+     }
+    ],
+    "total": {
+     "count_w4": 12210792,
+     "fill_drain_w4": 544,
+     "predicted": 12211336,
+     "conv2_9": {
+      "count_w4": 10343016,
+      "predicted": 10343512
+     }
+    },
+    "measured_before": false
+   },
+   "08.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 2333977,
+      "count_w4": 2097152,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 2097169,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+      "skewed": false
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10245848,
+      "count_w4": 5471733,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 5471790,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "dd68ded591816aeaa937acf5aec924b099366486fc2e298ad537906cae979997"
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9554896,
+      "count_w4": 5275881,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 5275938,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "ba940e7bf968e83af7cae4162e8e5b3a3014c60132ebba31a1d7bd63d39cf51e"
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9203467,
+      "count_w4": 5085377,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 50
+      },
+      "fill_drain_w4": 69,
+      "predicted": 5085446,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "cd5bdf5656cf354a7547f8b4f5d521b35fb5d38778764129926465d7057235fc"
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10215205,
+      "count_w4": 5514601,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 5514666,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "2b2a8bfec4ce88d0ff663f3155e9eff9383e105adae2a03c2916bb071c188e99"
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7718083,
+      "count_w4": 4840685,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4840740,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9e7b5638cfc0e69b7405c377e11e6bcd20f2f0893fad8fecfc9d0d8582998c67"
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 8481755,
+      "count_w4": 4888277,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4888332,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "9d09864dcafb5e7d90077c342c6062eca6f7dad6511e216c9add0d546a4c72b0"
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 6365722,
+      "count_w4": 4787625,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 4787676,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "a5efe19cee1314583aa8f3086ec47ec4d245f788fb7914ff3803accd0ae172cb"
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7436961,
+      "count_w4": 4840769,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 34
+      },
+      "fill_drain_w4": 53,
+      "predicted": 4840822,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "skewed": true,
+      "config_sha256": "6ce938e96229cb0ebbcd096f5ecb8d6ebdf88cc7ef24a47593fab0e9e07d9ad5"
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 65536,
+      "nonzeros": 11326984,
+      "count_w4": 5373952,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 5373983,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "skewed": false
+     }
+    ],
+    "total": {
+     "count_w4": 48176052,
+     "fill_drain_w4": 510,
+     "predicted": 48176562,
+     "conv2_9": {
+      "count_w4": 40704948,
+      "predicted": 40705410
+     }
+    },
+    "measured_before": false
+   }
+  }
+ },
+ "seconds": 58.6
+}

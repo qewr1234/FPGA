@@ -71,6 +71,15 @@ def load_layers(export):
         k, c = L['K'], L['COUT']
         out.append(dict(L, wq=blob[:c*k].reshape(c, k).astype(np.int8),
                         bq=blob[c*k:].astype(np.int32), cfg=export/L['config']))
+        if 'tap_order' in L:
+            # A layout export (bankperm/export_layout.py) keeps this layer's weight
+            # columns in another order: new tap j is old tap tap_order[j]. denoise()
+            # puts the window columns in the same order, so every accumulator is the
+            # integer model's.
+            o = np.asarray(L['tap_order'], np.int64)
+            if o.shape != (k,) or not np.array_equal(np.sort(o), np.arange(k)):
+                raise SystemExit(f'{L["name"]}: tap_order is not a permutation of its {k} taps')
+            out[-1]['tap_order'] = o
     return man, out
 
 
@@ -169,6 +178,10 @@ def denoise(q_in, man, layers, args, tag, start=1):
         x = im2col(q[None], kh=L['kh'], kw=L['kw'], pad=pad, dilation=L['dilation'], stride=L['stride'])
         if x.shape[1] != L['K']:
             raise SystemExit(f'{L["name"]}: windows are {x.shape[1]} taps, weights {L["K"]}')
+        if 'tap_order' in L:
+            # The export's weight columns are in this order (load_layers), so the
+            # windows go to the board files and to the oracle in it too.
+            x = x[:, L['tap_order']]
         t0 = time.time()
         try:
             acc, info = run_layer(L, x, args, tag)
@@ -179,6 +192,8 @@ def denoise(q_in, man, layers, args, tag, start=1):
                              f'{i} layer(s) that already passed.')
         info.update(name=L['name'], K=L['K'], COUT=L['COUT'], windows=int(x.shape[0]),
                     nonzero_fraction=float((x != 0).mean()), host_seconds=round(time.time()-t0, 1))
+        if 'tap_order' in L:
+            info['taps_reordered'] = True            # only on layers that have a tap order
         recs.append(info)
         msg = f'  {L["name"]}: {x.shape[0]:>7} windows x K={L["K"]:>4} -> COUT={L["COUT"]:>3}'
         if not info['emulated']:
