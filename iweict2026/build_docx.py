@@ -440,6 +440,7 @@ def main():
             # defaults give Normal (line 276 auto), about 0.15 x the figure height of blank
             # space above it; LibreOffice applies it to the text part only
             p.paragraph_format.line_spacing = 1.0
+            p.paragraph_format.keep_with_next = True   # the caption stays with its picture
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
                 open_wide()
