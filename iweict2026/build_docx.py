@@ -166,11 +166,6 @@ def make_table(doc, rows, widths_cm):
             add_runs(p, cell_text.replace('<br>', ' '))
             if j > 0:
                 p.alignment = 1  # center
-            if i < len(rows) - 1:
-                p.paragraph_format.keep_with_next = True   # the table is not split across columns
-        tr = tbl.rows[i]._tr
-        trPr = tr.get_or_add_trPr()
-        cant = OxmlElement('w:cantSplit'); trPr.append(cant)
     return tbl
 
 
@@ -440,7 +435,6 @@ def main():
             # defaults give Normal (line 276 auto), about 0.15 x the figure height of blank
             # space above it; LibreOffice applies it to the text part only
             p.paragraph_format.line_spacing = 1.0
-            p.paragraph_format.keep_with_next = True   # the caption stays with its picture
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
                 open_wide()
@@ -461,8 +455,7 @@ def main():
                 widths = [total * w / sum(rows.rel_widths) for w in rows.rel_widths]
             if wide:
                 open_wide()
-            h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head)
-            h.paragraph_format.keep_with_next = True; place(h._p)
+            h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head); place(h._p)
             tbl = make_table(doc, rows, widths); place(tbl._tbl); after_table = True
             continue
     close_wide()
