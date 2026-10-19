@@ -1,0 +1,97 @@
+{
+  "status": "PHYSICAL_3WAY_W4_CORE_CYCLE_COMPARISON",
+  "fclk_mhz": 50.0,
+  "image": "06.png",
+  "set": "Set12",
+  "noise_seed": 0,
+  "replicates": 3,
+  "frozen_total_pct_saved": 7.910940035730865,
+  "multistart_total_pct_saved": 9.014346038061682,
+  "frozen_conv2to9_pct_saved": 9.184990832348596,
+  "multistart_conv2to9_pct_saved": 10.46609952107482,
+  "repeat_rows": [
+    {
+      "rep": 1,
+      "baseline": 13465669,
+      "frozen": 12400408,
+      "multistart": 12251825,
+      "frozen_saved_pct": 7.910940035730865,
+      "multistart_saved_pct": 9.01436089064717,
+      "multi_vs_frozen_pct": 1.1982105750068868,
+      "conv2to9_original": 11597845,
+      "conv2to9_frozen": 10532584,
+      "conv2to9_multistart": 10384001,
+      "frozen_conv2to9_pct_saved": 9.184990832348596,
+      "multistart_conv2to9_pct_saved": 10.466116765657757,
+      "in_stall": {
+        "original": 0,
+        "frozen": 0,
+        "multistart": 0
+      },
+      "out_stall": {
+        "original": 0,
+        "frozen": 0,
+        "multistart": 0
+      }
+    },
+    {
+      "rep": 2,
+      "baseline": 13465669,
+      "frozen": 12400408,
+      "multistart": 12251831,
+      "frozen_saved_pct": 7.910940035730865,
+      "multistart_saved_pct": 9.0143163328907,
+      "multi_vs_frozen_pct": 1.198162189502152,
+      "conv2to9_original": 11597845,
+      "conv2to9_frozen": 10532584,
+      "conv2to9_multistart": 10384007,
+      "frozen_conv2to9_pct_saved": 9.184990832348596,
+      "multistart_conv2to9_pct_saved": 10.466065031908945,
+      "in_stall": {
+        "multistart": 6,
+        "frozen": 0,
+        "original": 0
+      },
+      "out_stall": {
+        "multistart": 0,
+        "frozen": 0,
+        "original": 0
+      }
+    },
+    {
+      "rep": 3,
+      "baseline": 13465669,
+      "frozen": 12400408,
+      "multistart": 12251825,
+      "frozen_saved_pct": 7.910940035730865,
+      "multistart_saved_pct": 9.01436089064717,
+      "multi_vs_frozen_pct": 1.1982105750068868,
+      "conv2to9_original": 11597845,
+      "conv2to9_frozen": 10532584,
+      "conv2to9_multistart": 10384001,
+      "frozen_conv2to9_pct_saved": 9.184990832348596,
+      "multistart_conv2to9_pct_saved": 10.466116765657757,
+      "in_stall": {
+        "original": 0,
+        "frozen": 0,
+        "multistart": 0
+      },
+      "out_stall": {
+        "original": 0,
+        "frozen": 0,
+        "multistart": 0
+      }
+    }
+  ],
+  "caveats": [
+    "Measured physical W4 core cycles on the explicitly selected, functioning board.",
+    "The canary does not certify manufacturer PS DDR/MIO presets.",
+    "Not a measurement of PS im2col, JTAG, host processing, end-to-end video latency, or energy.",
+    "Core cycles include DMA stalls; inspect per-run input/output stall counters.",
+    "Set12 06.png with noise seed0, not all 612 GPU conditions.",
+    "Keep Conv1\u201310 full-core and Conv2\u20139 estimates separate."
+  ],
+  "physical_bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+  "build_path": "C:\\fpga\\FPGA\\build\\zed_v4_p16_t4_w4_1792234898",
+  "original_only_canary": "C:\\fpga\\FPGA\\build\\q1_existing_w4_canary\\canary_01\\canary.json"
+}

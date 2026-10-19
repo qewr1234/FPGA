@@ -1,0 +1,20 @@
+{
+  "status": "PHYSICAL_ORIGINAL_W4_CANARY_PASS",
+  "bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+  "build_path": "C:\\fpga\\FPGA\\build\\zed_v4_p16_t4_w4_1792234898",
+  "source_report": "C:\\fpga\\FPGA\\build\\q1_existing_w4_canary\\canary_01\\original\\report.json",
+  "core_id": "0x4d410303",
+  "fclk_mhz": 50.0,
+  "image": "05.png",
+  "sigma": 25,
+  "mode": 1,
+  "model": "dn_d10_c32_us_fx_qat",
+  "historical_baseline_cycles": 13289042,
+  "canary_cycles": 13289030,
+  "delta_pct": -9.029996293186521e-05,
+  "bitexact_mismatches": 0,
+  "in_stall_cycles": 0,
+  "out_stall_cycles": 0,
+  "physical_board_test_performed": true,
+  "meaning": "A matching candidate .bit was actually programmed and passed original-model layer-by-layer output checks on this board. This is not manufacturer DDR/MIO certification or a permutation A/B/C speed result."
+}

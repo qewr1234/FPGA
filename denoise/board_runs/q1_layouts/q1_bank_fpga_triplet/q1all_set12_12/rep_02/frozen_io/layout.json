@@ -1,0 +1,18 @@
+{
+  "split": "cifar",
+  "K": 288,
+  "COUT": 32,
+  "frames": 65536,
+  "windows": 65536,
+  "mode_seq": 1,
+  "config_words": 9248,
+  "input_words": 4718592,
+  "gold_words": 2097152,
+  "zero_taps_appended": 0,
+  "addresses": {
+    "config": "0x10000000",
+    "input": "0x10100000",
+    "result": "0x10200000",
+    "gold": "0x10300000"
+  }
+}

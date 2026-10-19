@@ -1,0 +1,13 @@
+{
+  "script_version": "2026-10-17 o (four-wide window port: K a multiple of 4, never picked by default)",
+  "core_id": "0x4d410303",
+  "K": 324, "COUT": 4, "mode_seq": 1,
+  "fclk_mhz": 50.0000,
+  "built_k": 1152, "built_cout": 128,
+  "runtime_geometry": true,
+  "activations_per_cycle": 4,
+  "windows_expected": 16384, "windows_done": 16384,
+  "results_expected": 65536, "results": 65536,
+  "mismatches": 0, "first_bad_word": -1,
+  "cycles": 1343520, "in_stall": 0, "out_stall": 0
+}

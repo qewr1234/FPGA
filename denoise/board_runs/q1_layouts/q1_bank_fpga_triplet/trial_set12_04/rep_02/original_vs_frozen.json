@@ -1,0 +1,132 @@
+{
+  "status": "PHYSICAL_W4_CORE_CYCLE_COMPARISON",
+  "model": "dn_d10_c32_us_fx_qat",
+  "image": "04.png",
+  "sigma": 25,
+  "fclk_mhz": [
+    50.0
+  ],
+  "core_id": [
+    "0x4d410303"
+  ],
+  "bit_exact_mismatches": 0,
+  "baseline_cycles": 13455778,
+  "permuted_cycles": 12424571,
+  "total_saved_cycles": 1031207,
+  "total_pct_saved": 7.663674296647879,
+  "conv2to9_saved_cycles": 1031207,
+  "conv2to9_pct_saved": 8.8989573913529,
+  "layers": [
+    {
+      "layer": "conv1",
+      "baseline_cycles": 524305,
+      "permuted_cycles": 524305,
+      "cycle_saved": 0,
+      "pct_saved": 0.0,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv2",
+      "baseline_cycles": 1508002,
+      "permuted_cycles": 1388329,
+      "cycle_saved": 119673,
+      "pct_saved": 7.935864806545349,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv3",
+      "baseline_cycles": 1437009,
+      "permuted_cycles": 1354574,
+      "cycle_saved": 82435,
+      "pct_saved": 5.73656810778499,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv4",
+      "baseline_cycles": 1486971,
+      "permuted_cycles": 1293525,
+      "cycle_saved": 193446,
+      "pct_saved": 13.009399645319244,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv5",
+      "baseline_cycles": 1557213,
+      "permuted_cycles": 1421630,
+      "cycle_saved": 135583,
+      "pct_saved": 8.70677293343942,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv6",
+      "baseline_cycles": 1423075,
+      "permuted_cycles": 1296025,
+      "cycle_saved": 127050,
+      "pct_saved": 8.927849902499869,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv7",
+      "baseline_cycles": 1378303,
+      "permuted_cycles": 1310261,
+      "cycle_saved": 68042,
+      "pct_saved": 4.936650359173563,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv8",
+      "baseline_cycles": 1312203,
+      "permuted_cycles": 1210442,
+      "cycle_saved": 101761,
+      "pct_saved": 7.7549738874244305,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv9",
+      "baseline_cycles": 1485177,
+      "permuted_cycles": 1281960,
+      "cycle_saved": 203217,
+      "pct_saved": 13.683015559761564,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    },
+    {
+      "layer": "conv10",
+      "baseline_cycles": 1343520,
+      "permuted_cycles": 1343520,
+      "cycle_saved": 0,
+      "pct_saved": 0.0,
+      "baseline_in_stall": 0,
+      "permuted_in_stall": 0,
+      "baseline_out_stall": 0,
+      "permuted_out_stall": 0
+    }
+  ],
+  "warning": "Measures PL core cycles including DMA stalls as recorded; not whole-device wall-clock latency, PS overhead or power. Single-run results need repetition to establish variance."
+}
