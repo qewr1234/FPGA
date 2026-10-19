@@ -75,17 +75,23 @@ def no_numbering(p):
 
 # Characters Times New Roman lacks. Word draws them from a fallback font (Cambria Math has
 # very tall line metrics), which can make every line holding one much taller than the
-# others; such a line keeps the body's 11 pt pitch exactly, and the glyphs are named.
+# others. In the English build (main sets PIN_NO_TNR) they are Cambria Math runs and a
+# Body Text paragraph holding one keeps the body's pitch exactly; other styles are not
+# pinned. The Korean build is left as before: its Hangul lines are taller than 11 pt.
 NO_TNR = '\u2308\u2309'      # ⌈ ⌉
-BODY_PITCH_PT = 11.0           # Body Text: 10 pt, line 228/240 auto (as LibreOffice lays it out)
+BODY_PITCH_PT = 11.0           # Body Text: 10 pt Times New Roman, line 228/240 auto (as LibreOffice lays it out)
+PIN_NO_TNR = False
 
 
 def _run(p, text, **fmt):
-    for piece in re.split('([' + NO_TNR + ']+)', text):
+    for piece in re.split('([' + NO_TNR + ']+)', text) if PIN_NO_TNR else [text]:
         if not piece:
             continue
         r = p.add_run(piece)
-        r.bold = fmt.get('bold'); r.italic = fmt.get('italic')
+        if fmt.get('bold'):
+            r.bold = True
+        if fmt.get('italic'):
+            r.italic = True
         if fmt.get('code'):
             r.font.name = 'Courier New'
         elif piece[0] in NO_TNR:
@@ -106,7 +112,7 @@ def add_runs(p, text, bold_lead=False):
             _run(p, part[1:-1], code=True)
         else:
             _run(p, part)
-    if any(ch in text for ch in NO_TNR) and p.style is not None and p.style.name == 'Body Text':
+    if PIN_NO_TNR and any(ch in text for ch in NO_TNR) and p.style is not None and p.style.name == 'Body Text':
         p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
         p.paragraph_format.line_spacing = Pt(BODY_PITCH_PT)
 
@@ -265,6 +271,8 @@ def main():
     ap.add_argument('--east-asia-font', default='Malgun Gothic')
     args = ap.parse_args()
     out = args.out or args.src.with_suffix('.docx')
+    global PIN_NO_TNR
+    PIN_NO_TNR = args.lang == 'en'
 
     doc = Document(str(args.tpl))
     set_east_asia_font(doc, args.east_asia_font)
@@ -415,8 +423,9 @@ def main():
             path, cap = payload
             img = (args.src.parent / path).resolve()
             p = doc.add_paragraph(); p.alignment = 1; p.paragraph_format.first_line_indent = Cm(0)
-            # single spacing: Word multiplies a picture's line by the Normal style's 1.15
-            # (about 0.15 x the figure height of blank space above it); LibreOffice does not
+            # single spacing: Word multiplies a picture's line by the 1.15 that the document
+            # defaults give Normal (line 276 auto), about 0.15 x the figure height of blank
+            # space above it; LibreOffice applies it to the text part only
             p.paragraph_format.line_spacing = 1.0
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
