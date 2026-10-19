@@ -1,0 +1,2691 @@
+{
+ "what": "exact W=4 board cycles predicted for the L3 board runs of PROTOCOL_2_ADDENDUM.md, written before any of them; per layer CYCLES - IN_STALL must equal \"predicted\" exactly",
+ "written_utc": "2026-10-19T07:35:19Z",
+ "script": "bankperm/predict_board_3.py",
+ "protocol": {
+  "file": "bankperm/PROTOCOL_2_ADDENDUM.md",
+  "commit": "d6521ec",
+  "sha256": "a83bfc86183808f1e4645dbf9838f00cdc7d8951db7a55048a11914ed2f2ad78",
+  "adds_to": "bankperm/PROTOCOL_2.md",
+  "test": "a layer is predicted if CYCLES - IN_STALL equals it exactly; every miss is listed",
+  "identical_to_commit": true
+ },
+ "model": "dn_d10_c32_us_fx_qat",
+ "network": "B-32 ReLU + QAT s1",
+ "layout": "l3",
+ "set": "Set12",
+ "images": [
+  "05.png",
+  "06.png",
+  "07.png",
+  "08.png"
+ ],
+ "noise": "sigma 25 (the manifest's), test_noise seed 0, the board driver's host emulation",
+ "board": {
+  "bitstream": "the existing W=4 bitstream (build zed_v4_p16_t4_w4_*), the one of PROTOCOL_2's runs",
+  "core_id": "0x4d410303",
+  "driver_flags": "scripts/run_denoise.py --w4 --mode 1 --fclk 50",
+  "tile": 65536,
+  "runs_folder": "denoise/board_runs/q1_layouts3/ (PROTOCOL_2_ADDENDUM.md)",
+  "board_runs_per_layer": [
+   1
+  ],
+  "padding": "none: every K (36, 288, 324) is a multiple of 4, so no zero taps and, every window being whole beats, no zero windows are added (checked per layer)"
+ },
+ "core": "P = 16 lanes, T = 4 banks, tap t of a window in bank t % 4, sparse mode (mode 1)",
+ "rule": {
+  "count": "count_w4 = sum over windows of max(ceil(K/4) + 1, ceil(COUT/16) * max(1, max_b nnz_b), COUT) (denoise/predict_w4.py window_cycles, W = 4, sparse)",
+  "fill_drain": "conv2..conv10, per board run: min(load, last) + 3 + ((COUT-1) % 16 + 1), load = ceil(K/4) + 1, last = ceil(COUT/16) * max(1, max bank nnz) of the run's last window as the L3 export sends it (denoise/w4_gaps.py); conv1: the measured constant 17 per run",
+  "conv1_constant": {
+   "value": 17,
+   "source": "denoise/w4_gaps.json networks[\"B-32 ReLU + QAT\"] conv1 board_w4",
+   "gap": 17,
+   "in_stall": 0,
+   "note": "measured on the board on 05.png (the Original), not derived; conv1 reads the image, so its windows are the Original's in L3 too (checked); its output rows are relabelled, which changes no window cycle"
+  },
+  "predicted": "count_w4 + fill_drain_w4",
+  "code": "bankperm/predict_board_2.py layer_record and total, imported unchanged (the PROTOCOL_2 rule)"
+ },
+ "layouts": {
+  "l3": {
+   "orders_source": {
+    "network": "B-32 ReLU + QAT s1",
+    "file": "bankperm/perms_2.json",
+    "lf_sha256": "90c6b2739f1e60c7d5bd7353bfcb67794f4dc030e21697eec1dd56f67b90a802",
+    "identical_to_head": true
+   },
+   "orders": {
+    "conv1": [
+     0,
+     1,
+     5,
+     4,
+     3,
+     2,
+     8,
+     10,
+     6,
+     7,
+     12,
+     15,
+     11,
+     9,
+     14,
+     16,
+     18,
+     13,
+     23,
+     21,
+     19,
+     17,
+     25,
+     26,
+     20,
+     22,
+     30,
+     28,
+     27,
+     24,
+     31,
+     29
+    ],
+    "conv2": [
+     0,
+     1,
+     2,
+     4,
+     7,
+     3,
+     10,
+     6,
+     8,
+     5,
+     11,
+     9,
+     17,
+     12,
+     13,
+     16,
+     18,
+     22,
+     14,
+     21,
+     20,
+     24,
+     15,
+     23,
+     28,
+     25,
+     19,
+     26,
+     29,
+     30,
+     27,
+     31
+    ],
+    "conv3": [
+     0,
+     1,
+     2,
+     6,
+     4,
+     5,
+     3,
+     10,
+     8,
+     7,
+     9,
+     11,
+     16,
+     13,
+     12,
+     15,
+     18,
+     22,
+     14,
+     17,
+     20,
+     25,
+     19,
+     23,
+     24,
+     26,
+     21,
+     28,
+     27,
+     29,
+     30,
+     31
+    ],
+    "conv4": [
+     0,
+     8,
+     4,
+     3,
+     1,
+     13,
+     9,
+     6,
+     2,
+     17,
+     14,
+     7,
+     5,
+     19,
+     15,
+     10,
+     12,
+     21,
+     22,
+     11,
+     16,
+     23,
+     26,
+     18,
+     20,
+     24,
+     29,
+     27,
+     28,
+     25,
+     31,
+     30
+    ],
+    "conv5": [
+     0,
+     5,
+     2,
+     1,
+     4,
+     6,
+     3,
+     11,
+     8,
+     9,
+     7,
+     12,
+     10,
+     15,
+     14,
+     19,
+     13,
+     17,
+     18,
+     21,
+     16,
+     23,
+     22,
+     28,
+     20,
+     26,
+     25,
+     29,
+     24,
+     27,
+     30,
+     31
+    ],
+    "conv6": [
+     7,
+     1,
+     3,
+     0,
+     8,
+     6,
+     5,
+     2,
+     9,
+     17,
+     10,
+     4,
+     12,
+     19,
+     18,
+     11,
+     14,
+     21,
+     20,
+     13,
+     15,
+     24,
+     23,
+     16,
+     28,
+     27,
+     26,
+     22,
+     31,
+     29,
+     30,
+     25
+    ],
+    "conv7": [
+     4,
+     0,
+     3,
+     5,
+     8,
+     1,
+     6,
+     11,
+     12,
+     2,
+     7,
+     18,
+     14,
+     9,
+     10,
+     19,
+     17,
+     13,
+     15,
+     20,
+     24,
+     16,
+     26,
+     22,
+     25,
+     21,
+     28,
+     27,
+     29,
+     23,
+     30,
+     31
+    ],
+    "conv8": [
+     2,
+     5,
+     1,
+     0,
+     8,
+     14,
+     3,
+     4,
+     9,
+     15,
+     13,
+     6,
+     10,
+     17,
+     16,
+     7,
+     11,
+     21,
+     24,
+     12,
+     19,
+     22,
+     25,
+     18,
+     20,
+     27,
+     29,
+     23,
+     28,
+     31,
+     30,
+     26
+    ]
+   },
+   "orders_meaning": "keyed by producer: order[p] = the original output channel at position p of its map; class p % 4 (fit.order_from_group); a consumer's channel position p of 3x3 position s is sent in slot s*32 + (p + s) % 32 (bank (s + class) % 4) on conv2..conv9",
+   "export_command": "python bankperm/export_layout.py --layout skew --orders bankperm/perms_2.json --model dn_d10_c32_us_fx_qat --out DIR",
+   "export_path": "/tmp/claude-0/-home-user-FPGA/eb455984-bb54-5e73-a2f9-578f2a283bc1/scratchpad/l3prep/predict3/l3",
+   "export_build": {
+    "built_here": false,
+    "files_identical_to_a_fresh_build": true,
+    "differing_files": [],
+    "fresh_layout_manifest_tap_orders_equal": true
+   },
+   "no_adapter": "export_layout.read_orders reads perms_2.json directly (networks.<label>.orders of the entry with this model) and gives exactly perms_2.json's B-32 ReLU + QAT s1 orders (asserted); the independent mapping below is a second construction of the same export, not an adapter",
+   "export_check": {
+    "layers": [
+     {
+      "name": "conv1",
+      "skewed": false,
+      "outputs_relabeled": true,
+      "inputs_relabeled": false,
+      "config": "conv1_config.bin",
+      "config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "rebuilt_config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true
+     },
+     {
+      "name": "conv2",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv2_config.bin",
+      "config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "rebuilt_config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv3",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv3_config.bin",
+      "config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "rebuilt_config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv4",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv4_config.bin",
+      "config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "rebuilt_config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv5",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv5_config.bin",
+      "config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "rebuilt_config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv6",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv6_config.bin",
+      "config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "rebuilt_config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv7",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv7_config.bin",
+      "config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "rebuilt_config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv8",
+      "skewed": true,
+      "outputs_relabeled": true,
+      "inputs_relabeled": true,
+      "config": "conv8_config.bin",
+      "config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "rebuilt_config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv9",
+      "skewed": true,
+      "outputs_relabeled": false,
+      "inputs_relabeled": true,
+      "config": "conv9_config.bin",
+      "config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "rebuilt_config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": false,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true,
+      "bank_rule_holds": true,
+      "fold_then_tap_order_is_the_mapping": true
+     },
+     {
+      "name": "conv10",
+      "skewed": false,
+      "outputs_relabeled": false,
+      "inputs_relabeled": false,
+      "config": "conv10_config.bin",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "rebuilt_config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "config_identical_to_rebuilt": true,
+      "config_identical_to_original": true,
+      "manifest_entry_as_expected": true,
+      "tap_order_as_expected": true
+     }
+    ],
+    "manifest_top_level_identical": true,
+    "layer_names_identical": true,
+    "int_eval_identical": true,
+    "layer_sets": {
+     "skewed": [
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8",
+      "conv9"
+     ],
+     "outputs_relabeled": [
+      "conv1",
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8"
+     ],
+     "inputs_relabeled": [
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8",
+      "conv9"
+     ],
+     "config_unchanged": [
+      "conv10"
+     ]
+    },
+    "layer_sets_expected": {
+     "skewed": [
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8",
+      "conv9"
+     ],
+     "outputs_relabeled": [
+      "conv1",
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8"
+     ],
+     "inputs_relabeled": [
+      "conv2",
+      "conv3",
+      "conv4",
+      "conv5",
+      "conv6",
+      "conv7",
+      "conv8",
+      "conv9"
+     ],
+     "config_unchanged": [
+      "conv10"
+     ]
+    },
+    "all_ok": true
+   },
+   "config_sha256": {
+    "conv1": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+    "conv2": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+    "conv3": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+    "conv4": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+    "conv5": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+    "conv6": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+    "conv7": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+    "conv8": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+    "conv9": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+    "conv10": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+   },
+   "config_sha256_meaning": "SHA-256 of each layer's <layer>_config.bin in the L3 export, the bytes the driver streams as the layer's configuration; identical to the independent rebuild from the original's INT32 words and on every image's record",
+   "tap_order_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "tap_order_288_32": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    63,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    94,
+    95,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    125,
+    126,
+    127,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    156,
+    157,
+    158,
+    159,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153,
+    154,
+    155,
+    187,
+    188,
+    189,
+    190,
+    191,
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167,
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182,
+    183,
+    184,
+    185,
+    186,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199,
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    249,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248,
+    280,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    287,
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279
+   ],
+   "tap_order_meaning": "tap_order[slot] = the folded export's tap index sent in that slot (x_l3 = x_folded[:, order])",
+   "export_files": {
+    "conv10_config.bin": {
+     "sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+     "lf_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc"
+    },
+    "conv1_config.bin": {
+     "sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+     "lf_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe"
+    },
+    "conv2_config.bin": {
+     "sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+     "lf_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779"
+    },
+    "conv3_config.bin": {
+     "sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+     "lf_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378"
+    },
+    "conv4_config.bin": {
+     "sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+     "lf_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c"
+    },
+    "conv5_config.bin": {
+     "sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+     "lf_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7"
+    },
+    "conv6_config.bin": {
+     "sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+     "lf_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364"
+    },
+    "conv7_config.bin": {
+     "sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+     "lf_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524"
+    },
+    "conv8_config.bin": {
+     "sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+     "lf_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a"
+    },
+    "conv9_config.bin": {
+     "sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+     "lf_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3"
+    },
+    "int_eval.json": {
+     "sha256": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+     "lf_sha256": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf"
+    },
+    "layout_manifest.json": {
+     "sha256": "bdd1ac02fe1f904dee54ad90e52c3410a78e2d8df15f706ef3cc7e248640b774",
+     "lf_sha256": "bdd1ac02fe1f904dee54ad90e52c3410a78e2d8df15f706ef3cc7e248640b774"
+    },
+    "manifest.json": {
+     "sha256": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+     "lf_sha256": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4"
+    },
+    "permutation_manifest.json": {
+     "sha256": "a8c0004efb59233032258b04064ec484d31263b98e5a4cc46102bbb80c9ee199",
+     "lf_sha256": "a8c0004efb59233032258b04064ec484d31263b98e5a4cc46102bbb80c9ee199"
+    }
+   },
+   "platform_note": "the config.bin files and manifest.json (export_layout.py writes it with LF) are the same bytes wherever the export is built; int_eval.json is copied from the checkout, so compare it with CRLF read as LF (lf_sha256). permutation_manifest.json (fold.fold: derived_from = str(relative path), written with write_text) has backslashes in derived_from and CRLF line ends when the export is built on Windows, and layout_manifest.json records that file's raw hash: those two do not carry the same hash there and are not what the board streams",
+   "layout_manifest_sha256": "bdd1ac02fe1f904dee54ad90e52c3410a78e2d8df15f706ef3cc7e248640b774"
+  }
+ },
+ "comparison_sources": {
+  "board_prediction_2": {
+   "file": "bankperm/board_prediction_2.json",
+   "lf_sha256": "cfbb01d61072b3b8add862f9f9edd4c22ac02cb4e5735be136c649f8d6b7c7b8",
+   "identical_to_head": true,
+   "written_utc": "2026-10-19T07:12:57Z"
+  },
+  "results_2": {
+   "file": "bankperm/results_2.json",
+   "lf_sha256": "c9bb64b51f8f2c4d4f81b54802b3d8bb5925e22e436a6246ec4f2a84aa809cc5",
+   "identical_to_head": true
+  }
+ },
+ "validation": {
+  "image": "Set12 05.png",
+  "results": {
+   "l3_count_w4_vs_results_2": {
+    "count": 12041188,
+    "results_2": 12041188,
+    "equal": true
+   },
+   "original_count_w4_vs_results_2": {
+    "count": 13288456,
+    "results_2": 13288456,
+    "equal": true
+   },
+   "original_predicted_vs_board_prediction_2": {
+    "predicted": 13289030,
+    "board_prediction_2": 13289030,
+    "equal": true
+   },
+   "checks_05": {
+    "equal": true
+   }
+  },
+  "passed": true
+ },
+ "counts_vs_results_2": {
+  "05.png": {
+   "l3_count_w4": 12041188,
+   "results_2_L3_w4": 12041188,
+   "equal": true,
+   "original_count_w4": 13288456,
+   "results_2_L0_w4": 13288456,
+   "original_equal": true,
+   "skew_count_w4_board_prediction_2": 12139748,
+   "results_2_L2_w4": 12139748,
+   "skew_equal": true
+  },
+  "06.png": {
+   "l3_count_w4": 12027502,
+   "results_2_L3_w4": 12027502,
+   "equal": true,
+   "original_count_w4": 13465083,
+   "results_2_L0_w4": 13465083,
+   "original_equal": true,
+   "skew_count_w4_board_prediction_2": 12123070,
+   "results_2_L2_w4": 12123070,
+   "skew_equal": true
+  },
+  "07.png": {
+   "l3_count_w4": 12119294,
+   "results_2_L3_w4": 12119294,
+   "equal": true,
+   "original_count_w4": 13411455,
+   "results_2_L0_w4": 13411455,
+   "original_equal": true,
+   "skew_count_w4_board_prediction_2": 12210792,
+   "results_2_L2_w4": 12210792,
+   "skew_equal": true
+  },
+  "08.png": {
+   "l3_count_w4": 47846650,
+   "results_2_L3_w4": 47846650,
+   "equal": true,
+   "original_count_w4": 51976431,
+   "results_2_L0_w4": 51976431,
+   "original_equal": true,
+   "skew_count_w4_board_prediction_2": 48176052,
+   "results_2_L2_w4": 48176052,
+   "skew_equal": true
+  }
+ },
+ "checks": {
+  "05.png": {
+   "layers": [
+    {
+     "name": "conv1",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv2",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv3",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv4",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv5",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv6",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv7",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv8",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv9",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv10",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    }
+   ],
+   "windows_identical_to_the_original_on": [
+    "conv1",
+    "conv10"
+   ],
+   "unchanged_layers_expected": [
+    "conv1",
+    "conv10"
+   ],
+   "taps_reordered_on": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "denoised_identical": true,
+   "psnr": {
+    "l3": 29.536220128469942,
+    "original": 29.536220128469942,
+    "int_eval": 29.536220128469942,
+    "agrees_1e5": true
+   },
+   "original_records_equal_board_prediction_2": true,
+   "conv1_record_as_the_originals": true,
+   "conv10_record_as_the_originals": true,
+   "no_zero_padding": true,
+   "one_board_run_per_layer": true,
+   "all_ok": true
+  },
+  "06.png": {
+   "layers": [
+    {
+     "name": "conv1",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv2",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv3",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv4",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv5",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv6",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv7",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv8",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv9",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv10",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    }
+   ],
+   "windows_identical_to_the_original_on": [
+    "conv1",
+    "conv10"
+   ],
+   "unchanged_layers_expected": [
+    "conv1",
+    "conv10"
+   ],
+   "taps_reordered_on": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "denoised_identical": true,
+   "psnr": {
+    "l3": 28.495058808303973,
+    "original": 28.495058808303973,
+    "int_eval": 28.495058808303973,
+    "agrees_1e5": true
+   },
+   "original_records_equal_board_prediction_2": true,
+   "conv1_record_as_the_originals": true,
+   "conv10_record_as_the_originals": true,
+   "no_zero_padding": true,
+   "one_board_run_per_layer": true,
+   "all_ok": true
+  },
+  "07.png": {
+   "layers": [
+    {
+     "name": "conv1",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv2",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv3",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv4",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv5",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv6",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv7",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv8",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv9",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv10",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    }
+   ],
+   "windows_identical_to_the_original_on": [
+    "conv1",
+    "conv10"
+   ],
+   "unchanged_layers_expected": [
+    "conv1",
+    "conv10"
+   ],
+   "taps_reordered_on": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "denoised_identical": true,
+   "psnr": {
+    "l3": 28.87729852750743,
+    "original": 28.87729852750743,
+    "int_eval": 28.877298917920484,
+    "agrees_1e5": true
+   },
+   "original_records_equal_board_prediction_2": true,
+   "conv1_record_as_the_originals": true,
+   "conv10_record_as_the_originals": true,
+   "no_zero_padding": true,
+   "one_board_run_per_layer": true,
+   "all_ok": true
+  },
+  "08.png": {
+   "layers": [
+    {
+     "name": "conv1",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv2",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv3",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv4",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv5",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv6",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv7",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv8",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv9",
+     "skewed": true,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": false,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    },
+    {
+     "name": "conv10",
+     "skewed": false,
+     "windows_are_the_originals_in_the_mapping": true,
+     "windows_identical_to_the_original": true,
+     "accumulators_are_the_originals_in_the_row_order": true,
+     "nonzeros_equal": true
+    }
+   ],
+   "windows_identical_to_the_original_on": [
+    "conv1",
+    "conv10"
+   ],
+   "unchanged_layers_expected": [
+    "conv1",
+    "conv10"
+   ],
+   "taps_reordered_on": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "denoised_identical": true,
+   "psnr": {
+    "l3": 31.653151714089148,
+    "original": 31.653151714089148,
+    "int_eval": 31.653151344193166,
+    "agrees_1e5": true
+   },
+   "original_records_equal_board_prediction_2": true,
+   "conv1_record_as_the_originals": true,
+   "conv10_record_as_the_originals": true,
+   "no_zero_padding": true,
+   "one_board_run_per_layer": true,
+   "all_ok": true
+  }
+ },
+ "config_sha256_same_on_every_image": true,
+ "all_checks_passed": true,
+ "predictions": {
+  "l3": {
+   "05.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1361341,
+     "conv3": 1321646,
+     "conv4": 1271024,
+     "conv5": 1317031,
+     "conv6": 1233078,
+     "conv7": 1242938,
+     "conv8": 1198657,
+     "conv9": 1228177,
+     "conv10": 1343523
+    },
+    "total": 12041720
+   },
+   "06.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1269365,
+     "conv3": 1230726,
+     "conv4": 1278401,
+     "conv5": 1413252,
+     "conv6": 1244414,
+     "conv7": 1274640,
+     "conv8": 1199776,
+     "conv9": 1249632,
+     "conv10": 1343519
+    },
+    "total": 12028030
+   },
+   "07.png": {
+    "layers": {
+     "conv1": 524305,
+     "conv2": 1402412,
+     "conv3": 1337159,
+     "conv4": 1264770,
+     "conv5": 1325358,
+     "conv6": 1240003,
+     "conv7": 1239298,
+     "conv8": 1201312,
+     "conv9": 1241674,
+     "conv10": 1343519
+    },
+    "total": 12119810
+   },
+   "08.png": {
+    "layers": {
+     "conv1": 2097169,
+     "conv2": 5381827,
+     "conv3": 5197179,
+     "conv4": 5038127,
+     "conv5": 5437732,
+     "conv6": 4832779,
+     "conv7": 4874043,
+     "conv8": 4787470,
+     "conv9": 4826845,
+     "conv10": 5373983
+    },
+    "total": 47847154
+   }
+  }
+ },
+ "savings": {
+  "05.png": {
+   "vs_original": {
+    "board_prediction_2_predicted": 13289030,
+    "l3_predicted": 12041720,
+    "predicted_cycles": 1247310,
+    "predicted_pct": 9.386012,
+    "board_prediction_2_count_w4": 13288456,
+    "l3_count_w4": 12041188,
+    "count_cycles": 1247268,
+    "count_pct": 9.386102,
+    "fill_drain_difference": 42,
+    "conv2_9_predicted_cycles": 1247310,
+    "conv2_9_predicted_pct": 10.921005
+   },
+   "vs_skew": {
+    "board_prediction_2_predicted": 12140286,
+    "l3_predicted": 12041720,
+    "predicted_cycles": 98566,
+    "predicted_pct": 0.811892,
+    "board_prediction_2_count_w4": 12139748,
+    "l3_count_w4": 12041188,
+    "count_cycles": 98560,
+    "count_pct": 0.811878,
+    "fill_drain_difference": 6,
+    "conv2_9_predicted_cycles": 98566,
+    "conv2_9_predicted_pct": 0.959517
+   }
+  },
+  "06.png": {
+   "vs_original": {
+    "board_prediction_2_predicted": 13465669,
+    "l3_predicted": 12028030,
+    "predicted_cycles": 1437639,
+    "predicted_pct": 10.676328,
+    "board_prediction_2_count_w4": 13465083,
+    "l3_count_w4": 12027502,
+    "count_cycles": 1437581,
+    "count_pct": 10.676362,
+    "fill_drain_difference": 58,
+    "conv2_9_predicted_cycles": 1437639,
+    "conv2_9_predicted_pct": 12.395742
+   },
+   "vs_skew": {
+    "board_prediction_2_predicted": 12123612,
+    "l3_predicted": 12028030,
+    "predicted_cycles": 95582,
+    "predicted_pct": 0.788395,
+    "board_prediction_2_count_w4": 12123070,
+    "l3_count_w4": 12027502,
+    "count_cycles": 95568,
+    "count_pct": 0.788315,
+    "fill_drain_difference": 14,
+    "conv2_9_predicted_cycles": 95582,
+    "conv2_9_predicted_pct": 0.931981
+   }
+  },
+  "07.png": {
+   "vs_original": {
+    "board_prediction_2_predicted": 13412001,
+    "l3_predicted": 12119810,
+    "predicted_cycles": 1292191,
+    "predicted_pct": 9.634588,
+    "board_prediction_2_count_w4": 13411455,
+    "l3_count_w4": 12119294,
+    "count_cycles": 1292161,
+    "count_pct": 9.634756,
+    "fill_drain_difference": 30,
+    "conv2_9_predicted_cycles": 1292191,
+    "conv2_9_predicted_pct": 11.193444
+   },
+   "vs_skew": {
+    "board_prediction_2_predicted": 12211336,
+    "l3_predicted": 12119810,
+    "predicted_cycles": 91526,
+    "predicted_pct": 0.749517,
+    "board_prediction_2_count_w4": 12210792,
+    "l3_count_w4": 12119294,
+    "count_cycles": 91498,
+    "count_pct": 0.749321,
+    "fill_drain_difference": 28,
+    "conv2_9_predicted_cycles": 91526,
+    "conv2_9_predicted_pct": 0.884864
+   }
+  },
+  "08.png": {
+   "vs_original": {
+    "board_prediction_2_predicted": 51976969,
+    "l3_predicted": 47847154,
+    "predicted_cycles": 4129815,
+    "predicted_pct": 7.945471,
+    "board_prediction_2_count_w4": 51976431,
+    "l3_count_w4": 47846650,
+    "count_cycles": 4129781,
+    "count_pct": 7.945488,
+    "fill_drain_difference": 34,
+    "conv2_9_predicted_cycles": 4129815,
+    "conv2_9_predicted_pct": 9.27927
+   },
+   "vs_skew": {
+    "board_prediction_2_predicted": 48176562,
+    "l3_predicted": 47847154,
+    "predicted_cycles": 329408,
+    "predicted_pct": 0.683752,
+    "board_prediction_2_count_w4": 48176052,
+    "l3_count_w4": 47846650,
+    "count_cycles": 329402,
+    "count_pct": 0.683746,
+    "fill_drain_difference": 6,
+    "conv2_9_predicted_cycles": 329408,
+    "conv2_9_predicted_pct": 0.809249
+   }
+  }
+ },
+ "pooled": {
+  "05_08": {
+   "images": [
+    "05.png",
+    "06.png",
+    "07.png",
+    "08.png"
+   ],
+   "l3_predicted": 84036714,
+   "original_predicted": 92143669,
+   "saving_vs_original_pct": 8.798168,
+   "skew_predicted": 84651796,
+   "saving_vs_skew_pct": 0.726602
+  },
+  "06_08": {
+   "images": [
+    "06.png",
+    "07.png",
+    "08.png"
+   ],
+   "l3_predicted": 71994994,
+   "original_predicted": 78854639,
+   "saving_vs_original_pct": 8.699101,
+   "skew_predicted": 72511510,
+   "saving_vs_skew_pct": 0.712323
+  }
+ },
+ "never_run_on_the_board": [
+  "l3 05.png",
+  "l3 06.png",
+  "l3 07.png",
+  "l3 08.png"
+ ],
+ "assumptions": [
+  "one board run per layer: every layer here has at most 65536 windows (16,384 on 05-07, 65,536 on 08.png), so run_denoise.py --tile 65536 runs each layer once; with another tile each run pays its own fill/drain",
+  "the L3 run is scripts/run_denoise.py --export-dir <the L3 export> on the W=4 bitstream: conv2..conv9 windows with their columns in the export's tap_order (the skew order) after the relabeling folded into the producers, conv1 and conv10 windows as the Original's; the config.bin streamed per layer has the SHA-256 in layouts.l3.config_sha256. A host path that sends other windows or weights is not what is predicted",
+  "conv1's fill and drain is the 05.png Original's measured 17 on every image (not a prediction)",
+  "CYCLES - IN_STALL is compared; this bitstream's IN_STALL does not count starvation at window boundaries (PROTOCOL_2), so a miss is a miss even with IN_STALL = 0"
+ ],
+ "code": {
+  "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+  "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+  "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e",
+  "bankperm/export_layout.py": "da7384df47c8b4434a41a1f255235d9dfa7fbec5190dc0bbc8d017977f93e109",
+  "bankperm/fold.py": "bf8b7f0cb611b6b52f3ca034eb0f37f7cd8650c08dea457d52a3c8bf16f6e435",
+  "bankperm/predict_board_2.py": "3ff60af91344d16eaf5405d41477f3e72977e558e07c15bdc8a20c8f322ff395",
+  "bankperm/predict_board_3.py": "c53415da287c4098aba008262ff7db7b38794634d9aadda454f2ee90edccdc03"
+ },
+ "runs": {
+  "l3": {
+   "05.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 578743,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2584659,
+      "count_w4": 1361284,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1361341,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2418953,
+      "count_w4": 1321581,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 1321646,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2310892,
+      "count_w4": 1270963,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1271024,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2434514,
+      "count_w4": 1316972,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1317031,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2095315,
+      "count_w4": 1233015,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1233078,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2228446,
+      "count_w4": 1242881,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1242938,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1753611,
+      "count_w4": 1198602,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1198657,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2054618,
+      "count_w4": 1228114,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1228177,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": false
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2858383,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 28
+      },
+      "fill_drain_w4": 35,
+      "predicted": 1343523,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": false
+     }
+    ],
+    "total": {
+     "count_w4": 12041188,
+     "fill_drain_w4": 532,
+     "predicted": 12041720,
+     "conv2_9": {
+      "count_w4": 10173412,
+      "predicted": 10173892
+     }
+    }
+   },
+   "06.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 582601,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2396635,
+      "count_w4": 1269306,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1269365,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2209804,
+      "count_w4": 1230667,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1230726,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2359064,
+      "count_w4": 1278340,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1278401,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2635760,
+      "count_w4": 1413189,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1413252,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2223340,
+      "count_w4": 1244355,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1244414,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2346291,
+      "count_w4": 1274577,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1274640,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1710333,
+      "count_w4": 1199721,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 1199776,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2068467,
+      "count_w4": 1249571,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 1249632,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": false
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2868820,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": false
+     }
+    ],
+    "total": {
+     "count_w4": 12027502,
+     "fill_drain_w4": 528,
+     "predicted": 12028030,
+     "conv2_9": {
+      "count_w4": 10159726,
+      "predicted": 10160206
+     }
+    }
+   },
+   "07.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 548758,
+      "count_w4": 524288,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 524305,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2659512,
+      "count_w4": 1402355,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1402412,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2461865,
+      "count_w4": 1337100,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1337159,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2307618,
+      "count_w4": 1264711,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 1264770,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2469819,
+      "count_w4": 1325291,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 48
+      },
+      "fill_drain_w4": 67,
+      "predicted": 1325358,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2096319,
+      "count_w4": 1239940,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 44
+      },
+      "fill_drain_w4": 63,
+      "predicted": 1240003,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2167961,
+      "count_w4": 1239241,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1239298,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 1704322,
+      "count_w4": 1201263,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 30
+      },
+      "fill_drain_w4": 49,
+      "predicted": 1201312,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 16384,
+      "nonzeros": 2036804,
+      "count_w4": 1241617,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 1241674,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": false
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 16384,
+      "nonzeros": 2809619,
+      "count_w4": 1343488,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 1343519,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": false
+     }
+    ],
+    "total": {
+     "count_w4": 12119294,
+     "fill_drain_w4": 516,
+     "predicted": 12119810,
+     "conv2_9": {
+      "count_w4": 10251518,
+      "predicted": 10251986
+     }
+    }
+   },
+   "08.png": {
+    "layers": [
+     {
+      "name": "conv1",
+      "K": 36,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 2333977,
+      "count_w4": 2097152,
+      "board_runs": 1,
+      "last_window": {
+       "load": 10,
+       "compute": 8
+      },
+      "fill_drain_w4": 17,
+      "predicted": 2097169,
+      "status": "conv1: count + the measured constant (not derived)",
+      "config_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv2",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10245848,
+      "count_w4": 5381770,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 38
+      },
+      "fill_drain_w4": 57,
+      "predicted": 5381827,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv3",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9554896,
+      "count_w4": 5197120,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 40
+      },
+      "fill_drain_w4": 59,
+      "predicted": 5197179,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv4",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 9203467,
+      "count_w4": 5038062,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 46
+      },
+      "fill_drain_w4": 65,
+      "predicted": 5038127,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv5",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 10215205,
+      "count_w4": 5437671,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 42
+      },
+      "fill_drain_w4": 61,
+      "predicted": 5437732,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv6",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7718083,
+      "count_w4": 4832724,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4832779,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv7",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 8481755,
+      "count_w4": 4873988,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 36
+      },
+      "fill_drain_w4": 55,
+      "predicted": 4874043,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv8",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 6365722,
+      "count_w4": 4787419,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 32
+      },
+      "fill_drain_w4": 51,
+      "predicted": 4787470,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": true
+     },
+     {
+      "name": "conv9",
+      "K": 288,
+      "COUT": 32,
+      "windows": 65536,
+      "nonzeros": 7436961,
+      "count_w4": 4826792,
+      "board_runs": 1,
+      "last_window": {
+       "load": 73,
+       "compute": 34
+      },
+      "fill_drain_w4": 53,
+      "predicted": 4826845,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": true,
+      "outputs_relabeled": false
+     },
+     {
+      "name": "conv10",
+      "K": 324,
+      "COUT": 4,
+      "windows": 65536,
+      "nonzeros": 11326984,
+      "count_w4": 5373952,
+      "board_runs": 1,
+      "last_window": {
+       "load": 82,
+       "compute": 24
+      },
+      "fill_drain_w4": 31,
+      "predicted": 5373983,
+      "status": "count + the w4_gaps.py fill-and-drain rule",
+      "config_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+      "zero_padding": {
+       "taps": 0,
+       "windows": 0
+      },
+      "taps_reordered": false,
+      "outputs_relabeled": false
+     }
+    ],
+    "total": {
+     "count_w4": 47846650,
+     "fill_drain_w4": 504,
+     "predicted": 47847154,
+     "conv2_9": {
+      "count_w4": 40375546,
+      "predicted": 40376002
+     }
+    }
+   }
+  }
+ },
+ "seconds": 28.0
+}
