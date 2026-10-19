@@ -33,7 +33,7 @@ import re
 from pathlib import Path
 
 from docx import Document
-from docx.enum.text import WD_BREAK
+from docx.enum.text import WD_BREAK, WD_LINE_SPACING
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
@@ -73,6 +73,25 @@ def no_numbering(p):
         pPr.insert(0, numPr)
 
 
+# Characters Times New Roman lacks. Word draws them from a fallback font (Cambria Math has
+# very tall line metrics), which can make every line holding one much taller than the
+# others; such a line keeps the body's 11 pt pitch exactly, and the glyphs are named.
+NO_TNR = '\u2308\u2309'      # ⌈ ⌉
+BODY_PITCH_PT = 11.0           # Body Text: 10 pt, line 228/240 auto (as LibreOffice lays it out)
+
+
+def _run(p, text, **fmt):
+    for piece in re.split('([' + NO_TNR + ']+)', text):
+        if not piece:
+            continue
+        r = p.add_run(piece)
+        r.bold = fmt.get('bold'); r.italic = fmt.get('italic')
+        if fmt.get('code'):
+            r.font.name = 'Courier New'
+        elif piece[0] in NO_TNR:
+            r.font.name = 'Cambria Math'
+
+
 def add_runs(p, text, bold_lead=False):
     """Markdown **bold**, *italic*, `code` inside a paragraph -> runs."""
     parts = re.split(r'(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)', text)
@@ -80,13 +99,16 @@ def add_runs(p, text, bold_lead=False):
         if not part:
             continue
         if part.startswith('**'):
-            r = p.add_run(part[2:-2]); r.bold = True
+            _run(p, part[2:-2], bold=True)
         elif part.startswith('*'):
-            r = p.add_run(part[1:-1]); r.italic = True
+            _run(p, part[1:-1], italic=True)
         elif part.startswith('`'):
-            r = p.add_run(part[1:-1]); r.font.name = 'Courier New'
+            _run(p, part[1:-1], code=True)
         else:
-            p.add_run(part)
+            _run(p, part)
+    if any(ch in text for ch in NO_TNR) and p.style is not None and p.style.name == 'Body Text':
+        p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+        p.paragraph_format.line_spacing = Pt(BODY_PITCH_PT)
 
 
 def make_paragraph(doc, style, text='', **kw):
@@ -393,6 +415,9 @@ def main():
             path, cap = payload
             img = (args.src.parent / path).resolve()
             p = doc.add_paragraph(); p.alignment = 1; p.paragraph_format.first_line_indent = Cm(0)
+            # single spacing: Word multiplies a picture's line by the Normal style's 1.15
+            # (about 0.15 x the figure height of blank space above it); LibreOffice does not
+            p.paragraph_format.line_spacing = 1.0
             wide = 'psnr_vs_cycles' in str(img) or 'board' in str(img)
             if wide:
                 open_wide()
