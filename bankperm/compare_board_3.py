@@ -266,6 +266,10 @@ def pooled(res, images):
         b1 = sum(res['runs'][run_name(im)]['total']['cycles_minus_in_stall'] for im in ims)
         out[lay] = dict(images=ims, cycles=a - b, cycles_pct=pct(a, b), cycles_minus_in_stall=a1 - b1,
                         cycles_minus_in_stall_pct=pct(a1, b1))
+        tots = [(res['against_protocol_2_runs'][im][lay]['total'], res['runs'][run_name(im)]['total']) for im in ims]
+        if all('exact' in x and 'exact' in y for x, y in tots):
+            a2, b2 = sum(x['exact'] for x, _ in tots), sum(y['exact'] for _, y in tots)
+            out[lay].update(predicted=a2 - b2, predicted_pct=pct(a2, b2))
     return out
 
 
@@ -426,7 +430,8 @@ def main():
                   + (f', count {v["count_w4"]:,} ({v["count_w4_pct"]:.3f}%)' if 'count_w4' in v else ''))
     for k, rows in res['l3_savings_pooled'].items():
         for lay, v in rows.items():
-            print(f'pooled {k} ({len(v["images"])} images) L3 saving vs {lay}: {v["cycles"]:,} cycles ({v["cycles_pct"]:.3f}%)')
+            print(f'pooled {k} ({len(v["images"])} images) L3 saving vs {lay}: {v["cycles"]:,} cycles ({v["cycles_pct"]:.3f}%)'
+                  + (f', predicted {v["predicted"]:,} ({v["predicted_pct"]:.3f}%)' if 'predicted' in v else ''))
     for name, p in res['invalid_runs'].items():
         print(f'INVALID {name}: {"; ".join(p)}')
     for name, p in res['protocol_2_runs_invalid'].items():

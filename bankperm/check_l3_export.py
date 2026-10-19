@@ -1,6 +1,6 @@
 """Check the L3 export (skew + relabeling) before any L3 board run (bankperm/PROTOCOL_2_ADDENDUM.md).
 
-    python bankperm/check_l3_export.py              # writes bankperm/l3_export_check.json (about 3 minutes)
+    python bankperm/check_l3_export.py              # writes bankperm/l3_export_check.json (about a minute)
     python bankperm/check_l3_export.py --no-board   # without the stand-in debugger run (it needs tclsh)
 
 The L3 export is bankperm/export_layout.py's --orders path on dn_d10_c32_us_fx_qat
@@ -53,9 +53,16 @@ What is checked, all of it on the host (nothing here touches a board):
               cycles say nothing; what it checks is what the driver writes and sends
   unchanged   the files RUN_W4_LAYOUTS.cmd and its setup.json pin (the PROTOCOL_2 board
               plan, its prediction, the export, the driver, the comparison) are the
-              committed ones, and the skew export written now has every hash
-              bankperm/skew_export_check.json records
+              committed ones and those of the addendum's commit d6521ec, and the skew
+              export written now has every hash bankperm/skew_export_check.json records
+  run script  RUN_W4_L3.cmd has LF line ends, is ASCII, holds the export, check, pin and
+              board-run lines this check is for (the --w4 --mode 1 --fclk 50 --tile 65536
+              flags of the stand-in run), and none of its commands names a PROTOCOL_2
+              folder or script
   build       python -m py_compile on the L3 files
+  (info)      prediction_3: whether bankperm/board_prediction_3.json, if there, lists this
+              export's config.bin digests (not part of all_ok; prepare_l3.py --bitstream
+              requires it on the board PC)
 
 export_files_lf_sha256 records the hash of every file of the L3 export and of the
 original (text files with CRLF read as LF), which bankperm/prepare_l3.py --verify
@@ -64,9 +71,7 @@ compares on the board PC. permutation_manifest.json is compared there with fold.
 export_files_portable_sha256; on this machine the two hashes are the same.
 """
 import argparse
-import contextlib
 import hashlib
-import io
 import json
 import shutil
 import subprocess
@@ -106,6 +111,8 @@ PROTOCOL_2_FILES = ['RUN_W4_LAYOUTS.cmd', 'bankperm/PROTOCOL_2.md', 'bankperm/PR
                     'bankperm/skew_count.py', 'bankperm/board_transcribed.json', 'bankperm/perms_2.json',
                     'bankperm/results_2.json', 'scripts/run_denoise.py', 'scripts/run_cifar.py',
                     'scripts/run_board_xsdb.tcl', 'scripts/_fake_xsdb_inner.tcl']
+PROTOCOL_2_REF = 'd6521ec'       # the addendum's commit: none of PROTOCOL_2_FILES may differ from it
+RUN_SCRIPT = ROOT/'RUN_W4_L3.cmd'
 
 
 def sha(data):
@@ -205,8 +212,9 @@ def check_export(l3, lm, orders, work):
     ok &= (man['tap_order_layers'] == SKEWED and all(man['tap_order_is_skew_order_288_32'].values())
            and man['layout_manifest_tap_orders_same'] and man['original_with_lists_in_output_order_plus_tap_order']
            and man['bytes_in_exporter_format'])
+    pm = l3/'permutation_manifest.json'
     others = dict(int_eval_json_identical_to_original=(l3/'int_eval.json').read_bytes() == (ORIGINAL/'int_eval.json').read_bytes(),
-                  permutation_manifest_orders_are_perms_2=json.loads((l3/'permutation_manifest.json').read_bytes())['orders'] == orders,
+                  permutation_manifest_orders_are_perms_2=pm.is_file() and json.loads(pm.read_bytes()).get('orders') == orders,
                   files=sorted(p.name for p in l3.iterdir()))
     ok &= others['int_eval_json_identical_to_original'] and others['permutation_manifest_orders_are_perms_2']
     # fold.fold's intermediate, then the skew, as export_layout.py says it does
@@ -226,8 +234,8 @@ def check_export(l3, lm, orders, work):
     mf = json.loads((folded/'manifest.json').read_bytes())
     fold_rec = dict(config_bins_equal=all(via.values()), differing=sorted(k for k, v in via.items() if not v),
                     manifest_equal_without_tap_order=mf == stripped,
-                    permutation_manifest_identical=(folded/'permutation_manifest.json').read_bytes()
-                    == (l3/'permutation_manifest.json').read_bytes())
+                    permutation_manifest_identical=pm.is_file()
+                    and (folded/'permutation_manifest.json').read_bytes() == pm.read_bytes())
     ok &= fold_rec['config_bins_equal'] and fold_rec['manifest_equal_without_tap_order'] and fold_rec['permutation_manifest_identical']
     return dict(layout=lm['layout'], layers_reordered=lm['layers_reordered'], changed_files=lm['changed_files'],
                 config_bins=rows, manifest=man, other_files=others, fold_then_skew=fold_rec, all_ok=bool(ok))
@@ -388,20 +396,24 @@ def board(work, l3, xsdb, emu):
 def protocol_2_unchanged(work):
     rows = {}
     for name in PROTOCOL_2_FILES:
-        rc, blob, err = git('show', f'HEAD:{name}')
         p = ROOT/name
-        rows[name] = dict(committed=rc == 0, working_tree_is_head=rc == 0 and p.is_file() and lf(p) == blob.replace(b'\r\n', b'\n'))
-    rc, _, _ = git('diff', '--quiet', 'HEAD', '--', *PROTOCOL_2_FILES)
+        here = lf(p) if p.is_file() else None
+        rc, blob, _ = git('show', f'HEAD:{name}')
+        rc0, blob0, _ = git('show', f'{PROTOCOL_2_REF}:{name}')
+        rows[name] = dict(committed=rc == 0, working_tree_is_head=rc == 0 and here == blob.replace(b'\r\n', b'\n'),
+                          same_as_addendum_commit=rc0 == 0 and here == blob0.replace(b'\r\n', b'\n'))
+    rc, _, _ = git('diff', '--quiet', PROTOCOL_2_REF, '--', *PROTOCOL_2_FILES)
     skew = work/'exports'/'skew'
     if skew.exists():
         shutil.rmtree(skew)
     export_layout.write_layout(ORIGINAL, skew, 'skew')
     rec = json.loads((HERE/'skew_export_check.json').read_text(encoding='utf-8'))['export_files_lf_sha256']
     now = cse.lf_hashes(skew)
-    res = dict(files=rows, git_diff_quiet=rc == 0,
+    res = dict(ref=PROTOCOL_2_REF, files=rows, git_diff_quiet_since_ref=rc == 0,
                skew_export_written_now_has_the_hashes_of_skew_export_check_json=now == rec['skew'],
                original_export_has_the_hashes_of_skew_export_check_json=cse.lf_hashes(ORIGINAL) == rec['original'])
-    res['all_ok'] = bool(all(r['committed'] and r['working_tree_is_head'] for r in rows.values()) and res['git_diff_quiet']
+    res['all_ok'] = bool(all(r['committed'] and r['working_tree_is_head'] and r['same_as_addendum_commit']
+                             for r in rows.values()) and res['git_diff_quiet_since_ref']
                          and res['skew_export_written_now_has_the_hashes_of_skew_export_check_json']
                          and res['original_export_has_the_hashes_of_skew_export_check_json'])
     return res
@@ -410,6 +422,48 @@ def protocol_2_unchanged(work):
 def build_checks():
     rc, text, _ = cse.run([sys.executable, '-m', 'py_compile'] + NEW_FILES)
     return dict(py_compile=dict(files=NEW_FILES, exit_code=rc, output=text.strip()), all_ok=rc == 0)
+
+
+def run_script():
+    """RUN_W4_L3.cmd: LF line ends, ASCII, and the export and board-run lines this check is for."""
+    data = RUN_SCRIPT.read_bytes()
+    text = data.decode('ascii', errors='replace')
+    flags = ' '.join(cse.BOARD_ARGS).replace('--images 05.png', '--images %%b')
+    want = {
+        'export': r'python bankperm\export_layout.py --layout skew --model %MODEL% --orders bankperm\perms_2.json '
+                  r'--out %L3EXP%',
+        'export_folder': r'set "L3EXP=build\layout_exports\l3"',
+        'runs_folder': r'set "RUNS=denoise\board_runs\q1_layouts3"',
+        'model': f'set "MODEL={MODEL}"',
+        'verify': r'python bankperm\prepare_l3.py --verify %L3EXP% --require-check',
+        'pin': r'python bankperm\prepare_l3.py --bitstream "%W4BUILD%" --export %L3EXP% --record %RUNS%\setup.json',
+        'board_run': (r'python scripts\run_denoise.py --model %MODEL% --export-dir %L3EXP% --xsdb "%XSDB%" '
+                      r'--build "%W4BUILD%" ' + flags + r' --out "!OUT!" --board-dir "build\q1_layouts3_io\l3_%%~nb"'),
+        'images': 'for %%b in (05.png 06.png 07.png 08.png) do',
+    }
+    code = '\n'.join(l for l in text.splitlines() if not l.lstrip().lower().startswith('rem'))
+    res = dict(file=rel(RUN_SCRIPT), lf_sha256=sha(data), no_cr=b'\r' not in data, ascii=data.isascii(),
+               lines_present={k: v in text for k, v in want.items()},
+               touches_no_protocol_2_folder=not any(s in code for s in (
+                   'q1_layouts2', 'layout_exports\\skew', 'layout_exports\\frozen', 'layout_exports\\multistart',
+                   'compare_board_2', 'prepare_layouts', 'board_prediction_2')))
+    res['all_ok'] = bool(res['no_cr'] and res['ascii'] and all(res['lines_present'].values())
+                         and res['touches_no_protocol_2_folder'])
+    return res
+
+
+def prediction_3(l3):
+    """Information only: whether bankperm/board_prediction_3.json (if there) was made with this export's config.bin."""
+    p = HERE/'board_prediction_3.json'
+    if not p.is_file():
+        return dict(present=False)
+    pred = json.loads(p.read_text(encoding='utf-8'))
+    man = json.loads((l3/'manifest.json').read_bytes())
+    runs = (pred.get('runs') or {}).get('l3') or {}
+    same = {im: [L.get('config_sha256') for L in (runs.get(im) or {}).get('layers', [])]
+            == [sha((l3/n['config']).read_bytes()) for n in man['layers']] for im in ('05.png', '06.png', '07.png', '08.png')}
+    return dict(present=True, file=rel(p), **prepare_l3.text_record(p), config_sha256_equal_to_this_export=same,
+                note='not part of all_ok: bankperm/prepare_l3.py --bitstream checks it on the board PC before the runs')
 
 
 def main():
@@ -453,6 +507,8 @@ def main():
     print('unchanged PROTOCOL_2 files', flush=True)
     res['protocol_2_unchanged'] = protocol_2_unchanged(work)
     res['build'] = build_checks()
+    res['run_script'] = run_script()
+    res['prediction_3'] = prediction_3(l3)
     res['export_files_lf_sha256'] = dict(original=cse.lf_hashes(ORIGINAL), l3=cse.lf_hashes(l3))
     res['export_files_portable_sha256'] = dict(
         rule=prepare_l3.PORTABLE_RULE, original={p.name: prepare_l3.portable_sha(p) for p in sorted(ORIGINAL.iterdir()) if p.is_file()},
@@ -465,6 +521,7 @@ def main():
                  command_line_export=res['command_line_export']['all_ok'],
                  emulation=all(r['all_ok'] for r in res['emulation']), cli=all(r['all_ok'] for r in res['cli']),
                  protocol_2_unchanged=res['protocol_2_unchanged']['all_ok'], build=res['build']['all_ok'],
+                 run_script=res['run_script']['all_ok'],
                  portable_hashes_equal_lf_hashes_here=portable_same)
     if xsdb:
         parts['board_l3'] = res['board']['all_ok']

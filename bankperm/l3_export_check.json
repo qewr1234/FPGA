@@ -1,0 +1,1302 @@
+{
+ "model": "dn_d10_c32_us_fx_qat",
+ "network": "B-32 ReLU + QAT s1",
+ "what": "Check the L3 export (skew + relabeling) before any L3 board run (bankperm/PROTOCOL_2_ADDENDUM.md).",
+ "export_command": "python bankperm/export_layout.py --layout skew --model dn_d10_c32_us_fx_qat --orders bankperm/perms_2.json --out build/layout_exports/l3",
+ "layout_manifest": {
+  "layout": "skew+relabeling",
+  "rule": "skew (bankperm/PROTOCOL_2.md L2): channel p of position s goes to slot s*C + (p + s) % C, bank (s + p) % 4; applied to the inputs of conv2..conv(L-1) that read one map with C % 4 == 0",
+  "tap_order_semantics": "tap_order[j] = the old tap index (s*C + p) now in slot j: windows x' = x[:, tap_order] (scripts/run_denoise.py), weights w' = w[:, tap_order] in config.bin, bias unchanged",
+  "layers_reordered": [
+   "conv2",
+   "conv3",
+   "conv4",
+   "conv5",
+   "conv6",
+   "conv7",
+   "conv8",
+   "conv9"
+  ],
+  "changed_files": [
+   "conv2_config.bin",
+   "conv3_config.bin",
+   "conv4_config.bin",
+   "conv5_config.bin",
+   "conv6_config.bin",
+   "conv7_config.bin",
+   "conv8_config.bin",
+   "conv9_config.bin",
+   "manifest.json"
+  ],
+  "unchanged_files": [
+   "conv10_config.bin",
+   "conv1_config.bin",
+   "int_eval.json",
+   "permutation_manifest.json"
+  ],
+  "files": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+   "conv2_config.bin": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+   "conv3_config.bin": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+   "conv4_config.bin": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+   "conv5_config.bin": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+   "conv6_config.bin": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+   "conv7_config.bin": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+   "conv8_config.bin": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+   "conv9_config.bin": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "manifest.json": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+   "permutation_manifest.json": "a8c0004efb59233032258b04064ec484d31263b98e5a4cc46102bbb80c9ee199"
+  },
+  "relabeling_source": "bankperm/perms_2.json"
+ },
+ "inputs": {
+  "perms_2": {
+   "file": "bankperm/perms_2.json",
+   "git_blob": "b38479d9d59b1339525beb15fbed34df2db62761",
+   "lf_sha256": "90c6b2739f1e60c7d5bd7353bfcb67794f4dc030e21697eec1dd56f67b90a802",
+   "committed_blob": "b38479d9d59b1339525beb15fbed34df2db62761",
+   "is_committed_version": true
+  },
+  "network": "B-32 ReLU + QAT s1",
+  "model": "dn_d10_c32_us_fx_qat",
+  "read_by": "bankperm/export_layout.py read_orders (networks entry of the model)",
+  "orders_equal_perms_2_entry": true,
+  "producers": [
+   "conv1",
+   "conv2",
+   "conv3",
+   "conv4",
+   "conv5",
+   "conv6",
+   "conv7",
+   "conv8"
+  ],
+  "fitted": [
+   {
+    "layer": "conv2",
+    "producer": "conv1",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv3",
+    "producer": "conv2",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv4",
+    "producer": "conv3",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv5",
+    "producer": "conv4",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv6",
+    "producer": "conv5",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv7",
+    "producer": "conv6",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv8",
+    "producer": "conv7",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   },
+   {
+    "layer": "conv9",
+    "producer": "conv8",
+    "order_equals_fitted_order": true,
+    "is_permutation": true,
+    "classes_equal_fitted_classes": true,
+    "class_sizes": [
+     8,
+     8,
+     8,
+     8
+    ]
+   }
+  ],
+  "all_ok": true
+ },
+ "export": {
+  "layout": "skew+relabeling",
+  "layers_reordered": [
+   "conv2",
+   "conv3",
+   "conv4",
+   "conv5",
+   "conv6",
+   "conv7",
+   "conv8",
+   "conv9"
+  ],
+  "changed_files": [
+   "conv2_config.bin",
+   "conv3_config.bin",
+   "conv4_config.bin",
+   "conv5_config.bin",
+   "conv6_config.bin",
+   "conv7_config.bin",
+   "conv8_config.bin",
+   "conv9_config.bin",
+   "manifest.json"
+  ],
+  "config_bins": {
+   "conv1_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": false,
+    "rebuilt_from_original": true,
+    "identical_to_original": false
+   },
+   "conv2_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv3_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv4_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv5_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv6_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv7_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv8_config.bin": {
+    "rows_in_output_order": true,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv9_config.bin": {
+    "rows_in_output_order": false,
+    "columns_l3": true,
+    "rebuilt_from_original": true,
+    "identical_to_original": false,
+    "bank_rule_skewed": true
+   },
+   "conv10_config.bin": {
+    "rows_in_output_order": false,
+    "columns_l3": false,
+    "rebuilt_from_original": true,
+    "identical_to_original": true
+   }
+  },
+  "manifest": {
+   "tap_order_layers": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "tap_order_is_skew_order_288_32": {
+    "conv2": true,
+    "conv3": true,
+    "conv4": true,
+    "conv5": true,
+    "conv6": true,
+    "conv7": true,
+    "conv8": true,
+    "conv9": true
+   },
+   "layout_manifest_tap_orders_same": true,
+   "original_with_lists_in_output_order_plus_tap_order": true,
+   "bytes_in_exporter_format": true
+  },
+  "other_files": {
+   "int_eval_json_identical_to_original": true,
+   "permutation_manifest_orders_are_perms_2": true,
+   "files": [
+    "conv10_config.bin",
+    "conv1_config.bin",
+    "conv2_config.bin",
+    "conv3_config.bin",
+    "conv4_config.bin",
+    "conv5_config.bin",
+    "conv6_config.bin",
+    "conv7_config.bin",
+    "conv8_config.bin",
+    "conv9_config.bin",
+    "int_eval.json",
+    "layout_manifest.json",
+    "manifest.json",
+    "permutation_manifest.json"
+   ]
+  },
+  "fold_then_skew": {
+   "config_bins_equal": true,
+   "differing": [],
+   "manifest_equal_without_tap_order": true,
+   "permutation_manifest_identical": true
+  },
+  "all_ok": true
+ },
+ "command_line_export": {
+  "command": "python bankperm/export_layout.py --layout skew --model dn_d10_c32_us_fx_qat --orders bankperm/perms_2.json --out <out>",
+  "exit_code": 0,
+  "every_file_byte_identical_incl_layout_manifest": true,
+  "rerun_into_same_folder_exit_code": 0,
+  "rerun_byte_identical": true,
+  "all_ok": true
+ },
+ "emulation": [
+  {
+   "set": "Set12",
+   "image": "05.png",
+   "output_identical": true,
+   "png_identical": true,
+   "png_sha256": "a174fb23dfae2957a9e6178d96c2222150d91b806c3556352304afcd8a2d711d",
+   "psnr": 29.536220128469942,
+   "psnr_matches_int_eval": true,
+   "layers": [
+    {
+     "name": "conv1",
+     "taps_reordered": false,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": false,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "e3f63eaaf29c60f90338504a06be2238c24f29f96423e14fd34f69bb9e81fc99",
+     "original_window_sha256": "e3f63eaaf29c60f90338504a06be2238c24f29f96423e14fd34f69bb9e81fc99",
+     "accumulator_sha256": "ea1bcabe7e95bc32d913c8ace2985708c15ee99956aad09fce75cfd18cbecadf",
+     "count_l0": {
+      "w1": 606208,
+      "w2": 524288,
+      "w4": 524288
+     },
+     "count_l3": {
+      "w1": 606208,
+      "w2": 524288,
+      "w4": 524288
+     }
+    },
+    {
+     "name": "conv2",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "5f555cc427dfb9c06c6fbc52c332dfc11b69875cdbf24a90326096e551566d31",
+     "original_window_sha256": "4d9140276a3edd209f646a815d1f0516208c18855b06620ce1d531665446eb4d",
+     "accumulator_sha256": "4e03b63e12509c48e2eb7c4bd83b9d058d99cb5e6bf058c6ca583a497b67b3b3",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1504687
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1361284
+     }
+    },
+    {
+     "name": "conv3",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "5df0aaed876dcc6f17f157d03ab0de7c11ed8f9a738db5d0592b59e2883be213",
+     "original_window_sha256": "52c0720d1644475c247f783aed53b8db328a104b77f3b146422d0b9461dd4fcf",
+     "accumulator_sha256": "d55c80822541899ce15380152e9d21d245e57bfafbbf70b08df715a6691e2947",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1434940
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1321581
+     }
+    },
+    {
+     "name": "conv4",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "f0867439072eedce8e932ee0c71492bef4e77720e52fbb827400f8c998777090",
+     "original_window_sha256": "4a059743bdd412add50cbed066a39341b5ea91cd7e97a043ebeee51048f7ddde",
+     "accumulator_sha256": "59ea3febd66632be2dcddab8d484b3ab90a8afbb2d51e4294ddf40930e56b715",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1448281
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1270963
+     }
+    },
+    {
+     "name": "conv5",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "27d9b54549092e898e1f80a1d65fcd8f0a9d2f137f4e1664453a718d96f9f6a4",
+     "original_window_sha256": "0661c604602a1594b0f6a04c4e714b87580ff381638fef9aa50286099023cb77",
+     "accumulator_sha256": "3789089ae71cbc24cf6de5d09af8dc8f1109ba334ee6116c5ee90a2234c6ff8a",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1562871
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1316972
+     }
+    },
+    {
+     "name": "conv6",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "16c1249d2993defc64c8fe1961b1f62525520bc0f1551fa1467254df67f0f4bb",
+     "original_window_sha256": "62556f1fa2b5d12c5fa1f7d921eac0bde7863514fbd115fbc73e184f183da763",
+     "accumulator_sha256": "ac2349f616946c1281e6d98a76f10aa4445159cf6be9381b75b35a1ad5a8481c",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1369156
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1233015
+     }
+    },
+    {
+     "name": "conv7",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "15ffe4d4826412bc2982376b92442b8a366e4ee9bba98c643ba838fa8ce54447",
+     "original_window_sha256": "1add390831bbe2371aa791a1a1c1bd5d3d3a6e6b11e6b742192c28c07ad8c85d",
+     "accumulator_sha256": "a7a48bf49522caedee04be417195947ad17920062592de788fce4aa9c92f6389",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1375380
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1242881
+     }
+    },
+    {
+     "name": "conv8",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "f54972e4dd58c2aa617c8e8ba7509a372bd762e5ea3ba91996486b881d10ce8d",
+     "original_window_sha256": "c727087429ef02fe1e0aa09f351dbc88b67a65f5e75336b9c120f0fd3fce6505",
+     "accumulator_sha256": "f05d7a1375649d93e13dfde822feeb90384f13e030a248b5af1ec9efb863db5c",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1288962
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1198602
+     }
+    },
+    {
+     "name": "conv9",
+     "taps_reordered": true,
+     "outputs_relabelled": false,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": true,
+     "window_sha256": "5d7d27946941e1fcc72a4776e048aa700edff9b76a54a2810103a9e592bb33a4",
+     "original_window_sha256": "37a149dd8f36427f22c8d8b9dc6a639a2f64fdde32c4e78ab8347aeb24ebc56a",
+     "accumulator_sha256": "9874b6fa7bbea17ce03ca8f5b6dfe3c91c041a3d91c4d3f8efa2d36984b14951",
+     "count_l0": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1436403
+     },
+     "count_l3": {
+      "w1": 4734976,
+      "w2": 2375680,
+      "w4": 1228114
+     }
+    },
+    {
+     "name": "conv10",
+     "taps_reordered": false,
+     "outputs_relabelled": false,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": false,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": true,
+     "window_sha256": "5358ea986c4fbfe82f96a81ff84d71376bbc375ee9256250f24486adcb803101",
+     "original_window_sha256": "5358ea986c4fbfe82f96a81ff84d71376bbc375ee9256250f24486adcb803101",
+     "accumulator_sha256": "e70f52228a82bfe7e68b40c016f16adcdb30c80086a1c5484195c41a5decb483",
+     "count_l0": {
+      "w1": 5324800,
+      "w2": 2670592,
+      "w4": 1343488
+     },
+     "count_l3": {
+      "w1": 5324800,
+      "w2": 2670592,
+      "w4": 1343488
+     }
+    }
+   ],
+   "totals": {
+    "L0": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 13288456
+    },
+    "L3": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 12041188
+    }
+   },
+   "results_2_json": {
+    "L0": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 13288456
+    },
+    "L3": {
+     "w1": 43810816,
+     "w2": 22200320,
+     "w4": 12041188
+    },
+    "key": "Set12/05.png"
+   },
+   "l3_w4_total_equals_results_2": true,
+   "all_totals_equal_results_2": true,
+   "all_ok": true
+  },
+  {
+   "set": "BSD68",
+   "image": "test001.png",
+   "output_identical": true,
+   "png_identical": true,
+   "png_sha256": "3db49203de743e716c0d9aade7c482d7aaf3d949409c0faf09b7805fd9c766f4",
+   "psnr": 25.600777367795896,
+   "psnr_matches_int_eval": true,
+   "layers": [
+    {
+     "name": "conv1",
+     "taps_reordered": false,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": false,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "f346f7fa3fc1aec2fde37035e0d30bd21aaa29200d3596e16431f7a80879193a",
+     "original_window_sha256": "f346f7fa3fc1aec2fde37035e0d30bd21aaa29200d3596e16431f7a80879193a",
+     "accumulator_sha256": "6ef172ab4b306b8996c12bae9137acddb550fdf9c53eed8909dae6d435b3a07f",
+     "count_l0": {
+      "w1": 1435637,
+      "w2": 1241632,
+      "w4": 1241632
+     },
+     "count_l3": {
+      "w1": 1435637,
+      "w2": 1241632,
+      "w4": 1241632
+     }
+    },
+    {
+     "name": "conv2",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "9da251e890c77b954970a100e6d62b6f2d30255b0f7714c4932b85f6134ac5af",
+     "original_window_sha256": "7ea002fabef709d061f3554c0cd39029aee63a5b3f219b3698feb6dd1f26cf75",
+     "accumulator_sha256": "e72e9c502b16e1e4d2c0375b3f2c2277960681668c0a04746ef923720f8df7cc",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3703664
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3363881
+     }
+    },
+    {
+     "name": "conv3",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "2fc26cf09b58ae0c15ac4ee8c1ca3b2ba6d9d9339fb13af0cda70efd3c4137f9",
+     "original_window_sha256": "c82f82f2b10bcf2b4eca3130a668c1bec8c13674e0088897959b44871b9ed061",
+     "accumulator_sha256": "c3deb8ce7f7817cc6a40405c95402c627161af391418c4dbffda82170c774f2a",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3540437
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3225374
+     }
+    },
+    {
+     "name": "conv4",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "89a35d7d0321518a328845bc5ecdc3c6871c03892080b313ff9aac9cccdf6a2d",
+     "original_window_sha256": "f7066ccc756c8aeff84d4708e0b62c0a4c4ec2579db8524aa6c5e32ea5f7abae",
+     "accumulator_sha256": "f0a55f21497bc6774bf1f1179ce358e3b7982b85f485b157189c12b2fb325e6f",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3565810
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3042322
+     }
+    },
+    {
+     "name": "conv5",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "26caac9a8530295c945e5fdfd820f69d8aa7d6b19ea25fbe750ad867da4d63b1",
+     "original_window_sha256": "108391966f8b109a7e71ba46fa8304c978dd8a1152faa961266b7ab31b7c5358",
+     "accumulator_sha256": "79d5b1c492bb9fa92ada61b72330682633ef7def2cc4a04f7d344e15ac91524c",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3695282
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3111132
+     }
+    },
+    {
+     "name": "conv6",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "1b19294ac64a7e5533cda3a17ce70c3028f941bb02822a86073bf1ad07f57a09",
+     "original_window_sha256": "2281ad7b7d36d31b5641b9f25eb060b56852c9b7903e6c2e6665bc85766cb8f7",
+     "accumulator_sha256": "a0f4525aedf39e59821d7cd8e1746a2c86082876ab0910d430eee18e157bdfa0",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3517998
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3006895
+     }
+    },
+    {
+     "name": "conv7",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "aa57a219de84dcb0c7e392ff19eb55cf264d98620c5a054ad74f3b6e709c8c09",
+     "original_window_sha256": "7971d1d0b3513f568a068c999d0c6cad2de00b1dab4701a6d0cb5e266eba80e4",
+     "accumulator_sha256": "21a2399ffb0133be5bc4e980b6c89654aafdbd87e295345cae7c5f66197800f7",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3291970
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3012986
+     }
+    },
+    {
+     "name": "conv8",
+     "taps_reordered": true,
+     "outputs_relabelled": true,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": false,
+     "window_sha256": "3ddf41bb5366f4b9327ec98b11413e6261b8943d0a7b03a1ded961149aa10bce",
+     "original_window_sha256": "1358d6b097a60fa637a5b684e943cc57335d443a850adbba98c911b8bb40784c",
+     "accumulator_sha256": "3eae38bd32807dc1c2100a47365d2964393b84ad1bc9b64dc8a628d5ace273dd",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3325048
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 2861194
+     }
+    },
+    {
+     "name": "conv9",
+     "taps_reordered": true,
+     "outputs_relabelled": false,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": true,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": true,
+     "window_sha256": "e30e3db78e658594e0647d532781c62976f2150d3dd7f0a1a021605e9040165d",
+     "original_window_sha256": "203e10650dda554e0a43e6c56121ffb23248f4975237b3bbbd0d3287e9943746",
+     "accumulator_sha256": "471c05e6a39a47034cacd07149b604a493f5d76dc2b941fdeef9f1580c616cbc",
+     "count_l0": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3861051
+     },
+     "count_l3": {
+      "w1": 11213489,
+      "w2": 5626145,
+      "w4": 3073342
+     }
+    },
+    {
+     "name": "conv10",
+     "taps_reordered": false,
+     "outputs_relabelled": false,
+     "windows_are_original_with_l3_columns": true,
+     "windows_differ_from_original": false,
+     "accumulators_equal_up_to_column_order": true,
+     "accumulators_identical": true,
+     "window_sha256": "214dc070b74d2d2150e215dcbd78dd7ba96ba8814e6120591f83aec7beedb4b8",
+     "original_window_sha256": "214dc070b74d2d2150e215dcbd78dd7ba96ba8814e6120591f83aec7beedb4b8",
+     "accumulator_sha256": "25f097ddff00875b6fc3cdd100307daa73637829b1f7740e5ee8fa54e7bdb130",
+     "count_l0": {
+      "w1": 12610325,
+      "w2": 6324563,
+      "w4": 3181682
+     },
+     "count_l3": {
+      "w1": 12610325,
+      "w2": 6324563,
+      "w4": 3181682
+     }
+    }
+   ],
+   "totals": {
+    "L0": {
+     "w1": 103753874,
+     "w2": 52575355,
+     "w4": 32924574
+    },
+    "L3": {
+     "w1": 103753874,
+     "w2": 52575355,
+     "w4": 29120440
+    }
+   },
+   "results_2_json": {
+    "L0": {
+     "w1": 103753874,
+     "w2": 52575355,
+     "w4": 32924574
+    },
+    "L3": {
+     "w1": 103753874,
+     "w2": 52575355,
+     "w4": 29120440
+    },
+    "key": "BSD68/test001.png"
+   },
+   "l3_w4_total_equals_results_2": true,
+   "all_totals_equal_results_2": true,
+   "all_ok": true
+  }
+ ],
+ "cli": [
+  {
+   "set": "Set12",
+   "image": "05.png",
+   "exit_codes": [
+    0,
+    0
+   ],
+   "pngs": [
+    "05_clean.png",
+    "05_denoised.png",
+    "05_noisy.png"
+   ],
+   "pngs_identical": true,
+   "report_identical_but_export_dir_timing_marks": true,
+   "layers_marked_taps_reordered": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "all_ok": true
+  },
+  {
+   "set": "BSD68",
+   "image": "test001.png",
+   "exit_codes": [
+    0,
+    0
+   ],
+   "pngs": [
+    "test001_clean.png",
+    "test001_denoised.png",
+    "test001_noisy.png"
+   ],
+   "pngs_identical": true,
+   "report_identical_but_export_dir_timing_marks": true,
+   "layers_marked_taps_reordered": [
+    "conv2",
+    "conv3",
+    "conv4",
+    "conv5",
+    "conv6",
+    "conv7",
+    "conv8",
+    "conv9"
+   ],
+   "all_ok": true
+  }
+ ],
+ "board": {
+  "image": "Set12 05.png",
+  "args": [
+   "--w4",
+   "--mode",
+   "1",
+   "--fclk",
+   "50",
+   "--set",
+   "Set12",
+   "--images",
+   "05.png",
+   "--tile",
+   "65536"
+  ],
+  "exit_code": 0,
+  "seconds": 28.0,
+  "runs": 10,
+  "layers": [
+   {
+    "name": "conv1",
+    "tap_order": false,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": true,
+    "config_stream_sha256": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+    "window_stream_sha256": "e3f63eaaf29c60f90338504a06be2238c24f29f96423e14fd34f69bb9e81fc99"
+   },
+   {
+    "name": "conv2",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+    "window_stream_sha256": "5f555cc427dfb9c06c6fbc52c332dfc11b69875cdbf24a90326096e551566d31"
+   },
+   {
+    "name": "conv3",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+    "window_stream_sha256": "5df0aaed876dcc6f17f157d03ab0de7c11ed8f9a738db5d0592b59e2883be213"
+   },
+   {
+    "name": "conv4",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+    "window_stream_sha256": "f0867439072eedce8e932ee0c71492bef4e77720e52fbb827400f8c998777090"
+   },
+   {
+    "name": "conv5",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+    "window_stream_sha256": "27d9b54549092e898e1f80a1d65fcd8f0a9d2f137f4e1664453a718d96f9f6a4"
+   },
+   {
+    "name": "conv6",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+    "window_stream_sha256": "16c1249d2993defc64c8fe1961b1f62525520bc0f1551fa1467254df67f0f4bb"
+   },
+   {
+    "name": "conv7",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+    "window_stream_sha256": "15ffe4d4826412bc2982376b92442b8a366e4ee9bba98c643ba838fa8ce54447"
+   },
+   {
+    "name": "conv8",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+    "window_stream_sha256": "f54972e4dd58c2aa617c8e8ba7509a372bd762e5ea3ba91996486b881d10ce8d"
+   },
+   {
+    "name": "conv9",
+    "tap_order": true,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": false,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": false,
+    "config_stream_sha256": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+    "window_stream_sha256": "5d7d27946941e1fcc72a4776e048aa700edff9b76a54a2810103a9e592bb33a4"
+   },
+   {
+    "name": "conv10",
+    "tap_order": false,
+    "streamed": true,
+    "config_stream_is_l3_config": true,
+    "config_stream_is_original_config": true,
+    "window_stream_is_emulated_l3_windows": true,
+    "window_stream_is_original_windows": true,
+    "config_stream_sha256": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "window_stream_sha256": "5358ea986c4fbfe82f96a81ff84d71376bbc375ee9256250f24486adcb803101"
+   }
+  ],
+  "core_ids": [
+   "0x4d410302"
+  ],
+  "fclk_mhz": [
+   50.0
+  ],
+  "layers_marked_taps_reordered": [
+   "conv2",
+   "conv3",
+   "conv4",
+   "conv5",
+   "conv6",
+   "conv7",
+   "conv8",
+   "conv9"
+  ],
+  "png_sha256": "a174fb23dfae2957a9e6178d96c2222150d91b806c3556352304afcd8a2d711d",
+  "png_identical_to_emulation": true,
+  "conv2_9_streams_are_l3": true,
+  "all_ok": true,
+  "note": "stand-in core (scripts/_fake_xsdb_inner.tcl, fault \"wide\": ID 0x4d410302) copies gold into the results and reports fixed cycles, so mismatches and cycles here say nothing about hardware; the streams are the bytes its DMA was asked to send from the fake DDR the driver loaded. conv1 (outputs relabelled) streams the L3 weights and the image windows; conv10 the original's"
+ },
+ "protocol_2_unchanged": {
+  "ref": "d6521ec",
+  "files": {
+   "RUN_W4_LAYOUTS.cmd": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/PROTOCOL_2.md": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/PROTOCOL_2_ADDENDUM.md": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/board_prediction_2.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/skew_export_check.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/export_layout.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/prepare_layouts.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/compare_board_2.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/check_skew_export.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/predict_board_2.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/fold.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/skew_count.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/board_transcribed.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/perms_2.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "bankperm/results_2.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/run_denoise.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/run_cifar.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/run_board_xsdb.tcl": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/_fake_xsdb_inner.tcl": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   }
+  },
+  "git_diff_quiet_since_ref": true,
+  "skew_export_written_now_has_the_hashes_of_skew_export_check_json": true,
+  "original_export_has_the_hashes_of_skew_export_check_json": true,
+  "all_ok": true
+ },
+ "build": {
+  "py_compile": {
+   "files": [
+    "bankperm/check_l3_export.py",
+    "bankperm/prepare_l3.py",
+    "bankperm/compare_board_3.py"
+   ],
+   "exit_code": 0,
+   "output": ""
+  },
+  "all_ok": true
+ },
+ "run_script": {
+  "file": "RUN_W4_L3.cmd",
+  "lf_sha256": "88606f4639f45bb6cbdeae2226caf983071f12577622e61349091579294e49ab",
+  "no_cr": true,
+  "ascii": true,
+  "lines_present": {
+   "export": true,
+   "export_folder": true,
+   "runs_folder": true,
+   "model": true,
+   "verify": true,
+   "pin": true,
+   "board_run": true,
+   "images": true
+  },
+  "touches_no_protocol_2_folder": true,
+  "all_ok": true
+ },
+ "prediction_3": {
+  "present": true,
+  "file": "bankperm/board_prediction_3.json",
+  "git_blob": "31e444ec648aca3d97f588049f4d93e84be2fd65",
+  "lf_sha256": "42fa3e00a65c3ed86d9ceb87d35dc847192769a7e0866190e878aba7d5a0d95d",
+  "config_sha256_equal_to_this_export": {
+   "05.png": true,
+   "06.png": true,
+   "07.png": true,
+   "08.png": true
+  },
+  "note": "not part of all_ok: bankperm/prepare_l3.py --bitstream checks it on the board PC before the runs"
+ },
+ "export_files_lf_sha256": {
+  "original": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+   "conv2_config.bin": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658",
+   "conv3_config.bin": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8",
+   "conv4_config.bin": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08",
+   "conv5_config.bin": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9",
+   "conv6_config.bin": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd",
+   "conv7_config.bin": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b",
+   "conv8_config.bin": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d",
+   "conv9_config.bin": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "manifest.json": "db6d543b0480c8108de1ddacae1def01adca8ac31ea0df4c6ab2c5da2aa7c16f"
+  },
+  "l3": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+   "conv2_config.bin": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+   "conv3_config.bin": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+   "conv4_config.bin": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+   "conv5_config.bin": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+   "conv6_config.bin": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+   "conv7_config.bin": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+   "conv8_config.bin": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+   "conv9_config.bin": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "manifest.json": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+   "permutation_manifest.json": "a8c0004efb59233032258b04064ec484d31263b98e5a4cc46102bbb80c9ee199"
+  }
+ },
+ "export_files_portable_sha256": {
+  "rule": "sha256 of the file with CRLF read as LF (text files); for permutation_manifest.json also with every JSON-escaped backslash (the two bytes \\\\) read as \"/\" (fold.py writes derived_from with the platform path separator)",
+  "original": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+   "conv2_config.bin": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658",
+   "conv3_config.bin": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8",
+   "conv4_config.bin": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08",
+   "conv5_config.bin": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9",
+   "conv6_config.bin": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd",
+   "conv7_config.bin": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b",
+   "conv8_config.bin": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d",
+   "conv9_config.bin": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "manifest.json": "db6d543b0480c8108de1ddacae1def01adca8ac31ea0df4c6ab2c5da2aa7c16f"
+  },
+  "l3": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+   "conv2_config.bin": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+   "conv3_config.bin": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+   "conv4_config.bin": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+   "conv5_config.bin": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+   "conv6_config.bin": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+   "conv7_config.bin": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+   "conv8_config.bin": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+   "conv9_config.bin": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "manifest.json": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+   "permutation_manifest.json": "a8c0004efb59233032258b04064ec484d31263b98e5a4cc46102bbb80c9ee199"
+  }
+ },
+ "driver_code_lf_sha256": {
+  "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+  "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+  "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+ },
+ "tool_code_lf_sha256": {
+  "bankperm/export_layout.py": "da7384df47c8b4434a41a1f255235d9dfa7fbec5190dc0bbc8d017977f93e109",
+  "bankperm/fold.py": "bf8b7f0cb611b6b52f3ca034eb0f37f7cd8650c08dea457d52a3c8bf16f6e435",
+  "bankperm/skew_count.py": "3118c16b82cbe4a535d6f013053214b0920c864681798e4219ce5882323f4f59",
+  "bankperm/check_l3_export.py": "842560a6283ff6698a65b14e5497a76a8ab18818a0db74778506d57f51465d87",
+  "bankperm/prepare_l3.py": "66ee44555dfd5bf566d3f9cc6ccc0f1ac62eb76cae1c2b6743bb2a3e53d2b695",
+  "bankperm/compare_board_3.py": "98457b7b70bd3e1babf88b9bb21a68cabd0dcc87943ac79ddcdc26052b377f56"
+ },
+ "parts_ok": {
+  "inputs": true,
+  "export": true,
+  "command_line_export": true,
+  "emulation": true,
+  "cli": true,
+  "protocol_2_unchanged": true,
+  "build": true,
+  "run_script": true,
+  "portable_hashes_equal_lf_hashes_here": true,
+  "board_l3": true
+ },
+ "all_ok": true,
+ "not_checked": [],
+ "seconds": 52.6
+}
