@@ -1,5 +1,5 @@
 {
- "about": "References for the related-work section bankperm/RELATED_WORK_EN.md. Field n is the [n] used there (null if not cited there); field paper_n is the [n] of bankperm/PAPER_EN.md (null if not cited there). The two numberings differ. Each entry was checked on 2026-10-18 against Crossref, the arXiv API, NeurIPS proceedings metadata or the patent page; 'verified' says what was read. 'balances' is what the cited work equalizes; 'preempts_claim' is judged against the claim stated in RELATED_WORK_EN.md (Novelty position).",
+ "about": "References for the related-work section bankperm/RELATED_WORK_EN.md. Field n is the [n] used there (null if not cited there); field paper_n is the [n] of bankperm/PAPER_EN.md (null if not cited there; the paper was cut to the 10 references with a paper_n on 2026-10-19, so the other entries are kept here but not cited in it). The two numberings differ. Each entry was checked on 2026-10-18 against Crossref, the arXiv API, NeurIPS proceedings metadata or the patent page; 'verified' says what was read. 'balances' is what the cited work equalizes; 'preempts_claim' is judged against the claim stated in RELATED_WORK_EN.md (Novelty position). Notes here that call the tap skew unevaluated or a baseline still to add (top-level claim, budnik_kuck, last novelty threat) predate 2928d28: PAPER_EN.md now counts the skew on the board network after the study (not run on the board).",
  "claim": "Offline, function-preserving channel-to-bank permutation, chosen on calibration activations to minimise the per-window maximum bank nonzero count of a lockstep-bank zero-skipping integer CNN core (P=16, T=4, XC7Z020), folded into the producer's filters, bias and requantisation and the consumer's weights; RTL, bitstream and integer output unchanged; given the (ky, kx, channel) window order. On this platform the host builds the windows, so tap-level layouts (any static order of a window's taps, with the weight columns) are also exact; they are not evaluated.",
  "references": [
   {
@@ -13,7 +13,7 @@
     "A. Moshovos"
    ],
    "title": "Cnvlutin: Ineffectual-neuron-free deep neural network computing",
-   "venue": "Proc. ACM/IEEE 43rd Int. Symp. Computer Architecture (ISCA)",
+   "venue": "Proc. ACM/IEEE 43rd Annual Int. Symp. Computer Architecture (ISCA)",
    "year": 2016,
    "pages": "1-13",
    "doi": "10.1109/ISCA.2016.11",
@@ -55,7 +55,7 @@
    "how_this_work_differs": "Two-sided ASIC design; we keep a one-sided activation-skipping FPGA core fixed and relabel channels offline.",
    "preempts_claim": "no",
    "n": 2,
-   "paper_n": 3
+   "paper_n": null
   },
   {
    "id": "sparten",
@@ -79,7 +79,7 @@
    "how_this_work_differs": "Closest folding precedent: same offline relabel-and-compensate mechanism, but the objective is weight density, not per-window activation nonzeros across lockstep banks.",
    "preempts_claim": "partially: the fold-into-next-layer mechanism and offline greedy balancing (not the activation objective)",
    "n": 3,
-   "paper_n": 8
+   "paper_n": 4
   },
   {
    "id": "cambricon_x",
@@ -141,7 +141,7 @@
    "how_this_work_differs": "FPGA activation zero-skipping precedent; does not reassign channels to parallel units.",
    "preempts_claim": "no",
    "n": 5,
-   "paper_n": 2
+   "paper_n": null
   },
   {
    "id": "ese",
@@ -173,7 +173,7 @@
    "how_this_work_differs": "Balances by changing the network; we balance by an exact relabelling of activations.",
    "preempts_claim": "no",
    "n": 6,
-   "paper_n": 17
+   "paper_n": null
   },
   {
    "id": "bbs",
@@ -202,7 +202,7 @@
    "how_this_work_differs": "Function-changing weight balance; activation zeros cannot be pruned to a pattern without changing the output.",
    "preempts_claim": "no",
    "n": 7,
-   "paper_n": 18
+   "paper_n": null
   },
   {
    "id": "s2ta",
@@ -226,7 +226,7 @@
    "how_this_work_differs": "Bounds per-block activation nonzeros by discarding activations; we keep every activation and only relabel channels.",
    "preempts_claim": "no; but it contradicts any claim that bank balancing does not exist for activations",
    "n": 8,
-   "paper_n": 4
+   "paper_n": 2
   },
   {
    "id": "moffett_patent",
@@ -248,7 +248,7 @@
    "how_this_work_differs": "Balances activation banks by zeroing activations; ours is exact.",
    "preempts_claim": "no",
    "n": 9,
-   "paper_n": 5
+   "paper_n": null
   },
   {
    "id": "brim",
@@ -272,7 +272,7 @@
    "how_this_work_differs": "Shows offline use of activation statistics for balance is not new; it changes weights, we only relabel channels.",
    "preempts_claim": "partially: 'offline, activation-statistics-driven balancing' as a concept",
    "n": 10,
-   "paper_n": 19
+   "paper_n": null
   },
   {
    "id": "sense",
@@ -301,7 +301,7 @@
    "how_this_work_differs": "Closest activation-balancing FPGA work; ours is static, uses per-window co-activation instead of per-channel density, and adds no hardware.",
    "preempts_claim": "no; it states the opposite assumption (no offline balance for activations)",
    "n": 11,
-   "paper_n": 6
+   "paper_n": 3
   },
   {
    "id": "crane",
@@ -331,7 +331,7 @@
    "how_this_work_differs": "Ours balances activation work in expectation with no run-time hardware.",
    "preempts_claim": "no; states that offline activation balancing is not possible",
    "n": 12,
-   "paper_n": 7
+   "paper_n": null
   },
   {
    "id": "spalen",
@@ -404,7 +404,7 @@
    "how_this_work_differs": "Same folding and permutation search, but a weight objective; ours targets activation nonzeros per bank and keeps the network exact.",
    "preempts_claim": "partially: folding a channel permutation into the producer layer",
    "n": 15,
-   "paper_n": 11
+   "paper_n": 5
   },
   {
    "id": "tetris_ji",
@@ -456,7 +456,7 @@
    "how_this_work_differs": "Weight workload only; activation sparsity is listed as future work. Not the closest prior work for activation balance (Sense is).",
    "preempts_claim": "no",
    "n": 17,
-   "paper_n": 9
+   "paper_n": null
   },
   {
    "id": "sparhixcel_v2",
@@ -477,7 +477,7 @@
    "how_this_work_differs": "Static channel ordering against a cycle model, but for weight sparsity; ours for activation sparsity on an unchanged core.",
    "preempts_claim": "no",
    "n": 18,
-   "paper_n": 10
+   "paper_n": null
   },
   {
    "id": "vara",
@@ -499,7 +499,7 @@
    "how_this_work_differs": "Same ingredients (offline window statistics, permutation, weight compensation) with the opposite objective (cluster co-zeros vs spread co-active channels) and a run-time index; ours folds the permutation away.",
    "preempts_claim": "partially: co-activation/co-zero-driven offline reordering as a concept",
    "n": 19,
-   "paper_n": 20
+   "paper_n": 6
   },
   {
    "id": "neuralink",
@@ -652,7 +652,7 @@
    "how_this_work_differs": "Our per-window cycle model is a finer, data-dependent bound.",
    "preempts_claim": "no",
    "n": 25,
-   "paper_n": 12
+   "paper_n": 8
   },
   {
    "id": "zhang_fpga15",
@@ -705,7 +705,7 @@
    "how_this_work_differs": "Network family and test protocol source.",
    "preempts_claim": "no",
    "n": 27,
-   "paper_n": 14
+   "paper_n": 9
   },
   {
    "id": "roth_black_foe",
@@ -729,7 +729,7 @@
    "how_this_work_differs": "Dataset source.",
    "preempts_claim": "no",
    "n": 28,
-   "paper_n": 16
+   "paper_n": 10
   },
   {
    "id": "martin_bsd",
@@ -778,7 +778,7 @@
    "how_this_work_differs": "Our relabelling is fitted to activation statistics and keeps each channel's taps in one bank; a data-free skew of a window's taps over the banks is the tap-level alternative the paper leaves open.",
    "preempts_claim": "partially: spreading correlated items over banks by a fixed index rule is classic; a tap-level skew is a strong baseline on this platform",
    "n": 30,
-   "paper_n": 21
+   "paper_n": 7
   },
   {
    "id": "goodfellow_maxout",
@@ -802,7 +802,7 @@
    "how_this_work_differs": "Cited for the maxout networks studied, not as related work.",
    "preempts_claim": "no",
    "n": null,
-   "paper_n": 13
+   "paper_n": null
   },
   {
    "id": "jacob_qat",
@@ -830,7 +830,7 @@
    "how_this_work_differs": "Cited for the quantization-aware training of the networks studied, not as related work.",
    "preempts_claim": "no",
    "n": null,
-   "paper_n": 15
+   "paper_n": null
   }
  ],
  "checked_not_cited": [

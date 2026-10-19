@@ -37,6 +37,7 @@ from docx.enum.text import WD_BREAK
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt
+from docx.text.paragraph import Paragraph
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -416,6 +417,10 @@ def main():
             tbl = make_table(doc, rows, widths); place(tbl._tbl)
             continue
     close_wide()
+    # the template's last paragraph is empty, holds the final section break and has the
+    # numbered references style: Word would print an extra '[n]' after the last reference
+    if not sb_body.findall('.//' + qn('w:t')):
+        no_numbering(Paragraph(sb_body, None))
     doc.save(str(out))
     print('wrote', out)
 
