@@ -1,4 +1,4 @@
-"""Fig. 1: one real window of the board network under three tap-to-bank layouts.
+"""Fig. 1: one real window of the board network under four tap-to-bank layouts.
 
     python bankperm/figures/fig1_layouts.py    # writes bankperm/figures/fig1_layouts.{png,pdf}
 
@@ -25,8 +25,11 @@ print size). Layouts:
   (b) Frozen relabeling: bank = the channel's class in
       research/q1_codesign/bank_export_perm.json (orders of conv5's producer,
       conv4; position q of the order holds channel orders[q], class q % 4);
-  (c) skewed (bankperm/skew_count.py): bank (p + s) % 4.
-Checks before plotting: the class map equals bankperm/perms.json's for conv5,
+  (c) skewed (bankperm/skew_count.py): bank (p + s) % 4;
+  (d) skew + relabeling (PROTOCOL_2's L3, bankperm/perms_2.json): bank = (class of p + s) % 4,
+      the class from L3's order of conv5's producer; the core sees slot s*32 + (q + s) % 32
+      holding original tap s*32 + order[q] (relabeling folded, then the skew).
+Checks before plotting: the class maps equal bankperm/perms.json's and perms_2.json's for conv5,
 and for every layout the per-bank counts read off the grid equal those of the
 column-permuted window (fit.permuted_columns, skew_count.skew_order) and the
 window's cycles from predict_w4.window_cycles.
@@ -113,11 +116,22 @@ def main():
     rec = next(f for f in perms['fitted'] if f['layer'] == LAYER)
     assert rec['producer'] == producer and cls.tolist() == rec['class_of_original_channel']
 
+    perms2 = json.loads((BANKPERM/'perms_2.json').read_text())['networks']['B-32 ReLU + QAT s1']
+    rec3 = next(f for f in perms2['fitted'] if f['layer'] == LAYER)
+    order3 = np.asarray(perms2['orders'][producer])
+    assert rec3['producer'] == producer and order3.tolist() == rec3['order']
+    cls3 = np.asarray(rec3['class_of_original_channel'])
+    assert (cls3[order3] == np.arange(c) % T).all()                 # position q of L3's order: class q % 4
+    cols3 = np.empty(k, np.int64)                                    # the window the core sees under L3
+    for s in range(taps):
+        for q in range(c):
+            cols3[s*c + (q + s) % c] = s*c + order3[q]
     s_idx, p_idx = np.meshgrid(np.arange(taps), np.arange(c), indexing='ij')     # (9, 32)
     layouts = [
-        ('(a) Conventional: bank = p mod 4', p_idx % T, np.arange(k)),
-        ('(b) Frozen relabeling: bank = class of p', cls[p_idx], permuted_columns(order, taps)),
-        ('(c) Skewed: bank = (p + s) mod 4', (p_idx + s_idx) % T, skew_order(k, c)),
+        ('(a) Conventional: bank p mod 4', p_idx % T, np.arange(k)),
+        ('(b) Relabeling (Frozen): bank = class', cls[p_idx], permuted_columns(order, taps)),
+        ('(c) Skew: bank (p + s) mod 4', (p_idx + s_idx) % T, skew_order(k, c)),
+        ('(d) Skew + relabeling: (class + s) mod 4', (cls3[p_idx] + s_idx) % T, cols3),
     ]
     nz = win.reshape(taps, c) != 0
     rows = []
@@ -140,9 +154,9 @@ def main():
               f'(predict_w4.window_cycles; load {load})')
     print(f'  perfect balance for this window: ceil({int(nz.sum())}/4) = {math.ceil(nz.sum()/T)}')
 
-    fig = plt.figure(figsize=(WIDTH_CM/2.54, 6.7/2.54), dpi=300)
-    gs = fig.add_gridspec(3, 2, width_ratios=[32, 11], wspace=0.24, hspace=0.62,
-                          left=0.075, right=0.985, top=0.935, bottom=0.115)
+    fig = plt.figure(figsize=(WIDTH_CM/2.54, 8.4/2.54), dpi=300)
+    gs = fig.add_gridspec(len(rows), 2, width_ratios=[32, 11], wspace=0.24, hspace=0.62,
+                          left=0.085, right=0.975, top=0.945, bottom=0.095)
     zero = np.array(to_rgb(ZERO))
     pal = np.array([to_rgb(col) for col in BANK])
     ymax = 62
@@ -159,7 +173,7 @@ def main():
         ax.set_xticks([0, 8, 16, 24, 31])
         ax.set_yticks([0, 4, 8])
         ax.tick_params(length=2, pad=1.5)
-        if r < 2:
+        if r < len(rows) - 1:
             ax.set_xticklabels([])
         else:
             ax.set_xlabel('channel p (original order)', labelpad=1.5)
@@ -190,7 +204,7 @@ def main():
         bx.set_yticks([load/2])
         bx.set_yticklabels([f'{load/2:g}'], color=MUTED)
         bx.tick_params(length=0, pad=1.5)
-        if r < 2:
+        if r < len(rows) - 1:
             bx.set_xticklabels([])
         else:
             bx.set_xlabel('bank', labelpad=1.5)

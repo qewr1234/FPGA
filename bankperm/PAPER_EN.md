@@ -49,7 +49,7 @@ In (ky, kx, channel) order, tap s·N + p (s the 3×3 position, p the channel, N 
 
 **Skew (L2).** Skewed storage [7] applied to the taps: the host puts channel p of position s in slot s·N + (p + s) mod N, bank (p + s) mod 4, which spreads each channel's nine taps 3/2/2/2 over the banks (Fig. 1c). It permutes each window's taps and the consumer's weight columns alike and needs no data and no RTL change; no partial sum, in any order, exceeds |bias| + K·127·128 < 2³¹, so the INT32 result is unchanged. For N = 45, tap s·45 + p is already in bank (s + p) mod 4: there L2 = L0.
 
-**Skew + relabeling (L3).** Under the skew, the channel in position p is in bank (s + p) mod 4 at 3×3 position s, so a relabeling still decides which channels share a bank at each s; L3 refits it under this rule and then skews.
+**Skew + relabeling (L3).** Under the skew, the channel in position p is in bank (s + p) mod 4 at 3×3 position s, so a relabeling still decides which channels share a bank at each s; L3 refits it under this rule and then skews (Fig. 1d).
 
 **Fitting.** Each layer is fitted alone, as relabeled windows are the original's with permuted columns. The recipe draws 2048 windows per fitted layer from Set12 01.png (Cal-1; σ = 25, one noise draw), minimizes their mean of (1) at W = 4, and searches from the identity with 400 proposals, each swapping two channels of different classes (position mod 4), kept only if the objective falls. Under the conventional rule it gave Frozen, the first board layout, and under the skewed rule L3. A second relabeling of the board network, Multi-start, adds Set12 02–03, two noise draws per image (Cal-3) and four random starts (2005 objective evaluations per layer against 401).
 
@@ -57,7 +57,7 @@ In (ky, kx, channel) order, tap s·N + p (s the 3×3 position, p the channel, N 
 
 ![Fig. 1](figures/fig1_layouts.png)
 
-*Fig. 1. A conv5 input window of the board network on Set12 05.png (the first compute-bound one at W = 4 with the median m, 48). Filled: nonzero, colored by bank (bank 1 dotted). (a) L0, bank p mod 4; (b) Frozen, an L1 (16 of 32 channels change bank); (c) L2, bank (p + s) mod 4. Bars: nonzeros per bank; the fullest, m, costs 2m cycles; dashed: m = 36.5, where 2m equals the load of 73 cycles.*
+*Fig. 1. A conv5 input window of the board network on Set12 05.png (the first compute-bound one at W = 4 with the median m, 48). Filled: nonzero, colored by bank (bank 1 dotted). (a) L0, bank p mod 4; (b) Frozen, an L1 (16 of 32 channels change bank); (c) L2, bank (p + s) mod 4; (d) L3, bank (class + s) mod 4. Bars: nonzeros per bank; the fullest, m, costs 2m cycles; dashed: m = 36.5, where 2m equals the load of 73 cycles. Here L3 ties L2; over all of conv5's windows the mean m is 47.6, 42.1, 40.4 and 39.7.*
 
 ## IV. Experimental Setup
 
