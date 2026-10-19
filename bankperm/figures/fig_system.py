@@ -5,8 +5,9 @@
 A schematic, not data: the host builds each layer's windows (im2col), puts every
 tap in a slot, and the slot decides the bank (slot j -> bank j mod 4); the core's
 four banks skip zero taps but advance in lockstep, so a window costs the fullest
-bank's count m, as in equation (1). The relabeling (L1, and L3's) is folded into
-the weights offline; the skew (L2, and L3's) is the host's slot order. The bitstream
+bank's count m, as in equation (1). The relabeling (L1, and L3's) and the skew's
+weight-column order are folded into the weights offline; the host applies the skew's
+slot order to every window. The bitstream
 is the same for every layout. The example window (16 taps, 4, 1, 3 and 2 nonzeros per bank) is drawn, not taken from a run.
 Drawn at 8.0 cm, the width the build places it at (build_docx --col-fig-cm 8), with
 the colours and fonts of fig1_layouts.py.
@@ -19,7 +20,7 @@ import matplotlib.pyplot as plt
 plt.rcParams['hatch.linewidth'] = 0.4
 from matplotlib.patches import FancyBboxPatch, Rectangle, FancyArrowPatch
 
-from fig1_layouts import BANK, INK, MUTED, ZERO, setup_fonts
+from fig1_layouts import BANK, DOTTED, INK, MUTED, ZERO, setup_fonts
 
 HERE = Path(__file__).resolve().parent
 W_CM, H_CM = 8.0, 4.0
@@ -49,14 +50,16 @@ def main():
 
     # --- host: what it does per layer; the layouts act only here
     hx, hy, hw, hh = 0.04, 0.04, 3.1, H_CM - 0.08
-    box(ax, hx, hy, hw, hh, 'Host (CPU)')
-    steps = ['offline: relabel channels\n(L1, L3), fold into the weights',
-             'per layer: im2col, window of\nK = 9N taps; tap (s, p) to a slot',
+    box(ax, hx, hy, hw, hh, 'Host (PC)')
+    steps = ['offline, into the weights:\nthe relabeling (L1, L3) and\nthe skew order (L2, L3)',
+             'per layer: im2col, window of\nK = 9N taps; tap (s, p) → slot',
              'skew (L2, L3): tap (s, p) to\nslot s·N + (p + s) mod N',
              'requantize the sums;\nnext layer']
-    y, h, gap = hy + hh - 0.36, 0.74, 0.17
+    y, gap = hy + hh - 0.36, 0.14
+    heights = (0.92, 0.7, 0.7, 0.62)
     centers = []
     for i, what in enumerate(steps):
+        h = heights[i]
         ax.add_patch(Rectangle((hx + 0.1, y - h), hw - 0.2, h, fc='white', ec=EDGE, lw=0.5, zorder=2))
         ax.text(hx + 0.17, y - h/2, what, ha='left', va='center', fontsize=fs, color=INK, linespacing=1.2, zorder=3)
         centers.append(y - h/2)
@@ -74,10 +77,12 @@ def main():
     for j in range(n_show):
         ax.add_patch(Rectangle((sx + j*s, sy), s*0.88, s*0.88, fc=BANK[j % 4] if nz[j] else ZERO, ec=EDGE,
                                lw=0.3, zorder=3))
-    ax.text(sx, sy - 0.06, 'a window of 16 taps; filled: nonzero', ha='left', va='top', fontsize=5.5, color=MUTED)
+        if nz[j] and j % 4 == DOTTED:   # the white dot of Fig. 2 (grayscale)
+            ax.plot(sx + j*s + s*0.44, sy + s*0.44, 'o', ms=1.4, mfc='white', mec='none', zorder=4)
+    ax.text(sx, sy - 0.06, 'a toy window of 16 taps; filled: nonzero', ha='left', va='top', fontsize=5.5, color=MUTED)
     counts = [sum(nz[b::4]) for b in range(4)]
-    bw, bg, unit = 0.36, 0.16, 0.22
-    bx0, by0 = cx + 0.22, cy + 0.98
+    bw, bg, unit = 0.36, 0.10, 0.22
+    bx0, by0 = cx + 0.6, cy + 0.98
     for b, n in enumerate(counts):
         x = bx0 + b*(bw + bg)
         ax.add_patch(Rectangle((x, by0), bw, n*unit, fc=BANK[b], ec=INK if n == max(counts) else 'none', lw=0.7,
