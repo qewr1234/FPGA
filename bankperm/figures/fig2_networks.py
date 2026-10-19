@@ -12,6 +12,8 @@ marker at 0, after checking that results.json has exactly 0 on every image
 there. W = 1 is zero by shape on every network; a note says so (also checked).
 Pooled values are recomputed from the per-image counts and checked against the
 summaries. Short labels (printed): A, B, R1-R3, M1-M3, Av2, 45.
+Drawn at 8.0 cm, the width the build places it at (build_docx --col-fig-cm 8), so
+the 7 pt text is 7 pt in print.
 """
 import json
 import sys
@@ -72,7 +74,7 @@ def main():
     bounds = json.loads((BANKPERM/'bounds.json').read_text())['networks']
     assert list(res) == list(SHORT) and set(bounds) == set(SHORT)
 
-    fig, ax = plt.subplots(figsize=(8.4/2.54, 5.3/2.54), dpi=300)
+    fig, ax = plt.subplots(figsize=(8.0/2.54, 5.3/2.54), dpi=300)
     print('labels:')
     by_shape = []
     for label, (short, definition, x) in SHORT.items():

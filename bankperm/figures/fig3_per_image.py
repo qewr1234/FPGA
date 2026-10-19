@@ -19,6 +19,8 @@ Images are sorted by the bound's saving; Set12 05.png, the board image, is
 marked. Before plotting, the original (conventional) totals of the three files
 are checked to agree on every image, and each layout's pooled saving is
 recomputed from the per-image counts and checked against its file's summary.
+Drawn at 8.0 cm, the width the build places it at (build_docx --col-fig-cm 8), so
+the 7 pt text is 7 pt in print.
 """
 import json
 from pathlib import Path
@@ -116,7 +118,7 @@ def main():
           f'Frozen {100*series["frozen"][1]/series["bound"][1]:.1f}%')
     print(f'Set12 05.png: rank {board + 1} of 79 by the bound')
 
-    fig, ax = plt.subplots(figsize=(8.4/2.54, 5.5/2.54), dpi=300)
+    fig, ax = plt.subplots(figsize=(8.0/2.54, 5.5/2.54), dpi=300)
     ax.vlines(board + 1, 4, 12.6, color=MUTED, lw=0.6, ls=(0, (1, 1.5)), zorder=1)   # stops below the legend
     ax.annotate('Set12 05.png (board)', (board + 1, 4.55), xytext=(2.5, 0), textcoords='offset points', ha='left',
                 va='center', fontsize=7, color=MUTED)

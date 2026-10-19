@@ -13,6 +13,8 @@ columns, as the IEEE template does.
 Markdown conventions the converter understands:
   # Title                           -> paper title (one line)
   a line '(저자 이름), (소속...)'    -> replaced by --authors / --affil / --email
+                                       (and --author2 / --affil2 / --email2 for a second
+                                       affiliation beside it, in the template's two author columns)
   ## 초록 / ## Abstract             -> Abstract paragraph(s)
   **주제어** — ... / **Keywords** — -> key words
   ## I. 서론  (any roman numeral)   -> heading 1 (the numeral is stripped; Word numbers it)
@@ -231,6 +233,9 @@ def main():
     ap.add_argument('--authors', default='(저자 이름)')
     ap.add_argument('--affil', default='(학과), (대학교)', help='one line; use ; to split lines')
     ap.add_argument('--email', default='')
+    ap.add_argument('--author2', default=None, help='a second affiliation block beside the first')
+    ap.add_argument('--affil2', default='', help='its lines; use ; to split lines')
+    ap.add_argument('--email2', default='')
     ap.add_argument('--col-fig-cm', type=float, default=8.4, help='width of one-column figures')
     ap.add_argument('--wide-fig-cm', type=float, default=15.0, help='width of two-column figures')
     ap.add_argument('--ack', default='본 연구는 과학기술정보통신부 및 정보통신기획평가원의 "SW중심대학사업" 지원을 받아 수행되었습니다.')
@@ -264,14 +269,18 @@ def main():
     el = sb_title.getnext()
     while el is not None and el is not sb_authors:
         first_block.append(el); el = el.getnext()
+    two = args.author2 is not None
     authors = [e for e in first_block if style_of(e) == 'Author']
-    affils = [e for e in first_block if style_of(e) == 'Affiliation'][:4]
+    # the author block's section-break paragraph is the second block's last line
+    all_affils = [e for e in first_block if style_of(e) == 'Affiliation'] + [sb_authors]
+    affils, affils2 = all_affils[:4], all_affils[4:8]
     for e in first_block:
-        if e not in (authors[:1] + affils):
+        if e not in (authors[:1] + affils + (authors[1:2] + affils2 if two else [])):
             body.remove(e)
-    # the author block's section-break paragraph is the second block's last line: keep the break, drop its text
-    for r in list(sb_authors.findall(qn('w:r'))):
-        sb_authors.remove(r)
+    if not two:
+        # one affiliation: keep the section break, drop the second block's last line
+        for r in list(sb_authors.findall(qn('w:r'))):
+            sb_authors.remove(r)
 
     def set_text(el, text):
         runs = el.findall(qn('w:r'))
@@ -298,9 +307,18 @@ def main():
             set_text(e, line)
         else:
             body.remove(e)
+    if two:
+        # the second affiliation, beside the first in the template's two author columns
+        set_text(authors[1], args.author2)
+        affil2_lines = [s.strip() for s in args.affil2.split(';')] + ([args.email2] if args.email2 else [])
+        for e, line in zip(affils2, affil2_lines + [''] * 4):
+            if line or e is sb_authors:
+                set_text(e, line)
+            else:
+                body.remove(e)
     # the author block section should be one column since there is one affiliation
     cols = sb_authors.find(qn('w:pPr') + '/' + qn('w:sectPr') + '/' + qn('w:cols'))
-    if cols is not None:
+    if cols is not None and not two:
         for c in list(cols):
             cols.remove(c)
         cols.attrib.pop(qn('w:num'), None); cols.attrib.pop(qn('w:equalWidth'), None)
