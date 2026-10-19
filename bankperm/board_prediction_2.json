@@ -1,6 +1,6 @@
 {
  "what": "exact W=4 board cycles predicted for the PROTOCOL_2 board runs, written before any of them; per layer CYCLES - IN_STALL must equal \"predicted\" exactly",
- "written_utc": "2026-10-19T06:21:32Z",
+ "written_utc": "2026-10-19T07:12:57Z",
  "script": "bankperm/predict_board_2.py",
  "protocol": {
   "file": "bankperm/PROTOCOL_2.md",
@@ -1862,6 +1862,121 @@
    "comparisons": 49,
    "exact": 49,
    "largest_abs_difference": 0
+  },
+  "raw_report_original": {
+   "source": "denoise/board_runs/dn_d10_c32_us_fx_qat_05_w4.json",
+   "sha256": "64ff3031e4c04d2c60a1d81979c4edb7529eb1a193cf923823c52e9ffd4033fb",
+   "note": "the raw report.json of the earlier W=4 board run of the 05.png Original (not transcribed); kept apart from \"summary\", which counts the board_transcribed.json comparisons only",
+   "mode_seq": 1,
+   "core_id": [
+    "0x4d410303"
+   ],
+   "fclk_mhz": [
+    50.0
+   ],
+   "layers": [
+    {
+     "name": "conv1",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 524305,
+     "in_stall": 0,
+     "predicted": 524305,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv2",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1504752,
+     "in_stall": 0,
+     "predicted": 1504752,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv3",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1435005,
+     "in_stall": 0,
+     "predicted": 1435005,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv4",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1448350,
+     "in_stall": 0,
+     "predicted": 1448350,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv5",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1562948,
+     "in_stall": 12,
+     "predicted": 1562936,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv6",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1369221,
+     "in_stall": 0,
+     "predicted": 1369221,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv7",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1375441,
+     "in_stall": 0,
+     "predicted": 1375441,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv8",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1289021,
+     "in_stall": 0,
+     "predicted": 1289021,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv9",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1436476,
+     "in_stall": 0,
+     "predicted": 1436476,
+     "cycles_minus_in_stall_minus_predicted": 0
+    },
+    {
+     "name": "conv10",
+     "runs": 1,
+     "out_stall": 0,
+     "cycles": 1343523,
+     "in_stall": 0,
+     "predicted": 1343523,
+     "cycles_minus_in_stall_minus_predicted": 0
+    }
+   ],
+   "total": {
+    "cycles": 13289042,
+    "in_stall": 12,
+    "predicted": 13289030,
+    "cycles_minus_in_stall_minus_predicted": 0
+   },
+   "summary": {
+    "comparisons": 11,
+    "exact": 11,
+    "largest_abs_difference": 0
+   }
   }
  },
  "never_run_on_the_board": [
@@ -4879,5 +4994,5 @@
    }
   }
  },
- "seconds": 58.6
+ "seconds": 58.7
 }

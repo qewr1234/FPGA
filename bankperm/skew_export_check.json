@@ -923,7 +923,7 @@
  "board": {
   "original": {
    "exit_code": 0,
-   "seconds": 25.6,
+   "seconds": 25.7,
    "runs": 10,
    "layers": [
     {
@@ -1049,7 +1049,7 @@
   },
   "skew": {
    "exit_code": 0,
-   "seconds": 26.1,
+   "seconds": 28.1,
    "runs": 10,
    "layers": [
     {
@@ -1188,7 +1188,7 @@
   "ran": true,
   "export_board_data_exit": 0,
   "exit_code": 0,
-  "seconds": 19.099999999999998,
+  "seconds": 17.8,
   "ok_cases": 39,
   "failed_cases": [],
   "last_line": "all cases behaved as expected.",
@@ -1332,6 +1332,12 @@
   "output_identical": true,
   "all_ok": true
  },
+ "guards": {
+  "fold_refuses_a_layout_export": true,
+  "fold_wrote_nothing": true,
+  "export_layout_orders_refuses_a_source_outside_the_repository": true,
+  "all_ok": true
+ },
  "build": {
   "py_compile": {
    "files": [
@@ -1339,14 +1345,16 @@
     "bankperm/export_layout.py",
     "bankperm/prepare_layouts.py",
     "bankperm/compare_board_2.py",
-    "bankperm/check_skew_export.py"
+    "bankperm/check_skew_export.py",
+    "bankperm/fold.py",
+    "bankperm/predict_board_2.py"
    ],
    "exit_code": 0,
    "output": ""
   },
   "unittests": {
    "exit_code": 0,
-   "ran": "Ran 22 tests in 0.159s",
+   "ran": "Ran 22 tests in 0.110s",
    "last_line": "OK"
   },
   "all_ok": true
@@ -1420,6 +1428,7 @@
   "cli": true,
   "unchanged": true,
   "l3_orders": true,
+  "guards": true,
   "build": true,
   "board_original": true,
   "board_skew": true,
@@ -1427,5 +1436,5 @@
  },
  "all_ok": true,
  "not_checked": [],
- "seconds": 276.0
+ "seconds": 275.0
 }
