@@ -166,6 +166,11 @@ def make_table(doc, rows, widths_cm):
             add_runs(p, cell_text.replace('<br>', ' '))
             if j > 0:
                 p.alignment = 1  # center
+            if i < len(rows) - 1:
+                p.paragraph_format.keep_with_next = True   # the table is not split across columns
+        tr = tbl.rows[i]._tr
+        trPr = tr.get_or_add_trPr()
+        cant = OxmlElement('w:cantSplit'); trPr.append(cant)
     return tbl
 
 
@@ -328,6 +333,7 @@ def main():
 
     # --- walk the Markdown
     blocks = list(parse_markdown(args.src.read_text(encoding='utf-8')))
+    after_table = False
     title = next(p for k, p in blocks if k == 'title')
     title_el = next(e for e in paras if style_of(e) == 'papertitle')
     # '<br>' in the title starts a new title paragraph (as a line break typed in Word does)
@@ -415,7 +421,10 @@ def main():
                 place(p._p); continue
             if payload.startswith('**사사') or payload.startswith('**Acknowledg'):
                 continue  # the acknowledgment is written from --ack
-            p = doc.add_paragraph(style='Body Text'); add_runs(p, payload); place(p._p); continue
+            p = doc.add_paragraph(style='Body Text'); add_runs(p, payload)
+            if after_table:
+                p.paragraph_format.space_before = Pt(6)   # a paragraph right below a table
+            after_table = False; place(p._p); continue
         if kind == 'bullet':
             p = doc.add_paragraph(style='Body Text'); p.paragraph_format.first_line_indent = Cm(0)
             p.paragraph_format.left_indent = Cm(0.35)
@@ -451,8 +460,9 @@ def main():
                 widths = [total * w / sum(rows.rel_widths) for w in rows.rel_widths]
             if wide:
                 open_wide()
-            h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head); place(h._p)
-            tbl = make_table(doc, rows, widths); place(tbl._tbl)
+            h = make_paragraph(doc, 'table head'); no_numbering(h); add_runs(h, pending_head)
+            h.paragraph_format.keep_with_next = True; place(h._p)
+            tbl = make_table(doc, rows, widths); place(tbl._tbl); after_table = True
             continue
     close_wide()
     # the template's last paragraph is empty, holds the final section break and has the

@@ -10,8 +10,8 @@ layer is predicted if CYCLES − IN_STALL equals its value exactly.
 | Step | Script | Prediction (committed) | Runs | Status |
 |---|---|---|---|---|
 | 0 | `RUN_COLLECT_Q1_BOARD_EVIDENCE.cmd` | — | copies the raw reports of the earlier canary and triplet runs from `build\` | done, 7ebb7ea |
-| 1 | `RUN_W4_LAYOUTS.cmd` | `board_prediction_2.json` (7312a84; PROTOCOL_2) | Original, Frozen, Multi-start, Skew × 05–08 (16 runs, ~2.5 h) | done, c18fc8f: 157/160 layers exact (`board_measured_2.json`) |
-| 2 | `RUN_W4_L3.cmd` (needs step 1 finished) | `board_prediction_3.json` (0887924, reviewed; unchanged since; PROTOCOL_2_ADDENDUM) | skew + relabeling (L3) × 05–08 (4 runs, ~40 min) | done, 1a327f7: 39/40 layers exact (`board_measured_3.json`) |
+| 1 | `RUN_W4_LAYOUTS.cmd` | `board_prediction_2.json` (7312a84; PROTOCOL_2) | Original, Frozen, Multi-start, Skew × 05–08 (16 runs, ~2.5 h) | done, c18fc8f: 157/160 layers exact, conv1 included (conv2–conv10 141/144; `board_measured_2.json`) |
+| 2 | `RUN_W4_L3.cmd` (needs step 1 finished) | `board_prediction_3.json` (0887924, reviewed; unchanged since; PROTOCOL_2_ADDENDUM) | skew + relabeling (L3) × 05–08 (4 runs, ~40 min) | done, 1a327f7: 39/40 layers exact (35/36; `board_measured_3.json`) |
 
 The WIP commit 0887924 that first holds `board_prediction_3.json` said "not reviewed": the
 review finished afterwards and changed nothing in that file (its git blob is the same at
@@ -34,9 +34,11 @@ On 05.png the Original, Frozen and Multi-start values equal the earlier board ru
 had never run on the board. Correction (2026-10-19 evening): Original, Frozen and Multi-start
 *had* run on Set12 06–08 (and 04, 09–12) in earlier triplets on the board PC, outside the
 repository; their reports came in with 7ebb7ea, their dates are not recorded, and their board
-time does not fit after these runs, so they were made before the predictions. The predictions
-did not read them (they read only the exports, the count and `w4_gaps.py`), but the
-`never_run_on_the_board` lists of the prediction files are wrong for those nine runs.
+time does not fit after these runs, so they were made before these runs (the predictions were
+written 11 minutes before the PROTOCOL_2 runs were pinned). The predictions did not read the
+runs on 04 and 06–12 (they read the exports, the count and `w4_gaps.py`, and check themselves
+against the earlier 05.png totals), but the `never_run_on_the_board` lists of the prediction
+files are wrong for those nine runs.
 
 ## Results
 
