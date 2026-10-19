@@ -1,0 +1,2274 @@
+{
+ "what": "L3 board runs (PROTOCOL_2_ADDENDUM.md, W=4 bitstream) against the exact per-layer prediction, and against the Original and Skew runs of PROTOCOL_2",
+ "model": "dn_d10_c32_us_fx_qat",
+ "layout": "L3 (skew + relabeling, bankperm/perms_2.json)",
+ "core_id": "0x4d410303",
+ "fclk_mhz": 50.0,
+ "runs_dir": "denoise/board_runs/q1_layouts3",
+ "match_rule": "CYCLES - IN_STALL == exact",
+ "prediction": {
+  "file": "bankperm/board_prediction_3.json",
+  "present": true,
+  "git_blob": "31e444ec648aca3d97f588049f4d93e84be2fd65",
+  "lf_sha256": "42fa3e00a65c3ed86d9ceb87d35dc847192769a7e0866190e878aba7d5a0d95d",
+  "written_utc": "2026-10-19T07:35:19Z",
+  "all_checks_passed": true,
+  "pinned_before_the_runs": "31e444ec648aca3d97f588049f4d93e84be2fd65",
+  "same_as_pinned": true,
+  "committed_in": "0887924c812aa3c6182b64e2f7c8f336b30ca5dc",
+  "committed_at": "2026-10-19T07:38:58Z"
+ },
+ "runs": {
+  "l3_05": {
+   "layout": "l3",
+   "image": "05.png",
+   "export_dir": "C:\\fpga\\FPGA\\build\\layout_exports\\l3",
+   "prediction_read_from": "predictions/l3/05.png/layers",
+   "layers": [
+    {
+     "name": "conv1",
+     "cycles": 524305,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 524305,
+     "exact": 524305,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv2",
+     "cycles": 1361341,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1361341,
+     "exact": 1361341,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv3",
+     "cycles": 1321646,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1321646,
+     "exact": 1321646,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv4",
+     "cycles": 1271024,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1271024,
+     "exact": 1271024,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv5",
+     "cycles": 1317031,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1317031,
+     "exact": 1317031,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv6",
+     "cycles": 1233078,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1233078,
+     "exact": 1233078,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv7",
+     "cycles": 1242938,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1242938,
+     "exact": 1242938,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv8",
+     "cycles": 1198657,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1198657,
+     "exact": 1198657,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv9",
+     "cycles": 1228177,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1228177,
+     "exact": 1228177,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv10",
+     "cycles": 1343523,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1343523,
+     "exact": 1343523,
+     "difference": 0,
+     "match": true
+    }
+   ],
+   "total": {
+    "cycles": 12041720,
+    "in_stall": 0,
+    "out_stall": 0,
+    "cycles_minus_in_stall": 12041720,
+    "exact": 12041720,
+    "difference": 0,
+    "count_w4_results_2": 12041188,
+    "cycles_minus_in_stall_minus_count": 532,
+    "predicted_fill_drain": 532
+   },
+   "layers_matched": 10,
+   "layers_predicted": 10
+  },
+  "l3_06": {
+   "layout": "l3",
+   "image": "06.png",
+   "export_dir": "C:\\fpga\\FPGA\\build\\layout_exports\\l3",
+   "prediction_read_from": "predictions/l3/06.png/layers",
+   "layers": [
+    {
+     "name": "conv1",
+     "cycles": 524305,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 524305,
+     "exact": 524305,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv2",
+     "cycles": 1269365,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1269365,
+     "exact": 1269365,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv3",
+     "cycles": 1230726,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1230726,
+     "exact": 1230726,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv4",
+     "cycles": 1278401,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1278401,
+     "exact": 1278401,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv5",
+     "cycles": 1413252,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1413252,
+     "exact": 1413252,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv6",
+     "cycles": 1244414,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1244414,
+     "exact": 1244414,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv7",
+     "cycles": 1274640,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1274640,
+     "exact": 1274640,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv8",
+     "cycles": 1199776,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1199776,
+     "exact": 1199776,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv9",
+     "cycles": 1249632,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1249632,
+     "exact": 1249632,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv10",
+     "cycles": 1343519,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1343519,
+     "exact": 1343519,
+     "difference": 0,
+     "match": true
+    }
+   ],
+   "total": {
+    "cycles": 12028030,
+    "in_stall": 0,
+    "out_stall": 0,
+    "cycles_minus_in_stall": 12028030,
+    "exact": 12028030,
+    "difference": 0,
+    "count_w4_results_2": 12027502,
+    "cycles_minus_in_stall_minus_count": 528,
+    "predicted_fill_drain": 528
+   },
+   "layers_matched": 10,
+   "layers_predicted": 10
+  },
+  "l3_07": {
+   "layout": "l3",
+   "image": "07.png",
+   "export_dir": "C:\\fpga\\FPGA\\build\\layout_exports\\l3",
+   "prediction_read_from": "predictions/l3/07.png/layers",
+   "layers": [
+    {
+     "name": "conv1",
+     "cycles": 524305,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 524305,
+     "exact": 524305,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv2",
+     "cycles": 1402412,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1402412,
+     "exact": 1402412,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv3",
+     "cycles": 1337159,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1337159,
+     "exact": 1337159,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv4",
+     "cycles": 1264770,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1264770,
+     "exact": 1264770,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv5",
+     "cycles": 1325358,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1325358,
+     "exact": 1325358,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv6",
+     "cycles": 1240003,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1240003,
+     "exact": 1240003,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv7",
+     "cycles": 1239298,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1239298,
+     "exact": 1239298,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv8",
+     "cycles": 1201313,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1201313,
+     "exact": 1201312,
+     "difference": 1,
+     "match": false
+    },
+    {
+     "name": "conv9",
+     "cycles": 1241674,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1241674,
+     "exact": 1241674,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv10",
+     "cycles": 1343519,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 1343519,
+     "exact": 1343519,
+     "difference": 0,
+     "match": true
+    }
+   ],
+   "total": {
+    "cycles": 12119811,
+    "in_stall": 0,
+    "out_stall": 0,
+    "cycles_minus_in_stall": 12119811,
+    "exact": 12119810,
+    "difference": 1,
+    "count_w4_results_2": 12119294,
+    "cycles_minus_in_stall_minus_count": 517,
+    "predicted_fill_drain": 516
+   },
+   "layers_matched": 9,
+   "layers_predicted": 10
+  },
+  "l3_08": {
+   "layout": "l3",
+   "image": "08.png",
+   "export_dir": "C:\\fpga\\FPGA\\build\\layout_exports\\l3",
+   "prediction_read_from": "predictions/l3/08.png/layers",
+   "layers": [
+    {
+     "name": "conv1",
+     "cycles": 2097169,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 2097169,
+     "exact": 2097169,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv2",
+     "cycles": 5381827,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 5381827,
+     "exact": 5381827,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv3",
+     "cycles": 5197179,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 5197179,
+     "exact": 5197179,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv4",
+     "cycles": 5038127,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 5038127,
+     "exact": 5038127,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv5",
+     "cycles": 5437732,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 5437732,
+     "exact": 5437732,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv6",
+     "cycles": 4832779,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 4832779,
+     "exact": 4832779,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv7",
+     "cycles": 4874043,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 4874043,
+     "exact": 4874043,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv8",
+     "cycles": 4787470,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 4787470,
+     "exact": 4787470,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv9",
+     "cycles": 4826845,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 4826845,
+     "exact": 4826845,
+     "difference": 0,
+     "match": true
+    },
+    {
+     "name": "conv10",
+     "cycles": 5373983,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 5373983,
+     "exact": 5373983,
+     "difference": 0,
+     "match": true
+    }
+   ],
+   "total": {
+    "cycles": 47847154,
+    "in_stall": 0,
+    "out_stall": 0,
+    "cycles_minus_in_stall": 47847154,
+    "exact": 47847154,
+    "difference": 0,
+    "count_w4_results_2": 47846650,
+    "cycles_minus_in_stall_minus_count": 504,
+    "predicted_fill_drain": 504
+   },
+   "layers_matched": 10,
+   "layers_predicted": 10
+  }
+ },
+ "invalid_runs": {},
+ "missing_runs": [],
+ "ignored": [],
+ "misses": [
+  {
+   "run": "l3_07",
+   "image": "07.png",
+   "layer": "conv8",
+   "cycles": 1201313,
+   "in_stall": 0,
+   "out_stall": 0,
+   "exact": 1201312,
+   "difference": 1
+  }
+ ],
+ "unpredicted": [],
+ "setup": {
+  "what": "what the L3 board runs (bankperm/PROTOCOL_2_ADDENDUM.md) in this folder are made with, pinned before the first run (bankperm/prepare_l3.py --bitstream); a rerun of RUN_W4_L3.cmd refuses any change",
+  "build": "zed_v4_p16_t4_w4_1792234898",
+  "files": {
+   "system_wrapper.bit": {
+    "bytes": 4045769,
+    "sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"
+   },
+   "system_wrapper.xsa": {
+    "bytes": 1102973,
+    "sha256": "977aa1764cb7b24b44d2400609ff08996b7a6a36b21052cc9db159b819752068"
+   }
+  },
+  "earlier_canary_bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+  "matches_earlier_canary_bitstream": true,
+  "other_bitstream_allowed": false,
+  "prediction": {
+   "file": "bankperm/board_prediction_3.json",
+   "git_blob": "31e444ec648aca3d97f588049f4d93e84be2fd65",
+   "lf_sha256": "42fa3e00a65c3ed86d9ceb87d35dc847192769a7e0866190e878aba7d5a0d95d",
+   "committed_in": "0887924c812aa3c6182b64e2f7c8f336b30ca5dc",
+   "committed_at": "2026-10-19T07:38:58Z",
+   "commit_on_a_remote_branch": true,
+   "head": "eca6f62f41b200847914b70f4699dc5a8159b8a6"
+  },
+  "export_check": {
+   "file": "bankperm/l3_export_check.json",
+   "git_blob": "7446e4654a5a5235e1abc960c7ef21b8fc4a48c3",
+   "lf_sha256": "023707d45b3169d2cb0c621fb8d2ddf848059888cb3e6e50d3ca8fc3b49c2bda",
+   "committed_in": "68c3088607598ceeb1f70cd32b4cd75b0df9c8ff"
+  },
+  "orders": {
+   "file": "bankperm/perms_2.json",
+   "git_blob": "b38479d9d59b1339525beb15fbed34df2db62761",
+   "lf_sha256": "90c6b2739f1e60c7d5bd7353bfcb67794f4dc030e21697eec1dd56f67b90a802"
+  },
+  "export": {
+   "path": "build/layout_exports/l3",
+   "files": {
+    "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "conv1_config.bin": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+    "conv2_config.bin": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+    "conv3_config.bin": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+    "conv4_config.bin": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+    "conv5_config.bin": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+    "conv6_config.bin": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+    "conv7_config.bin": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+    "conv8_config.bin": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+    "conv9_config.bin": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+    "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+    "layout_manifest.json": "0e495e0bfd9754e6ab03a09c28bfbb04f6236fed4fe25c791c3d93278010a189",
+    "manifest.json": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+    "permutation_manifest.json": "8f00c5a85e78ab00d89c8b274ee4d4181c14f63d9ed77e2ece3f8f98816187f1"
+   },
+   "differ_from_original": [
+    "conv1_config.bin",
+    "conv2_config.bin",
+    "conv3_config.bin",
+    "conv4_config.bin",
+    "conv5_config.bin",
+    "conv6_config.bin",
+    "conv7_config.bin",
+    "conv8_config.bin",
+    "conv9_config.bin",
+    "manifest.json"
+   ],
+   "same_as_original": [
+    "conv10_config.bin",
+    "int_eval.json"
+   ],
+   "not_in_original": [
+    "layout_manifest.json",
+    "permutation_manifest.json"
+   ],
+   "checked_by": "bankperm/check_l3_export.py (bankperm/l3_export_check.json)",
+   "note": "layout_manifest.json (bankperm/export_layout.py) lists changed_files and unchanged_files against the intermediate fold.py export with the relabeling, not against the original; its status names check_skew_export.py, the check of the skew export. Against the original export see the lists here"
+  },
+  "config_bins_equal_to_the_prediction": 40,
+  "code": {
+   "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+   "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+   "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+  },
+  "tools": {
+   "RUN_W4_L3.cmd": "15844a2a0d6e9e919778b041997c286c934fbace9f32a2f90d4fd892f4ab0062",
+   "bankperm/prepare_l3.py": "0f74b6bd1c707b2d9f9cc43ff3bb00b4734a8a309b682bc9ac6d61b9a72bfc82",
+   "bankperm/compare_board_3.py": "98457b7b70bd3e1babf88b9bb21a68cabd0dcc87943ac79ddcdc26052b377f56",
+   "bankperm/check_l3_export.py": "786da42f4c8efb128a7359d22bbe989e766375feaf054591ee138c1e9c3f3f07",
+   "bankperm/export_layout.py": "da7384df47c8b4434a41a1f255235d9dfa7fbec5190dc0bbc8d017977f93e109",
+   "bankperm/fold.py": "bf8b7f0cb611b6b52f3ca034eb0f37f7cd8650c08dea457d52a3c8bf16f6e435",
+   "bankperm/skew_count.py": "3118c16b82cbe4a535d6f013053214b0920c864681798e4219ce5882323f4f59",
+   "bankperm/fit.py": "b8c60ed78abbb31a8adb19b4122ac0278e52366da4d3b712b2c280054139fc2f",
+   "bankperm/prepare_layouts.py": "449eb015eabb0847872a651ce2815fe2a93817b4b69d3fc1854f76bbf86e1a29",
+   "bankperm/compare_board_2.py": "b282575da4e0bf0309d68909d8bf4135260c9dc0ce2f1738c3906b4a0fa88c64",
+   "denoise/common.py": "5ce9f948d4ba7e758e5118f78fe42b16ec0c3367228ce1b7bcd07fcf8a00804a",
+   "denoise/count_test_sets.py": "780f14644b991b002e9dbdc9d75973aac769ec1ff248bc5d5e1a77b470532f10",
+   "denoise/predict_w4.py": "d40cb81adebb078f2ba325158d37e6c35702a4f46b6611330a750351e72155ad",
+   "scripts/q1_reviewer_bank.py": "ca1d43cec904ff91903b62418cfb7aed50a2bef78ac088d2e4a0cc8a21e4935a",
+   "scripts/q1_reviewer_export.py": "5ffe99fb5ef550018c5089e0ff222ecab62b656908ca346c3145066f72e60c65"
+  },
+  "q1_layouts2_setup": {
+   "file": "denoise/board_runs/q1_layouts2/setup.json",
+   "bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+   "same_bitstream": true,
+   "code": {
+    "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+    "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+    "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+   },
+   "same_driver": true
+  },
+  "protocol_2_runs": {
+   "folder": "denoise/board_runs/q1_layouts2",
+   "setup_json_present": true,
+   "runs_planned": 16,
+   "runs_finished": 16,
+   "not_finished": {},
+   "unfinished_allowed": false
+  },
+  "pinned_utc": "2026-10-19T10:10:29Z"
+ },
+ "against_protocol_2_runs": {
+  "05.png": {
+   "original": {
+    "run": "denoise/board_runs/q1_layouts2/original_05",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1504752,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1504752,
+      "exact": 1504752,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1435005,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1435005,
+      "exact": 1435005,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1448350,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1448350,
+      "exact": 1448350,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1562936,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1562936,
+      "exact": 1562936,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1369221,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1369221,
+      "exact": 1369221,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1375441,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1375441,
+      "exact": 1375441,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1289021,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1289021,
+      "exact": 1289021,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1436476,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1436476,
+      "exact": 1436476,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343523,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343523,
+      "exact": 1343523,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 13289030,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 13289030,
+     "exact": 13289030,
+     "difference": 0
+    },
+    "layers_matched": 10
+   },
+   "skew": {
+    "run": "denoise/board_runs/q1_layouts2/skew_05",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1386450,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1386450,
+      "exact": 1386450,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1339442,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1339442,
+      "exact": 1339442,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1283807,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1283807,
+      "exact": 1283807,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1337824,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1337824,
+      "exact": 1337824,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1236532,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1236532,
+      "exact": 1236532,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1250546,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1250546,
+      "exact": 1250546,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1199363,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1199363,
+      "exact": 1199363,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1238494,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1238494,
+      "exact": 1238494,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343523,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343523,
+      "exact": 1343523,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 12140286,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 12140286,
+     "exact": 12140286,
+     "difference": 0
+    },
+    "layers_matched": 10
+   }
+  },
+  "06.png": {
+   "original": {
+    "run": "denoise/board_runs/q1_layouts2/original_06",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1430915,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1430915,
+      "exact": 1430915,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1332936,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1332936,
+      "exact": 1332936,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1520295,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1520295,
+      "exact": 1520295,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1758428,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1758428,
+      "exact": 1758428,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1400728,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1400728,
+      "exact": 1400728,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1416427,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1416427,
+      "exact": 1416427,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1277759,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1277759,
+      "exact": 1277759,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1460357,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1460357,
+      "exact": 1460357,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343519,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343519,
+      "exact": 1343519,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 13465669,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 13465669,
+     "exact": 13465669,
+     "difference": 0
+    },
+    "layers_matched": 10
+   },
+   "skew": {
+    "run": "denoise/board_runs/q1_layouts2/skew_06",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1291317,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1291317,
+      "exact": 1291317,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1242351,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1242351,
+      "exact": 1242351,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1293933,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1293933,
+      "exact": 1293933,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1438630,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1438630,
+      "exact": 1438630,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1248039,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1248039,
+      "exact": 1248039,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1282599,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1282599,
+      "exact": 1282599,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1200205,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1200205,
+      "exact": 1200205,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1258714,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1258714,
+      "exact": 1258714,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343519,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343519,
+      "exact": 1343519,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 12123612,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 12123612,
+     "exact": 12123612,
+     "difference": 0
+    },
+    "layers_matched": 10
+   }
+  },
+  "07.png": {
+   "original": {
+    "run": "denoise/board_runs/q1_layouts2/original_07",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1549562,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1549562,
+      "exact": 1549562,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1471516,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1471516,
+      "exact": 1471516,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1479934,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1479934,
+      "exact": 1479934,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1592607,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1592607,
+      "exact": 1592607,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1395388,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1395388,
+      "exact": 1395388,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1337328,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1337328,
+      "exact": 1337328,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1286045,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1286045,
+      "exact": 1286045,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1431797,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1431797,
+      "exact": 1431797,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343519,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343519,
+      "exact": 1343519,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 13412001,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 13412001,
+     "exact": 13412001,
+     "difference": 0
+    },
+    "layers_matched": 10
+   },
+   "skew": {
+    "run": "denoise/board_runs/q1_layouts2/skew_07",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 524305,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 524305,
+      "exact": 524305,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 1425139,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1425139,
+      "exact": 1425139,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 1356385,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1356385,
+      "exact": 1356385,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 1277778,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1277778,
+      "exact": 1277778,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 1343448,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343448,
+      "exact": 1343448,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 1243563,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1243563,
+      "exact": 1243563,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 1245350,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1245350,
+      "exact": 1245350,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 1202253,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1202253,
+      "exact": 1202253,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 1249596,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1249596,
+      "exact": 1249596,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 1343519,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 1343519,
+      "exact": 1343519,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 12211336,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 12211336,
+     "exact": 12211336,
+     "difference": 0
+    },
+    "layers_matched": 10
+   }
+  },
+  "08.png": {
+   "original": {
+    "run": "denoise/board_runs/q1_layouts2/original_08",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 2097169,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 2097169,
+      "exact": 2097169,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 5983661,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5983661,
+      "exact": 5983661,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 5747927,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5747927,
+      "exact": 5747927,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 5736235,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5736235,
+      "exact": 5736235,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 6436792,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 6436792,
+      "exact": 6436792,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 5260095,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5260095,
+      "exact": 5260095,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 5188144,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5188144,
+      "exact": 5188144,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 4941111,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 4941111,
+      "exact": 4941110,
+      "difference": 1,
+      "match": false
+     },
+     {
+      "name": "conv9",
+      "cycles": 5211853,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5211853,
+      "exact": 5211853,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 5373983,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5373983,
+      "exact": 5373983,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 51976970,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 51976970,
+     "exact": 51976969,
+     "difference": 1
+    },
+    "layers_matched": 9
+   },
+   "skew": {
+    "run": "denoise/board_runs/q1_layouts2/skew_08",
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 2097169,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 2097169,
+      "exact": 2097169,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv2",
+      "cycles": 5471790,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5471790,
+      "exact": 5471790,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv3",
+      "cycles": 5275938,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5275938,
+      "exact": 5275938,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv4",
+      "cycles": 5085446,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5085446,
+      "exact": 5085446,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv5",
+      "cycles": 5514666,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5514666,
+      "exact": 5514666,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv6",
+      "cycles": 4840740,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 4840740,
+      "exact": 4840740,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv7",
+      "cycles": 4888332,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 4888332,
+      "exact": 4888332,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv8",
+      "cycles": 4787676,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 4787676,
+      "exact": 4787676,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv9",
+      "cycles": 4840822,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 4840822,
+      "exact": 4840822,
+      "difference": 0,
+      "match": true
+     },
+     {
+      "name": "conv10",
+      "cycles": 5373983,
+      "in_stall": 0,
+      "out_stall": 0,
+      "cycles_minus_in_stall": 5373983,
+      "exact": 5373983,
+      "difference": 0,
+      "match": true
+     }
+    ],
+    "total": {
+     "cycles": 48176562,
+     "in_stall": 0,
+     "out_stall": 0,
+     "cycles_minus_in_stall": 48176562,
+     "exact": 48176562,
+     "difference": 0
+    },
+    "layers_matched": 10
+   }
+  }
+ },
+ "protocol_2_runs_invalid": {},
+ "protocol_2_setup": {
+  "file": "denoise/board_runs/q1_layouts2/setup.json",
+  "present": true,
+  "same_bitstream": true,
+  "same_driver": true,
+  "prediction_2": {
+   "file": "bankperm/board_prediction_2.json",
+   "present": true,
+   "git_blob": "2fff5a73164be434cead4bc2838e30685a3c79a7",
+   "lf_sha256": "cfbb01d61072b3b8add862f9f9edd4c22ac02cb4e5735be136c649f8d6b7c7b8"
+  }
+ },
+ "l3_savings": {
+  "05.png": {
+   "original": {
+    "cycles": 1247310,
+    "cycles_pct": 9.386012,
+    "cycles_minus_in_stall": 1247310,
+    "cycles_minus_in_stall_pct": 9.386012,
+    "predicted": 1247310,
+    "predicted_pct": 9.386012,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 143411,
+      "cycles_pct": 9.530541,
+      "cycles_minus_in_stall": 143411
+     },
+     {
+      "name": "conv3",
+      "cycles": 113359,
+      "cycles_pct": 7.899554,
+      "cycles_minus_in_stall": 113359
+     },
+     {
+      "name": "conv4",
+      "cycles": 177326,
+      "cycles_pct": 12.243311,
+      "cycles_minus_in_stall": 177326
+     },
+     {
+      "name": "conv5",
+      "cycles": 245905,
+      "cycles_pct": 15.73353,
+      "cycles_minus_in_stall": 245905
+     },
+     {
+      "name": "conv6",
+      "cycles": 136143,
+      "cycles_pct": 9.943099,
+      "cycles_minus_in_stall": 136143
+     },
+     {
+      "name": "conv7",
+      "cycles": 132503,
+      "cycles_pct": 9.633492,
+      "cycles_minus_in_stall": 132503
+     },
+     {
+      "name": "conv8",
+      "cycles": 90364,
+      "cycles_pct": 7.010281,
+      "cycles_minus_in_stall": 90364
+     },
+     {
+      "name": "conv9",
+      "cycles": 208299,
+      "cycles_pct": 14.500695,
+      "cycles_minus_in_stall": 208299
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 1247268,
+    "count_w4_pct": 9.386102
+   },
+   "skew": {
+    "cycles": 98566,
+    "cycles_pct": 0.811892,
+    "cycles_minus_in_stall": 98566,
+    "cycles_minus_in_stall_pct": 0.811892,
+    "predicted": 98566,
+    "predicted_pct": 0.811892,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 25109,
+      "cycles_pct": 1.811028,
+      "cycles_minus_in_stall": 25109
+     },
+     {
+      "name": "conv3",
+      "cycles": 17796,
+      "cycles_pct": 1.328613,
+      "cycles_minus_in_stall": 17796
+     },
+     {
+      "name": "conv4",
+      "cycles": 12783,
+      "cycles_pct": 0.99571,
+      "cycles_minus_in_stall": 12783
+     },
+     {
+      "name": "conv5",
+      "cycles": 20793,
+      "cycles_pct": 1.55424,
+      "cycles_minus_in_stall": 20793
+     },
+     {
+      "name": "conv6",
+      "cycles": 3454,
+      "cycles_pct": 0.27933,
+      "cycles_minus_in_stall": 3454
+     },
+     {
+      "name": "conv7",
+      "cycles": 7608,
+      "cycles_pct": 0.608374,
+      "cycles_minus_in_stall": 7608
+     },
+     {
+      "name": "conv8",
+      "cycles": 706,
+      "cycles_pct": 0.058865,
+      "cycles_minus_in_stall": 706
+     },
+     {
+      "name": "conv9",
+      "cycles": 10317,
+      "cycles_pct": 0.833028,
+      "cycles_minus_in_stall": 10317
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 98560,
+    "count_w4_pct": 0.811878
+   }
+  },
+  "06.png": {
+   "original": {
+    "cycles": 1437639,
+    "cycles_pct": 10.676328,
+    "cycles_minus_in_stall": 1437639,
+    "cycles_minus_in_stall_pct": 10.676328,
+    "predicted": 1437639,
+    "predicted_pct": 10.676328,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 161550,
+      "cycles_pct": 11.289979,
+      "cycles_minus_in_stall": 161550
+     },
+     {
+      "name": "conv3",
+      "cycles": 102210,
+      "cycles_pct": 7.668035,
+      "cycles_minus_in_stall": 102210
+     },
+     {
+      "name": "conv4",
+      "cycles": 241894,
+      "cycles_pct": 15.910991,
+      "cycles_minus_in_stall": 241894
+     },
+     {
+      "name": "conv5",
+      "cycles": 345176,
+      "cycles_pct": 19.629806,
+      "cycles_minus_in_stall": 345176
+     },
+     {
+      "name": "conv6",
+      "cycles": 156314,
+      "cycles_pct": 11.159483,
+      "cycles_minus_in_stall": 156314
+     },
+     {
+      "name": "conv7",
+      "cycles": 141787,
+      "cycles_pct": 10.010188,
+      "cycles_minus_in_stall": 141787
+     },
+     {
+      "name": "conv8",
+      "cycles": 77983,
+      "cycles_pct": 6.103107,
+      "cycles_minus_in_stall": 77983
+     },
+     {
+      "name": "conv9",
+      "cycles": 210725,
+      "cycles_pct": 14.429691,
+      "cycles_minus_in_stall": 210725
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 1437581,
+    "count_w4_pct": 10.676362
+   },
+   "skew": {
+    "cycles": 95582,
+    "cycles_pct": 0.788395,
+    "cycles_minus_in_stall": 95582,
+    "cycles_minus_in_stall_pct": 0.788395,
+    "predicted": 95582,
+    "predicted_pct": 0.788395,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 21952,
+      "cycles_pct": 1.69997,
+      "cycles_minus_in_stall": 21952
+     },
+     {
+      "name": "conv3",
+      "cycles": 11625,
+      "cycles_pct": 0.935726,
+      "cycles_minus_in_stall": 11625
+     },
+     {
+      "name": "conv4",
+      "cycles": 15532,
+      "cycles_pct": 1.200371,
+      "cycles_minus_in_stall": 15532
+     },
+     {
+      "name": "conv5",
+      "cycles": 25378,
+      "cycles_pct": 1.764039,
+      "cycles_minus_in_stall": 25378
+     },
+     {
+      "name": "conv6",
+      "cycles": 3625,
+      "cycles_pct": 0.290456,
+      "cycles_minus_in_stall": 3625
+     },
+     {
+      "name": "conv7",
+      "cycles": 7959,
+      "cycles_pct": 0.620537,
+      "cycles_minus_in_stall": 7959
+     },
+     {
+      "name": "conv8",
+      "cycles": 429,
+      "cycles_pct": 0.035744,
+      "cycles_minus_in_stall": 429
+     },
+     {
+      "name": "conv9",
+      "cycles": 9082,
+      "cycles_pct": 0.72153,
+      "cycles_minus_in_stall": 9082
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 95568,
+    "count_w4_pct": 0.788315
+   }
+  },
+  "07.png": {
+   "original": {
+    "cycles": 1292190,
+    "cycles_pct": 9.63458,
+    "cycles_minus_in_stall": 1292190,
+    "cycles_minus_in_stall_pct": 9.63458,
+    "predicted": 1292191,
+    "predicted_pct": 9.634588,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 147150,
+      "cycles_pct": 9.496232,
+      "cycles_minus_in_stall": 147150
+     },
+     {
+      "name": "conv3",
+      "cycles": 134357,
+      "cycles_pct": 9.130516,
+      "cycles_minus_in_stall": 134357
+     },
+     {
+      "name": "conv4",
+      "cycles": 215164,
+      "cycles_pct": 14.538756,
+      "cycles_minus_in_stall": 215164
+     },
+     {
+      "name": "conv5",
+      "cycles": 267249,
+      "cycles_pct": 16.780599,
+      "cycles_minus_in_stall": 267249
+     },
+     {
+      "name": "conv6",
+      "cycles": 155385,
+      "cycles_pct": 11.135612,
+      "cycles_minus_in_stall": 155385
+     },
+     {
+      "name": "conv7",
+      "cycles": 98030,
+      "cycles_pct": 7.330288,
+      "cycles_minus_in_stall": 98030
+     },
+     {
+      "name": "conv8",
+      "cycles": 84732,
+      "cycles_pct": 6.588572,
+      "cycles_minus_in_stall": 84732
+     },
+     {
+      "name": "conv9",
+      "cycles": 190123,
+      "cycles_pct": 13.278628,
+      "cycles_minus_in_stall": 190123
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 1292161,
+    "count_w4_pct": 9.634756
+   },
+   "skew": {
+    "cycles": 91525,
+    "cycles_pct": 0.749508,
+    "cycles_minus_in_stall": 91525,
+    "cycles_minus_in_stall_pct": 0.749508,
+    "predicted": 91526,
+    "predicted_pct": 0.749517,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 22727,
+      "cycles_pct": 1.594722,
+      "cycles_minus_in_stall": 22727
+     },
+     {
+      "name": "conv3",
+      "cycles": 19226,
+      "cycles_pct": 1.417444,
+      "cycles_minus_in_stall": 19226
+     },
+     {
+      "name": "conv4",
+      "cycles": 13008,
+      "cycles_pct": 1.018017,
+      "cycles_minus_in_stall": 13008
+     },
+     {
+      "name": "conv5",
+      "cycles": 18090,
+      "cycles_pct": 1.346535,
+      "cycles_minus_in_stall": 18090
+     },
+     {
+      "name": "conv6",
+      "cycles": 3560,
+      "cycles_pct": 0.286274,
+      "cycles_minus_in_stall": 3560
+     },
+     {
+      "name": "conv7",
+      "cycles": 6052,
+      "cycles_pct": 0.485968,
+      "cycles_minus_in_stall": 6052
+     },
+     {
+      "name": "conv8",
+      "cycles": 940,
+      "cycles_pct": 0.078187,
+      "cycles_minus_in_stall": 940
+     },
+     {
+      "name": "conv9",
+      "cycles": 7922,
+      "cycles_pct": 0.633965,
+      "cycles_minus_in_stall": 7922
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 91498,
+    "count_w4_pct": 0.749321
+   }
+  },
+  "08.png": {
+   "original": {
+    "cycles": 4129816,
+    "cycles_pct": 7.945473,
+    "cycles_minus_in_stall": 4129816,
+    "cycles_minus_in_stall_pct": 7.945473,
+    "predicted": 4129815,
+    "predicted_pct": 7.945471,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 601834,
+      "cycles_pct": 10.057956,
+      "cycles_minus_in_stall": 601834
+     },
+     {
+      "name": "conv3",
+      "cycles": 550748,
+      "cycles_pct": 9.58168,
+      "cycles_minus_in_stall": 550748
+     },
+     {
+      "name": "conv4",
+      "cycles": 698108,
+      "cycles_pct": 12.170143,
+      "cycles_minus_in_stall": 698108
+     },
+     {
+      "name": "conv5",
+      "cycles": 999060,
+      "cycles_pct": 15.521086,
+      "cycles_minus_in_stall": 999060
+     },
+     {
+      "name": "conv6",
+      "cycles": 427316,
+      "cycles_pct": 8.123732,
+      "cycles_minus_in_stall": 427316
+     },
+     {
+      "name": "conv7",
+      "cycles": 314101,
+      "cycles_pct": 6.054207,
+      "cycles_minus_in_stall": 314101
+     },
+     {
+      "name": "conv8",
+      "cycles": 153641,
+      "cycles_pct": 3.109442,
+      "cycles_minus_in_stall": 153641
+     },
+     {
+      "name": "conv9",
+      "cycles": 385008,
+      "cycles_pct": 7.387162,
+      "cycles_minus_in_stall": 385008
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 4129781,
+    "count_w4_pct": 7.945488
+   },
+   "skew": {
+    "cycles": 329408,
+    "cycles_pct": 0.683752,
+    "cycles_minus_in_stall": 329408,
+    "cycles_minus_in_stall_pct": 0.683752,
+    "predicted": 329408,
+    "predicted_pct": 0.683752,
+    "layers": [
+     {
+      "name": "conv1",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     },
+     {
+      "name": "conv2",
+      "cycles": 89963,
+      "cycles_pct": 1.644124,
+      "cycles_minus_in_stall": 89963
+     },
+     {
+      "name": "conv3",
+      "cycles": 78759,
+      "cycles_pct": 1.492796,
+      "cycles_minus_in_stall": 78759
+     },
+     {
+      "name": "conv4",
+      "cycles": 47319,
+      "cycles_pct": 0.930479,
+      "cycles_minus_in_stall": 47319
+     },
+     {
+      "name": "conv5",
+      "cycles": 76934,
+      "cycles_pct": 1.39508,
+      "cycles_minus_in_stall": 76934
+     },
+     {
+      "name": "conv6",
+      "cycles": 7961,
+      "cycles_pct": 0.164458,
+      "cycles_minus_in_stall": 7961
+     },
+     {
+      "name": "conv7",
+      "cycles": 14289,
+      "cycles_pct": 0.292308,
+      "cycles_minus_in_stall": 14289
+     },
+     {
+      "name": "conv8",
+      "cycles": 206,
+      "cycles_pct": 0.004303,
+      "cycles_minus_in_stall": 206
+     },
+     {
+      "name": "conv9",
+      "cycles": 13977,
+      "cycles_pct": 0.288732,
+      "cycles_minus_in_stall": 13977
+     },
+     {
+      "name": "conv10",
+      "cycles": 0,
+      "cycles_pct": 0.0,
+      "cycles_minus_in_stall": 0
+     }
+    ],
+    "count_w4": 329402,
+    "count_w4_pct": 0.683746
+   }
+  }
+ },
+ "l3_savings_pooled": {
+  "all_images": {
+   "original": {
+    "images": [
+     "05.png",
+     "06.png",
+     "07.png",
+     "08.png"
+    ],
+    "cycles": 8106955,
+    "cycles_pct": 8.798168,
+    "cycles_minus_in_stall": 8106955,
+    "cycles_minus_in_stall_pct": 8.798168,
+    "predicted": 8106955,
+    "predicted_pct": 8.798168
+   },
+   "skew": {
+    "images": [
+     "05.png",
+     "06.png",
+     "07.png",
+     "08.png"
+    ],
+    "cycles": 615081,
+    "cycles_pct": 0.726601,
+    "cycles_minus_in_stall": 615081,
+    "cycles_minus_in_stall_pct": 0.726601,
+    "predicted": 615082,
+    "predicted_pct": 0.726602
+   }
+  },
+  "images_06_08": {
+   "original": {
+    "images": [
+     "06.png",
+     "07.png",
+     "08.png"
+    ],
+    "cycles": 6859645,
+    "cycles_pct": 8.699101,
+    "cycles_minus_in_stall": 6859645,
+    "cycles_minus_in_stall_pct": 8.699101,
+    "predicted": 6859645,
+    "predicted_pct": 8.699101
+   },
+   "skew": {
+    "images": [
+     "06.png",
+     "07.png",
+     "08.png"
+    ],
+    "cycles": 516515,
+    "cycles_pct": 0.712321,
+    "cycles_minus_in_stall": 516515,
+    "cycles_minus_in_stall_pct": 0.712321,
+    "predicted": 516516,
+    "predicted_pct": 0.712323
+   }
+  }
+ },
+ "results_2_counts_w4": {
+  "file": "bankperm/results_2.json",
+  "network": "B-32 ReLU + QAT s1",
+  "note": "per-window count summed over conv1-conv10, fill and drain left out",
+  "images": {
+   "05.png": {
+    "L0": 13288456,
+    "L1": 12355274,
+    "L2": 12139748,
+    "L3": 12041188
+   },
+   "06.png": {
+    "L0": 13465083,
+    "L1": 12399860,
+    "L2": 12123070,
+    "L3": 12027502
+   },
+   "07.png": {
+    "L0": 13411455,
+    "L1": 12442865,
+    "L2": 12210792,
+    "L3": 12119294
+   },
+   "08.png": {
+    "L0": 51976431,
+    "L1": 48894569,
+    "L2": 48176052,
+    "L3": 47846650
+   }
+  }
+ },
+ "summary": {
+  "runs_planned": 4,
+  "runs_valid": 4,
+  "runs_invalid": 0,
+  "runs_missing": 0,
+  "layers_compared": 40,
+  "layers_exact": 39,
+  "conv2_10_compared": 36,
+  "conv2_10_exact": 35,
+  "conv1_compared": 4,
+  "conv1_exact": 4,
+  "misses": 1,
+  "runs_unpredicted": 0,
+  "protocol_2_runs_compared": 8,
+  "protocol_2_runs_invalid": 0
+ },
+ "verdict": "1 MISS(ES): 39/40 layers exact (conv2..conv10 35/36; conv1, the measured constant, 4/4)",
+ "failed_attempts": []
+}

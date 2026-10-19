@@ -1,0 +1,73 @@
+Geometry  : layout.json -> frames=65536 mode_seq=1
+Shape     : layout.json -> K=288 COUT=32
+Script    : 2026-10-17 p (two- and four-wide window ports: K a multiple of W, never picked by default)
+Bitstream : C:/fpga/FPGA/build/zed_v4_p16_t4_w4_1792234898/system_wrapper.bit
+Platform  : C:/fpga/FPGA/build/zed_v4_p16_t4_w4_1792234898/system_wrapper.xsa
+Data      : C:/fpga/FPGA/build/q1_layouts3_io/l3_08
+
+Connecting...
+attempting to launch hw_server
+
+****** Xilinx hw_server v2026.1
+  **** Build date : May 29 2026 at 14:55:19
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+INFO: hw_server application started
+INFO: Use Ctrl-C to exit hw_server application
+
+
+
+****** Xilinx hw_server v2026.1
+
+  **** Build date : May 29 2026 at 14:55:19
+
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+INFO: hw_server application started
+
+INFO: Use Ctrl-C to exit hw_server application
+
+
+
+
+INFO: To connect to this hw_server instance use url: TCP:127.0.0.1:3121
+
+
+
+Device   : PSS_IDCODE 0x23727093
+PL quiet : held in reset, PL-to-PS level shifters off while it is configured
+Configuring the PL...
+INFO: [Hsi 55-2053] elapsed time for repository (C:/Vivado/2026.1/Vivado/data/embeddedsw) loading 1 seconds
+Clock    : already 50.00 MHz
+Access   : the processor's own view
+DDR      : buffers at 0x10000000 / 0x11200000 / 0x12400000 / 0x13600000
+Core     : v4 banked_window_mac four activations/cycle K=288 COUT=32 windows=65536
+Clock    : PL runs at 50.00 MHz (IO PLL, FPGA0_CLK_CTRL 0x00400800)
+
+Caches   : MMU already off; L2 already off
+Loading 36992 + 18874368 + 8388608 bytes over JTAG...
+Readback : the sampled words in DDR match the files.
+Built    : K<=1152 COUT<=128, runtime geometry on
+Shape set: RUN_K=288 RUN_COUT=32
+Streaming configuration...
+Configuration loaded: 9248 items.
+Running 65536 windows...
+Comparing 2097152 results...
+
+--- window_mac_axis on hardware ---
+windows done   : 65536 (expected 65536)
+results        : 2097152 (expected 2097152)
+MISMATCHES     : 0
+CYCLES         : 5381827
+  per window   : 82.12
+IN_STALL       : 0
+OUT_STALL      : 0
+
+RESULT: PASS -- core bound, 4 activations per cycle. CYCLES is NOT
+        comparable with verification/included_run/summary.json or any number
+        measured on the one-activation-per-cycle build.

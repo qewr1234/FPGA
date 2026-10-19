@@ -1,0 +1,121 @@
+{
+ "what": "what the L3 board runs (bankperm/PROTOCOL_2_ADDENDUM.md) in this folder are made with, pinned before the first run (bankperm/prepare_l3.py --bitstream); a rerun of RUN_W4_L3.cmd refuses any change",
+ "build": "zed_v4_p16_t4_w4_1792234898",
+ "files": {
+  "system_wrapper.bit": {
+   "bytes": 4045769,
+   "sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"
+  },
+  "system_wrapper.xsa": {
+   "bytes": 1102973,
+   "sha256": "977aa1764cb7b24b44d2400609ff08996b7a6a36b21052cc9db159b819752068"
+  }
+ },
+ "earlier_canary_bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+ "matches_earlier_canary_bitstream": true,
+ "other_bitstream_allowed": false,
+ "prediction": {
+  "file": "bankperm/board_prediction_3.json",
+  "git_blob": "31e444ec648aca3d97f588049f4d93e84be2fd65",
+  "lf_sha256": "42fa3e00a65c3ed86d9ceb87d35dc847192769a7e0866190e878aba7d5a0d95d",
+  "committed_in": "0887924c812aa3c6182b64e2f7c8f336b30ca5dc",
+  "committed_at": "2026-10-19T07:38:58Z",
+  "commit_on_a_remote_branch": true,
+  "head": "eca6f62f41b200847914b70f4699dc5a8159b8a6"
+ },
+ "export_check": {
+  "file": "bankperm/l3_export_check.json",
+  "git_blob": "7446e4654a5a5235e1abc960c7ef21b8fc4a48c3",
+  "lf_sha256": "023707d45b3169d2cb0c621fb8d2ddf848059888cb3e6e50d3ca8fc3b49c2bda",
+  "committed_in": "68c3088607598ceeb1f70cd32b4cd75b0df9c8ff"
+ },
+ "orders": {
+  "file": "bankperm/perms_2.json",
+  "git_blob": "b38479d9d59b1339525beb15fbed34df2db62761",
+  "lf_sha256": "90c6b2739f1e60c7d5bd7353bfcb67794f4dc030e21697eec1dd56f67b90a802"
+ },
+ "export": {
+  "path": "build/layout_exports/l3",
+  "files": {
+   "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+   "conv1_config.bin": "5b96269edad03f3fd8a71ab4e8073ecac1a496d9912e6a074f975d081f8220fe",
+   "conv2_config.bin": "38f7b5ed3e8af99ac56e0e5213c705bf9dfa7c6cbc85f71177c1fbb1452f3779",
+   "conv3_config.bin": "9dd5bb845dd5009c3886eb4ffffeacddb2c51ecda771bc4dde8742c9ca879378",
+   "conv4_config.bin": "0983cc5681f18369bffa806cb9484d48416bb7e8701691a07f50f2d8b6376c6c",
+   "conv5_config.bin": "2b992388f70f3f9947cdaf561333b90b09636521592cb3d928b77df2a75c4cc7",
+   "conv6_config.bin": "5a178dc87741753dee982d06a8c535fa38c9f9d01936ff98dd743d60ed77a364",
+   "conv7_config.bin": "cb5dbbccf6b3d2e4c109823b6f227b56d024fbbb5488c2e9708053c34c12b524",
+   "conv8_config.bin": "a2343fd04c6927b1a55fc23478ee88594c7ffee3242ce9ec2066fb72dca63b8a",
+   "conv9_config.bin": "5c203a3bf639d29c7b2f1cc12f1c51908f7c4b2aada6d20b59eb9d8caea296c3",
+   "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+   "layout_manifest.json": "0e495e0bfd9754e6ab03a09c28bfbb04f6236fed4fe25c791c3d93278010a189",
+   "manifest.json": "f42ef2f1a183b9c15d7e167a3df851abf715eb62f2433c9212b129d9ee3795f4",
+   "permutation_manifest.json": "8f00c5a85e78ab00d89c8b274ee4d4181c14f63d9ed77e2ece3f8f98816187f1"
+  },
+  "differ_from_original": [
+   "conv1_config.bin",
+   "conv2_config.bin",
+   "conv3_config.bin",
+   "conv4_config.bin",
+   "conv5_config.bin",
+   "conv6_config.bin",
+   "conv7_config.bin",
+   "conv8_config.bin",
+   "conv9_config.bin",
+   "manifest.json"
+  ],
+  "same_as_original": [
+   "conv10_config.bin",
+   "int_eval.json"
+  ],
+  "not_in_original": [
+   "layout_manifest.json",
+   "permutation_manifest.json"
+  ],
+  "checked_by": "bankperm/check_l3_export.py (bankperm/l3_export_check.json)",
+  "note": "layout_manifest.json (bankperm/export_layout.py) lists changed_files and unchanged_files against the intermediate fold.py export with the relabeling, not against the original; its status names check_skew_export.py, the check of the skew export. Against the original export see the lists here"
+ },
+ "config_bins_equal_to_the_prediction": 40,
+ "code": {
+  "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+  "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+  "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+ },
+ "tools": {
+  "RUN_W4_L3.cmd": "15844a2a0d6e9e919778b041997c286c934fbace9f32a2f90d4fd892f4ab0062",
+  "bankperm/prepare_l3.py": "0f74b6bd1c707b2d9f9cc43ff3bb00b4734a8a309b682bc9ac6d61b9a72bfc82",
+  "bankperm/compare_board_3.py": "98457b7b70bd3e1babf88b9bb21a68cabd0dcc87943ac79ddcdc26052b377f56",
+  "bankperm/check_l3_export.py": "786da42f4c8efb128a7359d22bbe989e766375feaf054591ee138c1e9c3f3f07",
+  "bankperm/export_layout.py": "da7384df47c8b4434a41a1f255235d9dfa7fbec5190dc0bbc8d017977f93e109",
+  "bankperm/fold.py": "bf8b7f0cb611b6b52f3ca034eb0f37f7cd8650c08dea457d52a3c8bf16f6e435",
+  "bankperm/skew_count.py": "3118c16b82cbe4a535d6f013053214b0920c864681798e4219ce5882323f4f59",
+  "bankperm/fit.py": "b8c60ed78abbb31a8adb19b4122ac0278e52366da4d3b712b2c280054139fc2f",
+  "bankperm/prepare_layouts.py": "449eb015eabb0847872a651ce2815fe2a93817b4b69d3fc1854f76bbf86e1a29",
+  "bankperm/compare_board_2.py": "b282575da4e0bf0309d68909d8bf4135260c9dc0ce2f1738c3906b4a0fa88c64",
+  "denoise/common.py": "5ce9f948d4ba7e758e5118f78fe42b16ec0c3367228ce1b7bcd07fcf8a00804a",
+  "denoise/count_test_sets.py": "780f14644b991b002e9dbdc9d75973aac769ec1ff248bc5d5e1a77b470532f10",
+  "denoise/predict_w4.py": "d40cb81adebb078f2ba325158d37e6c35702a4f46b6611330a750351e72155ad",
+  "scripts/q1_reviewer_bank.py": "ca1d43cec904ff91903b62418cfb7aed50a2bef78ac088d2e4a0cc8a21e4935a",
+  "scripts/q1_reviewer_export.py": "5ffe99fb5ef550018c5089e0ff222ecab62b656908ca346c3145066f72e60c65"
+ },
+ "q1_layouts2_setup": {
+  "file": "denoise/board_runs/q1_layouts2/setup.json",
+  "bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+  "same_bitstream": true,
+  "code": {
+   "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+   "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+   "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+  },
+  "same_driver": true
+ },
+ "protocol_2_runs": {
+  "folder": "denoise/board_runs/q1_layouts2",
+  "setup_json_present": true,
+  "runs_planned": 16,
+  "runs_finished": 16,
+  "not_finished": {},
+  "unfinished_allowed": false
+ },
+ "pinned_utc": "2026-10-19T10:10:29Z"
+}
