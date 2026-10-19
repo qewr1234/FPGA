@@ -3,7 +3,8 @@
     python bankperm/export_layout.py --layout skew --model dn_d10_c32_us_fx_qat --orders bankperm/perms_2.json --out build/layout_exports/l3
     python bankperm/prepare_l3.py --verify build/layout_exports/l3 [--require-check]
     python bankperm/prepare_l3.py --bitstream BUILD --export build/layout_exports/l3 \
-                                  --record denoise/board_runs/q1_layouts3/setup.json [--allow-other-bitstream]
+                                  --record denoise/board_runs/q1_layouts3/setup.json [--allow-other-bitstream] \
+                                  [--allow-unfinished-layouts]
 
 The L3 board runs of bankperm/PROTOCOL_2_ADDENDUM.md: L3 (skew + relabeling) of
 B-32 ReLU + QAT s1 exactly as in bankperm/perms_2.json, exported with
@@ -26,8 +27,11 @@ changes; it reuses that script's functions without changing them.
                of the orders, not read by the driver) also with its path separators read
                as "/", since fold.py writes "derived_from" with the platform's. Also
                perms_2.json and the driver files (scripts/run_denoise.py, run_cifar.py,
-               run_board_xsdb.tcl) must be those the check ran with. With --require-check
-               (RUN_W4_L3.cmd) that file must be there and say all_ok.
+               run_board_xsdb.tcl) must be those the check ran with, and so must the L3
+               tools (TOOLS: RUN_W4_L3.cmd, this script, compare_board_3.py,
+               check_l3_export.py and every repository module they import), each by its
+               SHA-256 with CRLF read as LF. With --require-check (RUN_W4_L3.cmd) that file
+               must be there and say all_ok.
 
 --bitstream BUILD --export DIR --record FILE pins, before the first L3 board run,
 what the runs are made with, and on a rerun refuses anything that changed since:
@@ -46,7 +50,13 @@ what the runs are made with, and on a rerun refuses anything that changed since:
                for it (runs.l3.<image>.layers[].config_sha256), and its tap orders the skew
                order on conv2..conv9; every export file's hash is recorded
   code         the hashes of scripts/run_denoise.py, run_cifar.py and run_board_xsdb.tcl,
-               which must also be those of the q1_layouts2 setup.json when it is there
+               which must also be those of the q1_layouts2 setup.json when it is there;
+               and of the L3 tools, which must be those l3_export_check.json records
+  PROTOCOL_2   RUN_W4_LAYOUTS.cmd must have finished (one board, one xsdb at a time):
+  runs         denoise/board_runs/q1_layouts2/setup.json is there and all 16 of its runs
+               are there and pass bankperm/compare_board_2.py's checks (its validate, used
+               unchanged), unless --allow-unfinished-layouts is given; the record says
+               which. Checked on every call, not only the first
 If FILE is already there, every one of these must be what it records.
 """
 import argparse
@@ -72,6 +82,14 @@ IMAGES = ('05.png', '06.png', '07.png', '08.png')
 SKEWED = tuple(f'conv{i}' for i in range(2, 10))
 CODE = prepare_layouts.CODE
 Q2_SETUP = ROOT/'denoise'/'board_runs'/'q1_layouts2'/'setup.json'
+# What the L3 steps run besides the driver files (CODE): RUN_W4_L3.cmd, the L3 scripts and every repository
+# module they import (bankperm/check_l3_export.py checks that this list is complete). --verify and --bitstream
+# require each to have the hash bankperm/l3_export_check.json records (tool_code_lf_sha256).
+TOOLS = ('RUN_W4_L3.cmd', 'bankperm/prepare_l3.py', 'bankperm/compare_board_3.py', 'bankperm/check_l3_export.py',
+         'bankperm/export_layout.py', 'bankperm/fold.py', 'bankperm/skew_count.py', 'bankperm/fit.py',
+         'bankperm/prepare_layouts.py', 'bankperm/compare_board_2.py', 'denoise/common.py',
+         'denoise/count_test_sets.py', 'denoise/predict_w4.py', 'scripts/q1_reviewer_bank.py',
+         'scripts/q1_reviewer_export.py')
 PORTABLE = 'permutation_manifest.json'
 PORTABLE_RULE = ('sha256 of the file with CRLF read as LF (text files); for permutation_manifest.json also with every '
                  'JSON-escaped backslash (the two bytes \\\\) read as "/" (fold.py writes derived_from with the '
@@ -127,6 +145,27 @@ def load_check():
     return json.loads(CHECK.read_text(encoding='utf-8')) if CHECK.is_file() else None
 
 
+def tool_hashes():
+    return {c: code_sha(ROOT/c) if (ROOT/c).is_file() else None for c in TOOLS}
+
+
+def check_tools(chk, problems):
+    """RUN_W4_L3.cmd, the L3 scripts and the modules they import must be the files the check was made with."""
+    want = chk.get('tool_code_lf_sha256') or {}
+    n = 0
+    for c, h in tool_hashes().items():
+        if c not in want:
+            problems.append(f'{CHECK.name} records no hash for {c}: it was not made with these L3 tools '
+                            f'(python bankperm/check_l3_export.py on the analysis machine)')
+        elif h != want[c]:
+            problems.append(f'{c} is {"not here" if h is None else "not the file " + CHECK.name + " was made with"} '
+                            f'(SHA-256 with CRLF read as LF): the L3 steps must run the committed, checked files '
+                            f'(git status shows a local change)')
+        else:
+            n += 1
+    return n
+
+
 def check_against_analysis(d, chk, problems):
     """The files here against the hashes bankperm/l3_export_check.json records. -> files compared."""
     rec = chk.get('export_files_portable_sha256') or {}
@@ -154,7 +193,7 @@ def check_against_analysis(d, chk, problems):
     for c in CODE:
         if code_sha(ROOT/c) != drv.get(c):
             problems.append(f'{c} is not the driver file {CHECK.name} checked the L3 export with')
-    return n
+    return n + check_tools(chk, problems)
 
 
 def verify(d, require_check=False):
@@ -230,7 +269,38 @@ def git_record(path, problems):
     return rec
 
 
-def record_setup(build, record, export, allow_other=False):
+def protocol_2_runs():
+    """RUN_W4_LAYOUTS.cmd's 16 runs in denoise/board_runs/q1_layouts2, checked as compare_board_2.py checks them."""
+    runs = Q2_SETUP.parent
+    finished, not_finished = [], {}
+    for lay in compare_board_2.LAYOUTS:
+        for im in compare_board_2.IMAGES:
+            name = f'{lay}_{im[:-4]}'
+            rep, why = compare_board_2.load_report(runs/name)
+            bad = [why] if why else compare_board_2.validate(rep, lay, im)
+            if bad:
+                not_finished[name] = bad[0] if (runs/name).is_dir() else 'not there'
+            else:
+                finished.append(name)
+    return dict(folder=rel(runs), setup_json_present=Q2_SETUP.is_file(),
+                runs_planned=len(compare_board_2.LAYOUTS)*len(compare_board_2.IMAGES), runs_finished=len(finished),
+                not_finished=not_finished)
+
+
+def files_against_original(files):
+    """Which files of the L3 export are byte for byte the original's (text files with CRLF read as LF)."""
+    orig = {q.name: prepare_layouts.lf_sha(q) for q in sorted(ORIGINAL.iterdir()) if q.is_file()}
+    return dict(
+        differ_from_original=sorted(n for n in files if n in orig and files[n] != orig[n]),
+        same_as_original=sorted(n for n in files if n in orig and files[n] == orig[n]),
+        not_in_original=sorted(n for n in files if n not in orig),
+        checked_by='bankperm/check_l3_export.py (bankperm/l3_export_check.json)',
+        note='layout_manifest.json (bankperm/export_layout.py) lists changed_files and unchanged_files against '
+             'the intermediate fold.py export with the relabeling, not against the original; its status names '
+             'check_skew_export.py, the check of the skew export. Against the original export see the lists here')
+
+
+def record_setup(build, record, export, allow_other=False, allow_unfinished=False):
     """Pin the bitstream, the prediction, the export and the driver before the first L3 run; recheck on a rerun."""
     import compare_board_3                         # the prediction, read the way the comparison reads it
     build, export = Path(build).resolve(), Path(export).resolve()
@@ -255,6 +325,22 @@ def record_setup(build, record, export, allow_other=False):
     chk = load_check()
     if chk is not None and chk.get('all_ok') is not True:
         problems.append(f'{rel(CHECK)} does not say all_ok')
+    tools = tool_hashes()
+    if chk is not None:
+        check_tools(chk, problems)
+
+    q2_runs = protocol_2_runs()
+    layouts_finished = q2_runs['setup_json_present'] and not q2_runs['not_finished']
+    q2_runs['unfinished_allowed'] = bool(allow_unfinished and not layouts_finished)
+    if not layouts_finished and not allow_unfinished:
+        nf = sorted(q2_runs['not_finished'])
+        problems.append(
+            f'RUN_W4_LAYOUTS.cmd has not finished: {rel(Q2_SETUP)} is '
+            f'{"there" if q2_runs["setup_json_present"] else "not there"} and {len(nf)} of its '
+            f'{q2_runs["runs_planned"]} runs are not finished ({", ".join(nf[:4])}{", ..." if len(nf) > 4 else ""}). '
+            f'One board, one xsdb at a time: run RUN_W4_L3.cmd after RUN_W4_LAYOUTS.cmd has finished all its runs. '
+            f'If RUN_W4_LAYOUTS.cmd is not running and you want the L3 runs anyway, give allow-unfinished-layouts as '
+            f'an argument of RUN_W4_L3.cmd (after xsdb; the record will say so)')
 
     q2 = json.loads(Q2_SETUP.read_text(encoding='utf-8')) if Q2_SETUP.is_file() else None
     q2_bit = ((q2 or {}).get('files') or {}).get('system_wrapper.bit', {}).get('sha256')
@@ -264,6 +350,7 @@ def record_setup(build, record, export, allow_other=False):
     if q2 is not None and q2.get('code') != code:
         problems.append(f'the driver files differ from those {rel(Q2_SETUP)} pinned for the Original and Skew runs '
                         f'these runs are compared with')
+    export_files = {q.name: prepare_layouts.lf_sha(q) for q in sorted(export.iterdir()) if q.is_file()}
     rec = dict(
         what='what the L3 board runs (bankperm/PROTOCOL_2_ADDENDUM.md) in this folder are made with, pinned before '
              'the first run (bankperm/prepare_l3.py --bitstream); a rerun of RUN_W4_L3.cmd refuses any change',
@@ -274,14 +361,14 @@ def record_setup(build, record, export, allow_other=False):
                                                  'commit_on_a_remote_branch', 'head')},
         export_check={k: chk_rec.get(k) for k in ('file', 'git_blob', 'lf_sha256', 'committed_in')},
         orders=dict(file=rel(PERMS_2), **text_record(PERMS_2)),
-        export=dict(path=rel(export), files={q.name: prepare_layouts.lf_sha(q) for q in sorted(export.iterdir())
-                                             if q.is_file()}),
+        export=dict(path=rel(export), files=export_files, **files_against_original(export_files)),
         config_bins_equal_to_the_prediction=configs if not problems else None,
-        code=code, q1_layouts2_setup=q2_rec)
+        code=code, tools=tools, q1_layouts2_setup=q2_rec, protocol_2_runs=q2_runs)
     if record.is_file():
         old = json.loads(record.read_text(encoding='utf-8'))
         what = dict(files='bitstream', export='L3 export', code='driver (run_denoise.py, run_cifar.py, '
-                    'run_board_xsdb.tcl)', orders='perms_2.json')
+                    'run_board_xsdb.tcl)', orders='perms_2.json', tools='L3 tools (RUN_W4_L3.cmd, '
+                    'prepare_l3.py, compare_board_3.py and what they import)')
         changed = [what[k] for k in what if old.get(k) != rec[k]]
         for k, label in (('prediction', 'prediction'), ('export_check', 'l3_export_check.json')):
             if (old.get(k) or {}).get('git_blob') != rec[k]['git_blob']:
@@ -301,7 +388,7 @@ def record_setup(build, record, export, allow_other=False):
             problems.append(f'build/{build.name}/system_wrapper.bit has SHA-256 {bit}, not the {earlier} of the earlier '
                             f'W=4 canary (bankperm/board_transcribed.json), the bitstream PROTOCOL_2_ADDENDUM.md names. '
                             f'W=4 builds here: {"; ".join(others)}. Move the newer build folder out of build, or give '
-                            f'allow-other-bitstream as the second argument of RUN_W4_L3.cmd to use this one '
+                            f'allow-other-bitstream as an argument of RUN_W4_L3.cmd (after xsdb) to use this one '
                             f'(the record will say so)')
         if q2_bit is not None and q2_bit != bit:
             problems.append(f'{rel(Q2_SETUP)} pinned bitstream {q2_bit} for the Original and Skew runs, not this '
@@ -323,6 +410,8 @@ def record_setup(build, record, export, allow_other=False):
     which = 'the earlier canary bitstream' if bit == earlier else 'NOT the earlier canary bitstream, allowed'
     if q2_rec is not None:
         which += ', ' + ('the q1_layouts2 bitstream' if q2_rec['same_bitstream'] else 'NOT the q1_layouts2 bitstream, allowed')
+    if q2_runs['unfinished_allowed']:
+        which += f', RUN_W4_LAYOUTS.cmd NOT finished ({q2_runs["runs_finished"]} of {q2_runs["runs_planned"]} runs), allowed'
     print(f'pinned -> {rel(record)}: bitstream {build.name} {bit[:16]}... ({which}), prediction '
           f'{rec["prediction"]["file"]} blob {rec["prediction"]["git_blob"][:12]} committed in '
           f'{(rec["prediction"]["committed_in"] or "?")[:12]}, {configs} config.bin as predicted')
@@ -339,13 +428,17 @@ def main():
     ap.add_argument('--allow-other-bitstream', action='store_true',
                     help='with --bitstream: accept a bitstream that is not the earlier W=4 canary bitstream '
                          '(or not the one q1_layouts2/setup.json pinned)')
+    ap.add_argument('--allow-unfinished-layouts', action='store_true',
+                    help='with --bitstream: pin and run although denoise/board_runs/q1_layouts2 does not hold all 16 '
+                         'finished PROTOCOL_2 runs (RUN_W4_LAYOUTS.cmd must not be running)')
     ap.add_argument('--require-check', action='store_true',
                     help=f'with --verify: fail if {CHECK.name} is missing or not all_ok')
     args = ap.parse_args()
     if args.bitstream:
         if not (args.record and args.export):
             raise SystemExit('--bitstream needs --record and --export')
-        return record_setup(args.bitstream, args.record.resolve(), args.export, args.allow_other_bitstream)
+        return record_setup(args.bitstream, args.record.resolve(), args.export, args.allow_other_bitstream,
+                            args.allow_unfinished_layouts)
     return verify(args.verify, args.require_check)
 
 

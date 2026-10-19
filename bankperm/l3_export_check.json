@@ -319,6 +319,48 @@
     "permutation_manifest.json"
    ]
   },
+  "files_against_original": {
+   "differ_from_original": [
+    "conv1_config.bin",
+    "conv2_config.bin",
+    "conv3_config.bin",
+    "conv4_config.bin",
+    "conv5_config.bin",
+    "conv6_config.bin",
+    "conv7_config.bin",
+    "conv8_config.bin",
+    "conv9_config.bin",
+    "manifest.json"
+   ],
+   "same_as_original": [
+    "conv10_config.bin",
+    "int_eval.json"
+   ],
+   "not_in_original": [
+    "layout_manifest.json",
+    "permutation_manifest.json"
+   ],
+   "checked_by": "bankperm/check_l3_export.py (bankperm/l3_export_check.json)",
+   "note": "layout_manifest.json (bankperm/export_layout.py) lists changed_files and unchanged_files against the intermediate fold.py export with the relabeling, not against the original; its status names check_skew_export.py, the check of the skew export. Against the original export see the lists here",
+   "as_expected": true,
+   "layout_manifest_changed_files": [
+    "conv2_config.bin",
+    "conv3_config.bin",
+    "conv4_config.bin",
+    "conv5_config.bin",
+    "conv6_config.bin",
+    "conv7_config.bin",
+    "conv8_config.bin",
+    "conv9_config.bin",
+    "manifest.json"
+   ],
+   "layout_manifest_unchanged_files": [
+    "conv10_config.bin",
+    "conv1_config.bin",
+    "int_eval.json",
+    "permutation_manifest.json"
+   ]
+  },
   "fold_then_skew": {
    "config_bins_equal": true,
    "differing": [],
@@ -925,7 +967,7 @@
    "65536"
   ],
   "exit_code": 0,
-  "seconds": 28.0,
+  "seconds": 26.6,
   "runs": 10,
   "layers": [
    {
@@ -1158,11 +1200,217 @@
     "committed": true,
     "working_tree_is_head": true,
     "same_as_addendum_commit": true
+   },
+   "bankperm/fit.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/common.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/count_test_sets.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/predict_w4.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/q1_reviewer_bank.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "scripts/q1_reviewer_export.py": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv10_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv1_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv2_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv3_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv4_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv5_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv6_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv7_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv8_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/conv9_config.bin": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/int_eval.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
+   },
+   "denoise/export/dn_d10_c32_us_fx_qat/manifest.json": {
+    "committed": true,
+    "working_tree_is_head": true,
+    "same_as_addendum_commit": true
    }
   },
   "git_diff_quiet_since_ref": true,
+  "whole_tree_since_ref": {
+   "command": "git diff --name-only d6521ec",
+   "exit_code": 0,
+   "error": null,
+   "changed": [
+    "RUN_W4_L3.cmd",
+    "bankperm/PAPER_EN.md",
+    "bankperm/README.md",
+    "bankperm/board_prediction_3.json",
+    "bankperm/check_l3_export.py",
+    "bankperm/compare_board_3.py",
+    "bankperm/figures/fig2_networks.pdf",
+    "bankperm/figures/fig2_networks.png",
+    "bankperm/figures/fig2_networks.py",
+    "bankperm/figures/fig3_per_image.pdf",
+    "bankperm/figures/fig3_per_image.png",
+    "bankperm/figures/fig3_per_image.py",
+    "bankperm/l3_export_check.json",
+    "bankperm/predict_board_3.py",
+    "bankperm/prepare_l3.py"
+   ],
+   "not_allowed": [],
+   "untracked": [],
+   "untracked_not_allowed": [],
+   "allowed": {
+    "l3_files": [
+     "RUN_W4_L3.cmd",
+     "bankperm/board_prediction_3.json",
+     "bankperm/l3_export_check.json",
+     "bankperm/board_measured_2.json",
+     "bankperm/board_measured_3.json",
+     "bankperm/check_l3_export.py",
+     "bankperm/prepare_l3.py",
+     "bankperm/compare_board_3.py",
+     "bankperm/predict_board_3.py"
+    ],
+    "result_dirs": [
+     "denoise/board_runs/q1_layouts2/",
+     "denoise/board_runs/q1_layouts2_attempts/",
+     "denoise/board_runs/q1_layouts3/",
+     "denoise/board_runs/q1_layouts3_attempts/"
+    ],
+    "doc_dirs": [
+     "bankperm/figures/"
+    ],
+    "docs": "*.md other than PROTOCOL_2*.md"
+   },
+   "all_ok": true
+  },
   "skew_export_written_now_has_the_hashes_of_skew_export_check_json": true,
   "original_export_has_the_hashes_of_skew_export_check_json": true,
+  "all_ok": true
+ },
+ "imports": {
+  "l3_modules": [
+   "prepare_l3",
+   "compare_board_3",
+   "export_layout",
+   "fold",
+   "skew_count",
+   "run_denoise"
+  ],
+  "l3_imports": [
+   "bankperm/compare_board_2.py",
+   "bankperm/compare_board_3.py",
+   "bankperm/export_layout.py",
+   "bankperm/fit.py",
+   "bankperm/fold.py",
+   "bankperm/prepare_l3.py",
+   "bankperm/prepare_layouts.py",
+   "bankperm/skew_count.py",
+   "denoise/common.py",
+   "denoise/count_test_sets.py",
+   "denoise/predict_w4.py",
+   "scripts/q1_reviewer_bank.py",
+   "scripts/q1_reviewer_export.py",
+   "scripts/run_cifar.py",
+   "scripts/run_denoise.py"
+  ],
+  "l3_not_in_tools": [],
+  "protocol_2_modules": [
+   "prepare_layouts",
+   "compare_board_2",
+   "export_layout",
+   "fold",
+   "skew_count",
+   "run_denoise"
+  ],
+  "protocol_2_imports": [
+   "bankperm/compare_board_2.py",
+   "bankperm/export_layout.py",
+   "bankperm/fit.py",
+   "bankperm/fold.py",
+   "bankperm/prepare_layouts.py",
+   "bankperm/skew_count.py",
+   "denoise/common.py",
+   "denoise/count_test_sets.py",
+   "denoise/predict_w4.py",
+   "scripts/q1_reviewer_bank.py",
+   "scripts/q1_reviewer_export.py",
+   "scripts/run_cifar.py",
+   "scripts/run_denoise.py"
+  ],
+  "protocol_2_not_in_unchanged_list": [],
+  "exit_codes": [
+   0,
+   0
+  ],
   "all_ok": true
  },
  "build": {
@@ -1170,7 +1418,8 @@
    "files": [
     "bankperm/check_l3_export.py",
     "bankperm/prepare_l3.py",
-    "bankperm/compare_board_3.py"
+    "bankperm/compare_board_3.py",
+    "bankperm/predict_board_3.py"
    ],
    "exit_code": 0,
    "output": ""
@@ -1179,7 +1428,7 @@
  },
  "run_script": {
   "file": "RUN_W4_L3.cmd",
-  "lf_sha256": "88606f4639f45bb6cbdeae2226caf983071f12577622e61349091579294e49ab",
+  "lf_sha256": "15844a2a0d6e9e919778b041997c286c934fbace9f32a2f90d4fd892f4ab0062",
   "no_cr": true,
   "ascii": true,
   "lines_present": {
@@ -1189,6 +1438,8 @@
    "model": true,
    "verify": true,
    "pin": true,
+   "override_arguments": true,
+   "choice_carries_on_only_on_y": true,
    "board_run": true,
    "images": true
   },
@@ -1277,12 +1528,21 @@
   "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
  },
  "tool_code_lf_sha256": {
+  "RUN_W4_L3.cmd": "15844a2a0d6e9e919778b041997c286c934fbace9f32a2f90d4fd892f4ab0062",
+  "bankperm/prepare_l3.py": "0f74b6bd1c707b2d9f9cc43ff3bb00b4734a8a309b682bc9ac6d61b9a72bfc82",
+  "bankperm/compare_board_3.py": "98457b7b70bd3e1babf88b9bb21a68cabd0dcc87943ac79ddcdc26052b377f56",
+  "bankperm/check_l3_export.py": "786da42f4c8efb128a7359d22bbe989e766375feaf054591ee138c1e9c3f3f07",
   "bankperm/export_layout.py": "da7384df47c8b4434a41a1f255235d9dfa7fbec5190dc0bbc8d017977f93e109",
   "bankperm/fold.py": "bf8b7f0cb611b6b52f3ca034eb0f37f7cd8650c08dea457d52a3c8bf16f6e435",
   "bankperm/skew_count.py": "3118c16b82cbe4a535d6f013053214b0920c864681798e4219ce5882323f4f59",
-  "bankperm/check_l3_export.py": "842560a6283ff6698a65b14e5497a76a8ab18818a0db74778506d57f51465d87",
-  "bankperm/prepare_l3.py": "66ee44555dfd5bf566d3f9cc6ccc0f1ac62eb76cae1c2b6743bb2a3e53d2b695",
-  "bankperm/compare_board_3.py": "98457b7b70bd3e1babf88b9bb21a68cabd0dcc87943ac79ddcdc26052b377f56"
+  "bankperm/fit.py": "b8c60ed78abbb31a8adb19b4122ac0278e52366da4d3b712b2c280054139fc2f",
+  "bankperm/prepare_layouts.py": "449eb015eabb0847872a651ce2815fe2a93817b4b69d3fc1854f76bbf86e1a29",
+  "bankperm/compare_board_2.py": "b282575da4e0bf0309d68909d8bf4135260c9dc0ce2f1738c3906b4a0fa88c64",
+  "denoise/common.py": "5ce9f948d4ba7e758e5118f78fe42b16ec0c3367228ce1b7bcd07fcf8a00804a",
+  "denoise/count_test_sets.py": "780f14644b991b002e9dbdc9d75973aac769ec1ff248bc5d5e1a77b470532f10",
+  "denoise/predict_w4.py": "d40cb81adebb078f2ba325158d37e6c35702a4f46b6611330a750351e72155ad",
+  "scripts/q1_reviewer_bank.py": "ca1d43cec904ff91903b62418cfb7aed50a2bef78ac088d2e4a0cc8a21e4935a",
+  "scripts/q1_reviewer_export.py": "5ffe99fb5ef550018c5089e0ff222ecab62b656908ca346c3145066f72e60c65"
  },
  "parts_ok": {
   "inputs": true,
@@ -1291,12 +1551,14 @@
   "emulation": true,
   "cli": true,
   "protocol_2_unchanged": true,
+  "imports": true,
   "build": true,
+  "tool_hashes_complete": true,
   "run_script": true,
   "portable_hashes_equal_lf_hashes_here": true,
   "board_l3": true
  },
  "all_ok": true,
  "not_checked": [],
- "seconds": 52.6
+ "seconds": 52.1
 }

@@ -29,9 +29,12 @@ What is checked, all of it on the host (nothing here touches a board):
               tap_order = skew_count.skew_order(288, 32) on conv2..conv9 and nowhere
               else; manifest.json the original's with its per-channel lists in the
               output order plus tap_order and nothing else; int_eval.json the
-              original's byte for byte; the intermediate fold.fold export, with the skew
-              on top, gives the same files; the command line export (as RUN_W4_L3.cmd
-              runs it) is byte for byte the in-process one
+              original's byte for byte; against the original, conv1..conv9 config.bin and
+              manifest.json differ and conv10_config.bin and int_eval.json are the same
+              (files_against_original; layout_manifest.json's changed_files is against
+              fold.py's intermediate, not the original); the intermediate fold.fold
+              export, with the skew on top, gives the same files; the command line export
+              (as RUN_W4_L3.cmd runs it) is byte for byte the in-process one
   emulation   the original and the L3 export emulated (run_denoise.denoise, the
               driver's own host path) on Set12 05.png and BSD68 test001.png: denoised
               image and PNG bytes identical; every layer's INT32 accumulators the
@@ -51,10 +54,17 @@ What is checked, all of it on the host (nothing here touches a board):
               taps_reordered marks on conv2..conv9 only, and the PNG the emulated one.
               The stand-in core copies gold into the results, so its mismatches and
               cycles say nothing; what it checks is what the driver writes and sends
-  unchanged   the files RUN_W4_LAYOUTS.cmd and its setup.json pin (the PROTOCOL_2 board
-              plan, its prediction, the export, the driver, the comparison) are the
-              committed ones and those of the addendum's commit d6521ec, and the skew
-              export written now has every hash bankperm/skew_export_check.json records
+  unchanged   the files RUN_W4_LAYOUTS.cmd runs, imports or its setup.json pins (the
+              PROTOCOL_2 board plan, its prediction, the exports and ZIPs, the driver,
+              the comparison and every repository module they import) are the committed
+              ones and those of the addendum's commit d6521ec; over the whole tree,
+              git diff d6521ec names only the L3 files, results of the board runs and
+              documentation (*.md other than PROTOCOL_2*.md, bankperm/figures/); and the
+              skew export written now has every hash bankperm/skew_export_check.json records
+  imports     the repository modules the L3 steps import (prepare_l3, compare_board_3,
+              export_layout with fold, run_denoise) are all in prepare_l3.TOOLS or the
+              driver files, and those the PROTOCOL_2 steps import (prepare_layouts,
+              compare_board_2, export_layout with fold, run_denoise) all in the unchanged list
   run script  RUN_W4_L3.cmd has LF line ends, is ASCII, holds the export, check, pin and
               board-run lines this check is for (the --w4 --mode 1 --fclk 50 --tile 65536
               flags of the stand-in run), and none of its commands names a PROTOCOL_2
@@ -63,6 +73,11 @@ What is checked, all of it on the host (nothing here touches a board):
   (info)      prediction_3: whether bankperm/board_prediction_3.json, if there, lists this
               export's config.bin digests (not part of all_ok; prepare_l3.py --bitstream
               requires it on the board PC)
+
+tool_code_lf_sha256 records the hash (CRLF read as LF) of every file of prepare_l3.TOOLS
+(RUN_W4_L3.cmd, the L3 scripts, this one included, and the modules they import), which
+prepare_l3.py --verify and --bitstream require on the board PC: change any of them and
+this check must be run again (and its output committed) before the L3 runs.
 
 export_files_lf_sha256 records the hash of every file of the L3 export and of the
 original (text files with CRLF read as LF), which bankperm/prepare_l3.py --verify
@@ -102,16 +117,42 @@ PERMS_2 = prepare_l3.PERMS_2
 RESULTS_2 = HERE/'results_2.json'
 IMAGES = [('Set12', '05.png'), ('BSD68', 'test001.png')]
 SKEWED = [f'conv{i}' for i in range(2, 10)]
-NEW_FILES = ['bankperm/check_l3_export.py', 'bankperm/prepare_l3.py', 'bankperm/compare_board_3.py']
-# What RUN_W4_LAYOUTS.cmd runs or its setup.json pins: none of it may change for L3.
+NEW_FILES = ['bankperm/check_l3_export.py', 'bankperm/prepare_l3.py', 'bankperm/compare_board_3.py',
+             'bankperm/predict_board_3.py']
+# What RUN_W4_LAYOUTS.cmd runs, imports or its setup.json pins: none of it may change for L3.
 PROTOCOL_2_FILES = ['RUN_W4_LAYOUTS.cmd', 'bankperm/PROTOCOL_2.md', 'bankperm/PROTOCOL_2_ADDENDUM.md',
                     'bankperm/board_prediction_2.json', 'bankperm/skew_export_check.json',
                     'bankperm/export_layout.py', 'bankperm/prepare_layouts.py', 'bankperm/compare_board_2.py',
                     'bankperm/check_skew_export.py', 'bankperm/predict_board_2.py', 'bankperm/fold.py',
                     'bankperm/skew_count.py', 'bankperm/board_transcribed.json', 'bankperm/perms_2.json',
                     'bankperm/results_2.json', 'scripts/run_denoise.py', 'scripts/run_cifar.py',
-                    'scripts/run_board_xsdb.tcl', 'scripts/_fake_xsdb_inner.tcl']
+                    'scripts/run_board_xsdb.tcl', 'scripts/_fake_xsdb_inner.tcl',
+                    'bankperm/fit.py', 'denoise/common.py', 'denoise/count_test_sets.py', 'denoise/predict_w4.py',
+                    'scripts/q1_reviewer_bank.py', 'scripts/q1_reviewer_export.py',
+                    'research/q1_codesign/artifacts/q1_bank_reordered_export_20261018.zip',
+                    'research/q1_codesign/artifacts/q1_multistart_verified_export_20261018.zip'] + sorted(
+    (ORIGINAL.relative_to(ROOT)/p.name).as_posix() for p in ORIGINAL.iterdir() if p.is_file())
 PROTOCOL_2_REF = 'd6521ec'       # the addendum's commit: none of PROTOCOL_2_FILES may differ from it
+# Paths git diff PROTOCOL_2_REF may name (over the whole tree): the L3 files, the results of the board runs, and
+# documentation (another workflow rewrites the paper, README and figures); nothing that is run or pinned.
+L3_PATHS = ['RUN_W4_L3.cmd', 'bankperm/board_prediction_3.json', 'bankperm/l3_export_check.json',
+            'bankperm/board_measured_2.json', 'bankperm/board_measured_3.json'] + NEW_FILES
+RESULT_DIRS = ['denoise/board_runs/q1_layouts2/', 'denoise/board_runs/q1_layouts2_attempts/',
+               'denoise/board_runs/q1_layouts3/', 'denoise/board_runs/q1_layouts3_attempts/']
+DOC_DIRS = ['bankperm/figures/']
+# The modules the L3 steps and the PROTOCOL_2 steps import (as scripts run by RUN_W4_L3.cmd / RUN_W4_LAYOUTS.cmd).
+L3_MODULES = ['prepare_l3', 'compare_board_3', 'export_layout', 'fold', 'skew_count', 'run_denoise']
+PROTOCOL_2_MODULES = ['prepare_layouts', 'compare_board_2', 'export_layout', 'fold', 'skew_count', 'run_denoise']
+TRACE = r'''
+import json, sys
+from pathlib import Path
+root = Path(sys.argv[1]).resolve()
+sys.path[:0] = [str(root/'bankperm'), str(root/'denoise'), str(root/'scripts')]
+for m in sys.argv[2].split(','):
+    __import__(m)
+print(json.dumps(sorted(Path(m.__file__).resolve().relative_to(root).as_posix() for m in list(sys.modules.values())
+                        if getattr(m, '__file__', None) and Path(m.__file__).resolve().is_relative_to(root))))
+'''
 RUN_SCRIPT = ROOT/'RUN_W4_L3.cmd'
 
 
@@ -217,6 +258,14 @@ def check_export(l3, lm, orders, work):
                   permutation_manifest_orders_are_perms_2=pm.is_file() and json.loads(pm.read_bytes()).get('orders') == orders,
                   files=sorted(p.name for p in l3.iterdir()))
     ok &= others['int_eval_json_identical_to_original'] and others['permutation_manifest_orders_are_perms_2']
+    vs = prepare_l3.files_against_original(cse.lf_hashes(l3, skip=()))
+    want_diff = sorted([f'conv{i}_config.bin' for i in range(1, 10)] + ['manifest.json'])
+    vs['as_expected'] = (vs['differ_from_original'] == want_diff
+                         and vs['same_as_original'] == ['conv10_config.bin', 'int_eval.json']
+                         and vs['not_in_original'] == ['layout_manifest.json', 'permutation_manifest.json'])
+    vs['layout_manifest_changed_files'] = lm['changed_files']
+    vs['layout_manifest_unchanged_files'] = lm['unchanged_files']
+    ok &= vs['as_expected']
     # fold.fold's intermediate, then the skew, as export_layout.py says it does
     folded = work/'folded'
     if folded.exists():
@@ -238,7 +287,8 @@ def check_export(l3, lm, orders, work):
                     and (folded/'permutation_manifest.json').read_bytes() == pm.read_bytes())
     ok &= fold_rec['config_bins_equal'] and fold_rec['manifest_equal_without_tap_order'] and fold_rec['permutation_manifest_identical']
     return dict(layout=lm['layout'], layers_reordered=lm['layers_reordered'], changed_files=lm['changed_files'],
-                config_bins=rows, manifest=man, other_files=others, fold_then_skew=fold_rec, all_ok=bool(ok))
+                config_bins=rows, manifest=man, other_files=others, files_against_original=vs,
+                fold_then_skew=fold_rec, all_ok=bool(ok))
 
 
 def command_line_export(work, l3):
@@ -393,15 +443,36 @@ def board(work, l3, xsdb, emu):
 
 # ----------------------------------------------------------------------------- unchanged
 
+def allowed_change(path):
+    return (path in L3_PATHS or any(path.startswith(d) for d in RESULT_DIRS + DOC_DIRS)
+            or (path.endswith('.md') and not Path(path).name.startswith('PROTOCOL_2')))
+
+
+def whole_tree_since_ref():
+    """git diff --name-only PROTOCOL_2_REF over the whole working tree: every path must be an allowed one."""
+    rc, out, err = git('diff', '--name-only', PROTOCOL_2_REF)
+    names = out.decode().splitlines() if not rc else []
+    rc2, out2, _ = git('ls-files', '--others', '--exclude-standard')
+    untracked = out2.decode().splitlines() if not rc2 else []
+    bad = sorted(n for n in names if not allowed_change(n))
+    return dict(command=f'git diff --name-only {PROTOCOL_2_REF}', exit_code=rc, error=err or None, changed=names,
+                not_allowed=bad, untracked=untracked, untracked_not_allowed=sorted(n for n in untracked if not allowed_change(n)),
+                allowed=dict(l3_files=L3_PATHS, result_dirs=RESULT_DIRS, doc_dirs=DOC_DIRS,
+                             docs='*.md other than PROTOCOL_2*.md'),
+                all_ok=rc == 0 and not bad)
+
+
 def protocol_2_unchanged(work):
     rows = {}
     for name in PROTOCOL_2_FILES:
         p = ROOT/name
-        here = lf(p) if p.is_file() else None
+        text = Path(name).suffix in prepare_l3.prepare_layouts.TEXT or Path(name).suffix in ('.py', '.cmd', '.tcl')
+        norm = (lambda b: b.replace(b'\r\n', b'\n')) if text else (lambda b: b)
+        here = norm(p.read_bytes()) if p.is_file() else None
         rc, blob, _ = git('show', f'HEAD:{name}')
         rc0, blob0, _ = git('show', f'{PROTOCOL_2_REF}:{name}')
-        rows[name] = dict(committed=rc == 0, working_tree_is_head=rc == 0 and here == blob.replace(b'\r\n', b'\n'),
-                          same_as_addendum_commit=rc0 == 0 and here == blob0.replace(b'\r\n', b'\n'))
+        rows[name] = dict(committed=rc == 0, working_tree_is_head=rc == 0 and here == norm(blob),
+                          same_as_addendum_commit=rc0 == 0 and here == norm(blob0))
     rc, _, _ = git('diff', '--quiet', PROTOCOL_2_REF, '--', *PROTOCOL_2_FILES)
     skew = work/'exports'/'skew'
     if skew.exists():
@@ -410,12 +481,32 @@ def protocol_2_unchanged(work):
     rec = json.loads((HERE/'skew_export_check.json').read_text(encoding='utf-8'))['export_files_lf_sha256']
     now = cse.lf_hashes(skew)
     res = dict(ref=PROTOCOL_2_REF, files=rows, git_diff_quiet_since_ref=rc == 0,
+               whole_tree_since_ref=whole_tree_since_ref(),
                skew_export_written_now_has_the_hashes_of_skew_export_check_json=now == rec['skew'],
                original_export_has_the_hashes_of_skew_export_check_json=cse.lf_hashes(ORIGINAL) == rec['original'])
     res['all_ok'] = bool(all(r['committed'] and r['working_tree_is_head'] and r['same_as_addendum_commit']
                              for r in rows.values()) and res['git_diff_quiet_since_ref']
+                         and res['whole_tree_since_ref']['all_ok']
                          and res['skew_export_written_now_has_the_hashes_of_skew_export_check_json']
                          and res['original_export_has_the_hashes_of_skew_export_check_json'])
+    return res
+
+
+def imports():
+    """The repository modules the L3 and the PROTOCOL_2 steps import must all be in the lists checked here."""
+    def trace(mods):
+        r = subprocess.run([sys.executable, '-c', TRACE, str(ROOT), ','.join(mods)], capture_output=True, text=True,
+                           cwd=str(ROOT))
+        return (json.loads(r.stdout) if r.returncode == 0 else None), r.returncode
+    l3, rc1 = trace(L3_MODULES)
+    p2, rc2 = trace(PROTOCOL_2_MODULES)
+    covered_l3 = set(prepare_l3.TOOLS) | set(prepare_l3.CODE)
+    res = dict(l3_modules=L3_MODULES, l3_imports=l3, l3_not_in_tools=None if l3 is None else sorted(set(l3) - covered_l3),
+               protocol_2_modules=PROTOCOL_2_MODULES, protocol_2_imports=p2,
+               protocol_2_not_in_unchanged_list=None if p2 is None else sorted(set(p2) - set(PROTOCOL_2_FILES)),
+               exit_codes=[rc1, rc2])
+    res['all_ok'] = bool(l3 is not None and p2 is not None and not res['l3_not_in_tools']
+                         and not res['protocol_2_not_in_unchanged_list'])
     return res
 
 
@@ -436,7 +527,10 @@ def run_script():
         'runs_folder': r'set "RUNS=denoise\board_runs\q1_layouts3"',
         'model': f'set "MODEL={MODEL}"',
         'verify': r'python bankperm\prepare_l3.py --verify %L3EXP% --require-check',
-        'pin': r'python bankperm\prepare_l3.py --bitstream "%W4BUILD%" --export %L3EXP% --record %RUNS%\setup.json',
+        'pin': (r'python bankperm\prepare_l3.py --bitstream "%W4BUILD%" --export %L3EXP% --record %RUNS%\setup.json '
+                r'%ALLOWBIT% %ALLOWQ2%'),
+        'override_arguments': 'for %%a in (%2 %3) do if not "%%~a"=="" (',
+        'choice_carries_on_only_on_y': ') else if not errorlevel 1 (',
         'board_run': (r'python scripts\run_denoise.py --model %MODEL% --export-dir %L3EXP% --xsdb "%XSDB%" '
                       r'--build "%W4BUILD%" ' + flags + r' --out "!OUT!" --board-dir "build\q1_layouts3_io\l3_%%~nb"'),
         'images': 'for %%b in (05.png 06.png 07.png 08.png) do',
@@ -506,6 +600,7 @@ def main():
         res['board'] = dict(ran=False, why='--no-board' if args.no_board else 'no tclsh on this machine')
     print('unchanged PROTOCOL_2 files', flush=True)
     res['protocol_2_unchanged'] = protocol_2_unchanged(work)
+    res['imports'] = imports()
     res['build'] = build_checks()
     res['run_script'] = run_script()
     res['prediction_3'] = prediction_3(l3)
@@ -514,13 +609,13 @@ def main():
         rule=prepare_l3.PORTABLE_RULE, original={p.name: prepare_l3.portable_sha(p) for p in sorted(ORIGINAL.iterdir()) if p.is_file()},
         l3={p.name: prepare_l3.portable_sha(p) for p in sorted(l3.iterdir()) if p.is_file() and p.name != 'layout_manifest.json'})
     res['driver_code_lf_sha256'] = {n: prepare_l3.code_sha(ROOT/n) for n in prepare_l3.CODE}
-    res['tool_code_lf_sha256'] = {n: prepare_l3.code_sha(ROOT/n) for n in
-                                  ['bankperm/export_layout.py', 'bankperm/fold.py', 'bankperm/skew_count.py'] + NEW_FILES}
+    res['tool_code_lf_sha256'] = prepare_l3.tool_hashes()      # prepare_l3.py --verify / --bitstream require these
     portable_same = all(res['export_files_portable_sha256'][k] == res['export_files_lf_sha256'][k] for k in ('original', 'l3'))
     parts = dict(inputs=res['inputs']['all_ok'], export=res['export']['all_ok'],
                  command_line_export=res['command_line_export']['all_ok'],
                  emulation=all(r['all_ok'] for r in res['emulation']), cli=all(r['all_ok'] for r in res['cli']),
-                 protocol_2_unchanged=res['protocol_2_unchanged']['all_ok'], build=res['build']['all_ok'],
+                 protocol_2_unchanged=res['protocol_2_unchanged']['all_ok'], imports=res['imports']['all_ok'],
+                 build=res['build']['all_ok'], tool_hashes_complete=None not in res['tool_code_lf_sha256'].values(),
                  run_script=res['run_script']['all_ok'],
                  portable_hashes_equal_lf_hashes_here=portable_same)
     if xsdb:

@@ -3,9 +3,11 @@ rem PROTOCOL_2 addendum board runs (bankperm\PROTOCOL_2_ADDENDUM.md): B-32 ReLU 
 rem (dn_d10_c32_us_fx_qat), layout L3 (skew + relabeling, bankperm\perms_2.json), on the W=4
 rem bitstream, Set12 05, 06, 07, 08.png. Run it after RUN_W4_LAYOUTS.cmd has finished: one board.
 rem
-rem   RUN_W4_L3.cmd [xsdb] [allow-other-bitstream]
+rem   RUN_W4_L3.cmd [xsdb] [allow-other-bitstream] [allow-unfinished-layouts]
 rem        xsdb defaults to C:/Vivado/2026.1/Vivado/bin/xsdb.bat; allow-other-bitstream accepts
-rem        a bitstream that is not the earlier W=4 canary's (see step 1)
+rem        a bitstream that is not the earlier W=4 canary's (see step 1); allow-unfinished-layouts
+rem        runs although RUN_W4_LAYOUTS.cmd has not finished its 16 runs (see step 1). Both only
+rem        on purpose, in either order after xsdb.
 rem
 rem Nothing of RUN_W4_LAYOUTS.cmd's changes: its folders (denoise\board_runs\q1_layouts2,
 rem build\layout_exports\frozen, multistart, skew), its prediction and its scripts are only read.
@@ -19,8 +21,12 @@ rem    bankperm\board_prediction_3.json and bankperm\l3_export_check.json must b
 rem    unchanged (git), every config.bin of the L3 export must be the one it was predicted with,
 rem    and the bitstream must be the earlier W=4 canary's (bankperm\board_transcribed.json) and
 rem    the one denoise\board_runs\q1_layouts2\setup.json pinned (when it is there) unless
-rem    allow-other-bitstream is given. A rerun refuses a bitstream, prediction, export or driver
-rem    file that differs from what setup.json pinned.
+rem    allow-other-bitstream is given. RUN_W4_LAYOUTS.cmd must have finished: its setup.json
+rem    and all 16 of its runs there and passing bankperm\compare_board_2.py's checks, unless
+rem    allow-unfinished-layouts is given. The L3 tools (this script, prepare_l3.py,
+rem    compare_board_3.py and what they import) must be the files l3_export_check.json records.
+rem    A rerun refuses a bitstream, prediction, export, driver or tool file that differs from
+rem    what setup.json pinned.
 rem 2. 4 board runs, --w4 --mode 1 --fclk 50 --tile 65536, each to
 rem    denoise\board_runs\q1_layouts3\l3_STEM\report.json, 05.png first. Stops at the first
 rem    failure. 05.png is compared with its prediction layer by layer before the others run; if
@@ -46,10 +52,20 @@ set "RUNS=denoise\board_runs\q1_layouts3"
 set "L3EXP=build\layout_exports\l3"
 set "STOP="
 set "ALLOWBIT="
-if /i "%~2"=="allow-other-bitstream" set "ALLOWBIT=--allow-other-bitstream"
-if not "%~2"=="" if not defined ALLOWBIT (
-    echo The second argument can only be allow-other-bitstream, not %~2
-    set "STOP=an unknown second argument"
+set "ALLOWQ2="
+for %%a in (%2 %3) do if not "%%~a"=="" (
+    if /i "%%~a"=="allow-other-bitstream" (
+        set "ALLOWBIT=--allow-other-bitstream"
+    ) else if /i "%%~a"=="allow-unfinished-layouts" (
+        set "ALLOWQ2=--allow-unfinished-layouts"
+    ) else (
+        echo After xsdb only allow-other-bitstream and allow-unfinished-layouts can be given, not %%~a
+        set "STOP=an unknown argument"
+    )
+)
+if not "%~4"=="" (
+    echo At most three arguments: xsdb, allow-other-bitstream, allow-unfinished-layouts
+    set "STOP=too many arguments"
 )
 set "W4BUILD="
 for /f "delims=" %%d in ('dir /b /ad /o:n build\zed_v4_p16_t4_w4_* 2^>nul') do (
@@ -83,7 +99,7 @@ if not defined STOP (
     if errorlevel 1 set "STOP=checking the L3 export"
 )
 if not defined STOP (
-    python bankperm\prepare_l3.py --bitstream "%W4BUILD%" --export %L3EXP% --record %RUNS%\setup.json %ALLOWBIT%
+    python bankperm\prepare_l3.py --bitstream "%W4BUILD%" --export %L3EXP% --record %RUNS%\setup.json %ALLOWBIT% %ALLOWQ2%
     if errorlevel 1 set "STOP=pinning the prediction, the export and the bitstream"
 )
 if not defined STOP (
@@ -122,7 +138,11 @@ for %%b in (05.png 06.png 07.png 08.png) do if not defined STOP (
             echo If the Original and Skew runs of RUN_W4_LAYOUTS.cmd matched theirs, check the setup
             echo first: the PL clock, the bitstream and the board. The run is kept as it is.
             choice /c YN /m "Carry on with the other 3 runs anyway"
-            if errorlevel 2 set "STOP=l3 05.png misses the prediction and you chose to stop"
+            if errorlevel 2 (
+                set "STOP=l3 05.png misses the prediction and you chose to stop"
+            ) else if not errorlevel 1 (
+                set "STOP=l3 05.png misses the prediction and no Y was given"
+            )
         ) else if errorlevel 10 (
             echo l3 05.png: every layer exact, carrying on
         ) else (
