@@ -1,0 +1,1490 @@
+{
+ "what": "count, not a board measurement: conventional tap layout (bank t % 4) against the skewed layout (bank (p + s) % 4); inputs of conv2..conv(L-1) only; fill and drain left out",
+ "noise": "sigma 25, test_noise seed 0",
+ "exactness": {
+  "argument": "same permutation of window taps and weight columns; |partial sum| <= K*127*128 < 2^31",
+  "checked": "dn_d10_c32_us_fx_qat 05.png, 4096 windows per layer, integer oracle",
+  "layers_differing": []
+ },
+ "board_network": {
+  "label": "B-32 ReLU + QAT s1",
+  "model": "dn_d10_c32_us_fx_qat",
+  "saving_percent_79_images_other_than_01": {
+   "w1": {
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0,
+    "pooled": 0.0
+   },
+   "w2": {
+    "min": 0.0,
+    "median": 0.0,
+    "max": 0.0,
+    "pooled": 0.0
+   },
+   "w4": {
+    "min": 5.703164431695844,
+    "median": 9.023929428650359,
+    "max": 13.655298504190592,
+    "pooled": 9.20111457096235
+   },
+   "line_buffer": {
+    "min": 10.96119208597421,
+    "median": 12.603206550811727,
+    "max": 17.101240364776622,
+    "pooled": 12.660786694532888
+   }
+  }
+ },
+ "ratios_05png": {
+  "B/A": {
+   "w1": {
+    "conventional": 0.7454929577464788,
+    "skewed": 0.7454929577464788,
+    "same_side_of_1": true,
+    "change_percent": 0.0
+   },
+   "w2": {
+    "conventional": 0.8173162592811122,
+    "skewed": 0.7660762866776203,
+    "same_side_of_1": true,
+    "change_percent": -6.269295639433515
+   },
+   "w4": {
+    "conventional": 1.1937139804159966,
+    "skewed": 1.181672078145636,
+    "same_side_of_1": true,
+    "change_percent": -1.0087761782067879
+   },
+   "line_buffer": {
+    "conventional": 1.234787533195171,
+    "skewed": 1.2417612395492856,
+    "same_side_of_1": true,
+    "change_percent": 0.5647697410800133
+   }
+  },
+  "maxout/ReLU": {
+   "w1": {
+    "conventional": 1.0100972326103217,
+    "skewed": 1.0100972326103217,
+    "same_side_of_1": true,
+    "change_percent": 0.0
+   },
+   "w2": {
+    "conventional": 1.5455316409853552,
+    "skewed": 1.4624847299498385,
+    "same_side_of_1": true,
+    "change_percent": -5.373355603549476
+   },
+   "w4": {
+    "conventional": 2.4819632920483765,
+    "skewed": 2.5645138597605155,
+    "same_side_of_1": true,
+    "change_percent": 3.3260188809645768
+   },
+   "line_buffer": {
+    "conventional": 2.6114454508293163,
+    "skewed": 2.7990735414925045,
+    "same_side_of_1": true,
+    "change_percent": 7.184836681294766
+   }
+  },
+  "45-channel/maxout": {
+   "w1": {
+    "conventional": 1.3828211773417254,
+    "skewed": 1.3828211773417254,
+    "same_side_of_1": true,
+    "change_percent": 0.0
+   },
+   "w2": {
+    "conventional": 0.9069741374101946,
+    "skewed": 0.9584764874577075,
+    "same_side_of_1": true,
+    "change_percent": 5.678480556741619
+   },
+   "w4": {
+    "conventional": 0.7191837474750966,
+    "skewed": 0.7618948167178842,
+    "same_side_of_1": true,
+    "change_percent": 5.938825702435181
+   },
+   "line_buffer": {
+    "conventional": 0.7100563369275495,
+    "skewed": 0.7525274066313715,
+    "same_side_of_1": true,
+    "change_percent": 5.9813661951946635
+   }
+  }
+ },
+ "networks": {
+  "B-32 ReLU + QAT s1": {
+   "model": "dn_d10_c32_us_fx_qat",
+   "images": {
+    "Set12 01.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13268814,
+      "line_buffer": 12425082
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12153348,
+      "line_buffer": 10882671
+     }
+    },
+    "Set12 02.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12959127,
+      "line_buffer": 12039365
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12030716,
+      "line_buffer": 10656033
+     }
+    },
+    "Set12 03.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13108119,
+      "line_buffer": 12284720
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12064559,
+      "line_buffer": 10810704
+     }
+    },
+    "Set12 04.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13455203,
+      "line_buffer": 12756165
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12179765,
+      "line_buffer": 11131107
+     }
+    },
+    "Set12 05.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13288456,
+      "line_buffer": 12544792
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12139748,
+      "line_buffer": 11043344
+     }
+    },
+    "Set12 06.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13465083,
+      "line_buffer": 12680310
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12123070,
+      "line_buffer": 11016295
+     }
+    },
+    "Set12 07.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 13411455,
+      "line_buffer": 12597703
+     },
+     "skewed": {
+      "w1": 43810816,
+      "w2": 22200320,
+      "w4": 12210792,
+      "line_buffer": 10987389
+     }
+    },
+    "Set12 08.png": {
+     "pixels": 262144,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 51976431,
+      "line_buffer": 48298151
+     },
+     "skewed": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 48176052,
+      "line_buffer": 42618248
+     }
+    },
+    "Set12 09.png": {
+     "pixels": 262144,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 53751482,
+      "line_buffer": 50725630
+     },
+     "skewed": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 48821371,
+      "line_buffer": 44346033
+     }
+    },
+    "Set12 10.png": {
+     "pixels": 262144,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 52435290,
+      "line_buffer": 49236725
+     },
+     "skewed": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 48243392,
+      "line_buffer": 43426257
+     }
+    },
+    "Set12 11.png": {
+     "pixels": 262144,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 52664242,
+      "line_buffer": 49431438
+     },
+     "skewed": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 48480398,
+      "line_buffer": 43584690
+     }
+    },
+    "Set12 12.png": {
+     "pixels": 262144,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 52726755,
+      "line_buffer": 49671966
+     },
+     "skewed": {
+      "w1": 175243264,
+      "w2": 88801280,
+      "w4": 48367128,
+      "line_buffer": 43773640
+     }
+    },
+    "BSD68 test001.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32924574,
+      "line_buffer": 31525380
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29386692,
+      "line_buffer": 27363231
+     }
+    },
+    "BSD68 test002.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32240531,
+      "line_buffer": 30576794
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28648270,
+      "line_buffer": 26159153
+     }
+    },
+    "BSD68 test003.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31330827,
+      "line_buffer": 29242271
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28850396,
+      "line_buffer": 25752972
+     }
+    },
+    "BSD68 test004.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31199763,
+      "line_buffer": 29247401
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28814384,
+      "line_buffer": 25794402
+     }
+    },
+    "BSD68 test005.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32924180,
+      "line_buffer": 31556238
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28839903,
+      "line_buffer": 26863734
+     }
+    },
+    "BSD68 test006.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31610443,
+      "line_buffer": 29718390
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28521605,
+      "line_buffer": 25720552
+     }
+    },
+    "BSD68 test007.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31944975,
+      "line_buffer": 30322888
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29062283,
+      "line_buffer": 26594468
+     }
+    },
+    "BSD68 test008.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32851472,
+      "line_buffer": 31355263
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29484782,
+      "line_buffer": 27364921
+     }
+    },
+    "BSD68 test009.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32341954,
+      "line_buffer": 30598784
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29311196,
+      "line_buffer": 26582729
+     }
+    },
+    "BSD68 test010.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31087143,
+      "line_buffer": 29101196
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28759943,
+      "line_buffer": 25734685
+     }
+    },
+    "BSD68 test011.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32716929,
+      "line_buffer": 31190263
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29173657,
+      "line_buffer": 26938277
+     }
+    },
+    "BSD68 test012.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31608594,
+      "line_buffer": 30008485
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28866472,
+      "line_buffer": 26452837
+     }
+    },
+    "BSD68 test013.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31237697,
+      "line_buffer": 29423894
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28645390,
+      "line_buffer": 25890359
+     }
+    },
+    "BSD68 test014.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31187252,
+      "line_buffer": 29090963
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28850504,
+      "line_buffer": 25695879
+     }
+    },
+    "BSD68 test015.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32445786,
+      "line_buffer": 30795586
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29304907,
+      "line_buffer": 26864083
+     }
+    },
+    "BSD68 test016.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32303003,
+      "line_buffer": 30826997
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29059428,
+      "line_buffer": 26934684
+     }
+    },
+    "BSD68 test017.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31414497,
+      "line_buffer": 29244250
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29035969,
+      "line_buffer": 25471183
+     }
+    },
+    "BSD68 test018.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30961563,
+      "line_buffer": 28675601
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28802918,
+      "line_buffer": 25306868
+     }
+    },
+    "BSD68 test019.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31964307,
+      "line_buffer": 30150804
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29011812,
+      "line_buffer": 26330067
+     }
+    },
+    "BSD68 test020.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31759001,
+      "line_buffer": 29737172
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28998098,
+      "line_buffer": 25985635
+     }
+    },
+    "BSD68 test021.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33479841,
+      "line_buffer": 32098392
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29535598,
+      "line_buffer": 27587499
+     }
+    },
+    "BSD68 test022.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32998821,
+      "line_buffer": 31601007
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29328439,
+      "line_buffer": 27330718
+     }
+    },
+    "BSD68 test023.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31697217,
+      "line_buffer": 29911461
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28781645,
+      "line_buffer": 26186415
+     }
+    },
+    "BSD68 test024.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32654024,
+      "line_buffer": 31066760
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29249513,
+      "line_buffer": 26732488
+     }
+    },
+    "BSD68 test025.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31843107,
+      "line_buffer": 29769851
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29102255,
+      "line_buffer": 26029521
+     }
+    },
+    "BSD68 test026.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31998777,
+      "line_buffer": 30333648
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28973117,
+      "line_buffer": 26480715
+     }
+    },
+    "BSD68 test027.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31407691,
+      "line_buffer": 29381848
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28917424,
+      "line_buffer": 25879204
+     }
+    },
+    "BSD68 test028.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33434492,
+      "line_buffer": 31739534
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29298908,
+      "line_buffer": 26311680
+     }
+    },
+    "BSD68 test029.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33770454,
+      "line_buffer": 32366251
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29760400,
+      "line_buffer": 27911477
+     }
+    },
+    "BSD68 test030.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30854103,
+      "line_buffer": 28902260
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28559186,
+      "line_buffer": 25557775
+     }
+    },
+    "BSD68 test031.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33556933,
+      "line_buffer": 32370026
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29510590,
+      "line_buffer": 28039294
+     }
+    },
+    "BSD68 test032.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32431902,
+      "line_buffer": 31155734
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28968485,
+      "line_buffer": 27159347
+     }
+    },
+    "BSD68 test033.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31949072,
+      "line_buffer": 30121542
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28916372,
+      "line_buffer": 26289992
+     }
+    },
+    "BSD68 test034.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31371709,
+      "line_buffer": 29276639
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28704835,
+      "line_buffer": 25541358
+     }
+    },
+    "BSD68 test035.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31927859,
+      "line_buffer": 30226778
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29097784,
+      "line_buffer": 26519012
+     }
+    },
+    "BSD68 test036.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30787327,
+      "line_buffer": 28902537
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28572020,
+      "line_buffer": 25716330
+     }
+    },
+    "BSD68 test037.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31901155,
+      "line_buffer": 30135323
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28906784,
+      "line_buffer": 26376749
+     }
+    },
+    "BSD68 test038.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31792312,
+      "line_buffer": 30061999
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29019330,
+      "line_buffer": 26409304
+     }
+    },
+    "BSD68 test039.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30742894,
+      "line_buffer": 28685404
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28613527,
+      "line_buffer": 25405872
+     }
+    },
+    "BSD68 test040.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31517803,
+      "line_buffer": 29753159
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28720510,
+      "line_buffer": 26084574
+     }
+    },
+    "BSD68 test041.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32458784,
+      "line_buffer": 30785545
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29253047,
+      "line_buffer": 26729191
+     }
+    },
+    "BSD68 test042.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31379658,
+      "line_buffer": 29394772
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28881096,
+      "line_buffer": 25926226
+     }
+    },
+    "BSD68 test043.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31754447,
+      "line_buffer": 29859676
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28985733,
+      "line_buffer": 26068151
+     }
+    },
+    "BSD68 test044.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32409557,
+      "line_buffer": 30800812
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29032027,
+      "line_buffer": 26806364
+     }
+    },
+    "BSD68 test045.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30348619,
+      "line_buffer": 28012361
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28488198,
+      "line_buffer": 24937110
+     }
+    },
+    "BSD68 test046.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32590349,
+      "line_buffer": 31199204
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29162247,
+      "line_buffer": 27254023
+     }
+    },
+    "BSD68 test047.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32245296,
+      "line_buffer": 30835053
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28988351,
+      "line_buffer": 26977944
+     }
+    },
+    "BSD68 test048.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32224933,
+      "line_buffer": 30528869
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28976682,
+      "line_buffer": 26411659
+     }
+    },
+    "BSD68 test049.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31577373,
+      "line_buffer": 29573495
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28712962,
+      "line_buffer": 25655620
+     }
+    },
+    "BSD68 test050.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32920163,
+      "line_buffer": 31517589
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29008547,
+      "line_buffer": 27066043
+     }
+    },
+    "BSD68 test051.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31448497,
+      "line_buffer": 29652390
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28840311,
+      "line_buffer": 26188199
+     }
+    },
+    "BSD68 test052.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31794080,
+      "line_buffer": 29959240
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28468500,
+      "line_buffer": 25715551
+     }
+    },
+    "BSD68 test053.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30627643,
+      "line_buffer": 28447670
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28398780,
+      "line_buffer": 25143785
+     }
+    },
+    "BSD68 test054.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31489510,
+      "line_buffer": 29763832
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28691093,
+      "line_buffer": 26156669
+     }
+    },
+    "BSD68 test055.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32275378,
+      "line_buffer": 30759096
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29198191,
+      "line_buffer": 26987060
+     }
+    },
+    "BSD68 test056.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33671096,
+      "line_buffer": 32489492
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29535702,
+      "line_buffer": 28104451
+     }
+    },
+    "BSD68 test057.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31754255,
+      "line_buffer": 29857986
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29036435,
+      "line_buffer": 26243165
+     }
+    },
+    "BSD68 test058.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30494449,
+      "line_buffer": 28362894
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28423346,
+      "line_buffer": 25216050
+     }
+    },
+    "BSD68 test059.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30955446,
+      "line_buffer": 28839725
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28784565,
+      "line_buffer": 25601484
+     }
+    },
+    "BSD68 test060.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30524240,
+      "line_buffer": 28286020
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28572632,
+      "line_buffer": 25171927
+     }
+    },
+    "BSD68 test061.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 31134273,
+      "line_buffer": 28976198
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28912188,
+      "line_buffer": 25628703
+     }
+    },
+    "BSD68 test062.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32196295,
+      "line_buffer": 30264857
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29336395,
+      "line_buffer": 25914498
+     }
+    },
+    "BSD68 test063.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32685176,
+      "line_buffer": 31350158
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29190001,
+      "line_buffer": 27230819
+     }
+    },
+    "BSD68 test064.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32243554,
+      "line_buffer": 30745747
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29047974,
+      "line_buffer": 26870797
+     }
+    },
+    "BSD68 test065.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 32515461,
+      "line_buffer": 30806516
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29295825,
+      "line_buffer": 26512028
+     }
+    },
+    "BSD68 test066.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 30077723,
+      "line_buffer": 27518485
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 28362341,
+      "line_buffer": 24502131
+     }
+    },
+    "BSD68 test067.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 33660501,
+      "line_buffer": 32491929
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29548819,
+      "line_buffer": 28079023
+     }
+    },
+    "BSD68 test068.png": {
+     "pixels": 154401,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 34028132,
+      "line_buffer": 32777591
+     },
+     "skewed": {
+      "w1": 103753874,
+      "w2": 52575355,
+      "w4": 29381489,
+      "line_buffer": 27662977
+     }
+    }
+   }
+  },
+  "A": {
+   "model": "dn_d7_c32_es",
+   "images": {
+    "Set12 05.png": {
+     "pixels": 65536,
+     "layers_skewed": 5,
+     "conventional": {
+      "w1": 116326400,
+      "w2": 59441152,
+      "w4": 37520214,
+      "line_buffer": 35289395
+     },
+     "skewed": {
+      "w1": 116326400,
+      "w2": 59441152,
+      "w4": 33766185,
+      "line_buffer": 31154808
+     }
+    }
+   }
+  },
+  "B + QAT": {
+   "model": "dn_d10_c64_us_es_qat",
+   "images": {
+    "Set12 05.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 86720512,
+      "w2": 48582220,
+      "w4": 44788404,
+      "line_buffer": 43574905
+     },
+     "skewed": {
+      "w1": 86720512,
+      "w2": 45536457,
+      "w4": 39900558,
+      "line_buffer": 38686833
+     }
+    }
+   }
+  },
+  "B-32 maxout + QAT s1": {
+   "model": "dn_d10_c32_us_mo_fx_qat",
+   "images": {
+    "Set12 05.png": {
+     "pixels": 65536,
+     "layers_skewed": 8,
+     "conventional": {
+      "w1": 44253184,
+      "w2": 34311297,
+      "w4": 32981460,
+      "line_buffer": 32760040
+     },
+     "skewed": {
+      "w1": 44253184,
+      "w2": 32467629,
+      "w4": 31132552,
+      "line_buffer": 30911132
+     }
+    }
+   }
+  },
+  "10 x 45 ReLU + QAT": {
+   "model": "dn_d10_c45_us_fx_qat",
+   "images": {
+    "Set12 05.png": {
+     "pixels": 65536,
+     "layers_skewed": 0,
+     "conventional": {
+      "w1": 61194240,
+      "w2": 31119459,
+      "w4": 23719730,
+      "line_buffer": 23261474
+     },
+     "skewed": {
+      "w1": 61194240,
+      "w2": 31119459,
+      "w4": 23719730,
+      "line_buffer": 23261474
+     }
+    }
+   }
+  }
+ }
+}
