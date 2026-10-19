@@ -1,0 +1,111 @@
+{
+ "what": "what the PROTOCOL_2 board runs in this folder are made with, pinned before the first run (bankperm/prepare_layouts.py --bitstream); a rerun of RUN_W4_LAYOUTS.cmd refuses any change",
+ "build": "zed_v4_p16_t4_w4_1792234898",
+ "files": {
+  "system_wrapper.bit": {
+   "bytes": 4045769,
+   "sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6"
+  },
+  "system_wrapper.xsa": {
+   "bytes": 1102973,
+   "sha256": "977aa1764cb7b24b44d2400609ff08996b7a6a36b21052cc9db159b819752068"
+  }
+ },
+ "earlier_canary_bitstream_sha256": "11641ab391846baeb27b006440bd4b9ec19d53da9fbf8b2742bf9f9291f247a6",
+ "matches_earlier_canary_bitstream": true,
+ "other_bitstream_allowed": false,
+ "prediction": {
+  "file": "bankperm/board_prediction_2.json",
+  "git_blob": "2fff5a73164be434cead4bc2838e30685a3c79a7",
+  "lf_sha256": "cfbb01d61072b3b8add862f9f9edd4c22ac02cb4e5735be136c649f8d6b7c7b8",
+  "committed_in": "7312a844c3504b0edbc582af7482f0e7734f60ad",
+  "committed_at": "2026-10-19T07:21:02Z",
+  "commit_on_a_remote_branch": true,
+  "head": "d6521ec4b188e43f7ac9f6ee73e85c2f5e7daafa"
+ },
+ "exports": {
+  "original": {
+   "path": "denoise/export/dn_d10_c32_us_fx_qat",
+   "files": {
+    "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "conv1_config.bin": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+    "conv2_config.bin": "8ec3fb59fa88b73e73a2cd6fac321e50714607dc1f23605a8d168a859b07e658",
+    "conv3_config.bin": "fc671a019c07f921520e6a0e9f92c2326f9b6b238a8c9890645c905565af06a8",
+    "conv4_config.bin": "caf0430da2bec722043e4b769e1d9bd7c49dd35962b7e80338a09e53c37c4d08",
+    "conv5_config.bin": "dd9c43bb5a9235ebf3bac65371a9e8e662d2a651fc57941830aa17e9baf796d9",
+    "conv6_config.bin": "3370410d1b5b309ed407f30d30efc9ff6bdf550ff89544aaa64e5324d0bafcbd",
+    "conv7_config.bin": "ecda1f2e7766a1fbde8c06a10264cad6ec4fa33ec9bafa137d90e31dc37d503b",
+    "conv8_config.bin": "dda93ac234c47f33102ac390720aee1e08157edc17c4478d72e71f88c3a5971d",
+    "conv9_config.bin": "22fd59b7f34b5c87c6e0d97ef7b34a7936b947451e8b5e990a9bfb29fb834741",
+    "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+    "manifest.json": "db6d543b0480c8108de1ddacae1def01adca8ac31ea0df4c6ab2c5da2aa7c16f"
+   }
+  },
+  "frozen": {
+   "path": "build/layout_exports/frozen",
+   "files": {
+    "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "conv1_config.bin": "2ed21a4d27cb619e4ce4f7c02145ad4df70754edef167b3a2e0f4f700729ae46",
+    "conv2_config.bin": "fe5e3d0950f7029610bde50dab17b54cb0278d57f7a5fb2619a0f56e84bdeda7",
+    "conv3_config.bin": "26f7579e2455a15fce5fbcda9d41524982be20f3144a757534848d4851877c59",
+    "conv4_config.bin": "66206c90eb638067c04166d5835740c05241dbf1a3cb62f5714f1818351f04b7",
+    "conv5_config.bin": "94f7d97f9a8c3c3cde5093e3c2e7978f4a514805cdbf0fa8006bc7caa702e016",
+    "conv6_config.bin": "b4815a61d5cab4df807b9a1bb5d90ed49bd7f5ffafa4fa59fb841a6eb95b8aee",
+    "conv7_config.bin": "88c90a1720dbee2f234e00e8d7e4963d22a361db596561394f3fd3c21128896e",
+    "conv8_config.bin": "805e986fd301bce247d7d6e1c2fc000a5771ae16854c1eebead1044b1c87bc19",
+    "conv9_config.bin": "de811139d094fab2f9b6418d5beffb87065ec1f533badc2dfc26aed00ea35166",
+    "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+    "layout_manifest.json": "773209aaef74a3aa70bb37b018a5eb598c5917d7ef8922fbd024ffb30ccea22c",
+    "manifest.json": "cdd64603e016cd7e27265a5d4b8a04a8f431d9c004703b1fdf18c3391bf8481f",
+    "permutation_manifest.json": "ab624675d977ba0a0efddfbe13242771d38a00a6278a58e014a8f0634de94cdb",
+    "SHA256SUMS.txt": "a3694ccef66f160dca09a043ecabb47eab815f980cf2e53d372e1d9b966e5cc5"
+   }
+  },
+  "multistart": {
+   "path": "build/layout_exports/multistart",
+   "files": {
+    "bitexact_report.json": "7277cd34b767ac01ac80bf3068b0d5a928dbddfa64c6e724bae9c8626df3dd8a",
+    "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "conv1_config.bin": "7099f586ba3260a01fe3ad60d3549761b8b661c7a8d0a174f4f4f4d2e50d6c79",
+    "conv2_config.bin": "66abfeb2c09e1b9568204134be0fe15b3108ef44eebd6b99dbe5c6d426cc4df3",
+    "conv3_config.bin": "71a4b54de6603997c8a8c8e4b62733dd8df2f9d4dc9c9a08ee8e10010351bd38",
+    "conv4_config.bin": "051baff1cacafaebcf039df6c56eaae838c7c50dcf4ab44986b2decdb56acc9d",
+    "conv5_config.bin": "36d5bd3672d8391d5ba9b224d7bcfb6fe9211a713826b30e9b72982833509c87",
+    "conv6_config.bin": "93fa94ae98655413d36c0108621d39249087ea5c69247def20a16b5eac384b78",
+    "conv7_config.bin": "d03d92d422e1cf9e9638aa1dc582e2051b666c5d2e7f139be607141141972c1d",
+    "conv8_config.bin": "00837b2a1ae370a55e5e2d7e99046b8430c277019902ecbf917604d28a2ae7a0",
+    "conv9_config.bin": "d926e53f64cfb7a31fe1a6bbc7d2944e29796f523531c0084cfff29c542067f6",
+    "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+    "layout_manifest.json": "2a3e7e8b801d492a93acbc339e10e8ad7d98e6ffee9085df79ce2c3495c5768c",
+    "manifest.json": "ac87de53d95616a7883d12e72c567dbf6f83c816a54709875c9d49773c8569a0",
+    "permutation_manifest.json": "f35feb77fcaa786a69ddb26bbada8d020c305e856dea2cec321f2e0a347ab436",
+    "q1_multistart_provenance.json": "21d07d01879962591702d43afbf8a204354e5a3a7e0ed2d7b5de1b88767b9250"
+   }
+  },
+  "skew": {
+   "path": "build/layout_exports/skew",
+   "files": {
+    "conv10_config.bin": "eac856f482f80c3a0f4e841e67080b47fe4270d8759ffcf7b56da252470055cc",
+    "conv1_config.bin": "19b2418789f0f6a1c926e898e2c50eb81ec5ca98c85a0f2bff2e0596cbff6961",
+    "conv2_config.bin": "dd68ded591816aeaa937acf5aec924b099366486fc2e298ad537906cae979997",
+    "conv3_config.bin": "ba940e7bf968e83af7cae4162e8e5b3a3014c60132ebba31a1d7bd63d39cf51e",
+    "conv4_config.bin": "cd5bdf5656cf354a7547f8b4f5d521b35fb5d38778764129926465d7057235fc",
+    "conv5_config.bin": "2b2a8bfec4ce88d0ff663f3155e9eff9383e105adae2a03c2916bb071c188e99",
+    "conv6_config.bin": "9e7b5638cfc0e69b7405c377e11e6bcd20f2f0893fad8fecfc9d0d8582998c67",
+    "conv7_config.bin": "9d09864dcafb5e7d90077c342c6062eca6f7dad6511e216c9add0d546a4c72b0",
+    "conv8_config.bin": "a5efe19cee1314583aa8f3086ec47ec4d245f788fb7914ff3803accd0ae172cb",
+    "conv9_config.bin": "6ce938e96229cb0ebbcd096f5ecb8d6ebdf88cc7ef24a47593fab0e9e07d9ad5",
+    "int_eval.json": "bc733a962803cef5a88f3a297a06b826048f519da46caa83243b3ad25ff7b1cf",
+    "layout_manifest.json": "6200dad7c1b83724c589d94233e78db1f65b06685c8d339e93f53f9e5b2aa76e",
+    "manifest.json": "7c52efc8a10d9c466e034af9325445174a687d25745e9b0a2279a37cedcbbffa"
+   }
+  }
+ },
+ "config_bins_equal_to_the_prediction": 160,
+ "code": {
+  "scripts/run_denoise.py": "4b0bbbddc2870d2f0d12e9fc3c2b5bf52211ce44dfa1ec616c5c12b345ce1bdd",
+  "scripts/run_cifar.py": "f1bbd40ff3856ad46073a8409456f311498b47772e64125df27ec497e14f0b64",
+  "scripts/run_board_xsdb.tcl": "9a741c5249d4e52cf698abbd87e316c6d2150b32ac04b69652eb76d3ca222c3e"
+ },
+ "pinned_utc": "2026-10-19T07:24:27Z"
+}
