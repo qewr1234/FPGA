@@ -1,0 +1,40 @@
+Geometry  : layout.json -> frames=16384 mode_seq=1
+Shape     : layout.json -> K=288 COUT=32
+Script    : 2026-10-17 o (four-wide window port: K a multiple of 4, never picked by default)
+Bitstream : C:/fpga/FPGA/build/zed_v4_p16_t4_w4_1792234898/system_wrapper.bit
+Platform  : C:/fpga/FPGA/build/zed_v4_p16_t4_w4_1792234898/system_wrapper.xsa
+Data      : C:/fpga/FPGA/build/q1_bank_fpga_triplet/trial_set12_04/rep_03/original_io
+
+Connecting...
+Device   : PSS_IDCODE 0x23727093
+PL quiet : held in reset, PL-to-PS level shifters off while it is configured
+Configuring the PL...
+INFO: [Hsi 55-2053] elapsed time for repository (C:/Vivado/2026.1/Vivado/data/embeddedsw) loading 1 seconds
+Clock    : already 50.00 MHz
+Access   : the processor's own view
+DDR      : buffers at 0x10000000 / 0x10500000 / 0x10a00000 / 0x10f00000
+Core     : v4 banked_window_mac four activations/cycle K=288 COUT=32 windows=16384
+Clock    : PL runs at 50.00 MHz (IO PLL, FPGA0_CLK_CTRL 0x00400800)
+
+Caches   : MMU already off; L2 already off
+Loading 36992 + 4718592 + 2097152 bytes over JTAG...
+Readback : the sampled words in DDR match the files.
+Built    : K<=1152 COUT<=128, runtime geometry on
+Shape set: RUN_K=288 RUN_COUT=32
+Streaming configuration...
+Configuration loaded: 9248 items.
+Running 16384 windows...
+Comparing 524288 results...
+
+--- window_mac_axis on hardware ---
+windows done   : 16384 (expected 16384)
+results        : 524288 (expected 524288)
+MISMATCHES     : 0
+CYCLES         : 1437009
+  per window   : 87.71
+IN_STALL       : 0
+OUT_STALL      : 0
+
+RESULT: PASS -- core bound, four activations per cycle. CYCLES is NOT
+        comparable with verification/included_run/summary.json or any number
+        measured on the one-activation-per-cycle build.

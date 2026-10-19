@@ -1,0 +1,245 @@
+{
+  "emulated": false,
+  "model": "dn_d10_c32_us_fx_qat",
+  "export_dir": "C:\\fpga\\FPGA\\build\\q1_reviewer_export\\dn_d10_c32_us_fx_qat",
+  "set": "Set12",
+  "sigma": 25,
+  "mode_seq": 1,
+  "activations_per_cycle": 4,
+  "images": [
+    {
+      "image": "04.png",
+      "width": 256,
+      "height": 256,
+      "psnr_noisy": 20.41114849349715,
+      "psnr_denoised": 28.83990264995345,
+      "start_layer": 1,
+      "layers": [
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 524305,
+          "wall_seconds": 22.7,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 36,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv1",
+          "K": 36,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.9756588406032987,
+          "host_seconds": 22.7
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1388329,
+          "wall_seconds": 34.5,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv2",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.5479585859510634,
+          "host_seconds": 37.8
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1354574,
+          "wall_seconds": 34.7,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv3",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.507014168633355,
+          "host_seconds": 37.8
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1293525,
+          "wall_seconds": 34.1,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv4",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.48526933458116317,
+          "host_seconds": 37.6
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1421630,
+          "wall_seconds": 34.4,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv5",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.5241589016384549,
+          "host_seconds": 37.7
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1296025,
+          "wall_seconds": 34.9,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv6",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.45651732550727,
+          "host_seconds": 38.2
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1310261,
+          "wall_seconds": 35.4,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv7",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.48186514112684464,
+          "host_seconds": 38.7
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1210442,
+          "wall_seconds": 35.4,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv8",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.3761126200358073,
+          "host_seconds": 38.8
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1281960,
+          "wall_seconds": 35.0,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 288,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv9",
+          "K": 288,
+          "COUT": 32,
+          "windows": 16384,
+          "nonzero_fraction": 0.4474012586805556,
+          "host_seconds": 38.3
+        },
+        {
+          "emulated": false,
+          "runs": 1,
+          "cycles": 1343520,
+          "wall_seconds": 27.1,
+          "mismatches": 0,
+          "fclk_mhz": [
+            50.0
+          ],
+          "core_id": [
+            "0x4d410303"
+          ],
+          "taps_streamed": 324,
+          "in_stall": 0,
+          "out_stall": 0,
+          "name": "conv10",
+          "K": 324,
+          "COUT": 4,
+          "windows": 16384,
+          "nonzero_fraction": 0.5390773820288387,
+          "host_seconds": 27.5
+        }
+      ],
+      "cycles": 12424571
+    }
+  ],
+  "mean_psnr_noisy": 20.41114849349715,
+  "mean_psnr_denoised": 28.83990264995345,
+  "mismatches": 0
+}
