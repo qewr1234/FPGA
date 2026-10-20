@@ -79,7 +79,7 @@ def main():
                                lw=0.3, zorder=3))
         if nz[j] and j % 4 == DOTTED:   # the white dot of Fig. 2 (grayscale)
             ax.plot(sx + j*s + s*0.44, sy + s*0.44, 'o', ms=1.4, mfc='white', mec='none', zorder=4)
-    ax.text(sx, sy - 0.06, 'a toy window of 16 taps; filled: nonzero', ha='left', va='top', fontsize=5.5, color=MUTED)
+    ax.text(sx, sy - 0.06, 'example window, 16 taps; filled: nonzero', ha='left', va='top', fontsize=5.5, color=MUTED)
     counts = [sum(nz[b::4]) for b in range(4)]
     bw, bg, unit = 0.36, 0.10, 0.22
     bx0, by0 = cx + 0.6, cy + 0.98

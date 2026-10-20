@@ -22,7 +22,7 @@ cycles. A bar whose number would cross the dashed line carries it inside the
 bar instead. Drawn at 8.0 cm, the width the build places it at (7 pt text at
 print size). Layouts:
   (a) conventional, tap s*32 + p in bank (s*32 + p) % 4 = p % 4;
-  (b) Frozen relabeling: bank = the channel's class in
+  (b) L1 relabeling (the board's L1): bank = the channel's class in
       research/q1_codesign/bank_export_perm.json (orders of conv5's producer,
       conv4; position q of the order holds channel orders[q], class q % 4);
   (c) skewed (bankperm/skew_count.py): bank (p + s) % 4;
@@ -128,10 +128,10 @@ def main():
             cols3[s*c + (q + s) % c] = s*c + order3[q]
     s_idx, p_idx = np.meshgrid(np.arange(taps), np.arange(c), indexing='ij')     # (9, 32)
     layouts = [
-        ('(a) Conventional: bank p mod 4', p_idx % T, np.arange(k)),
-        ('(b) Relabeling (Frozen): bank = class', cls[p_idx], permuted_columns(order, taps)),
-        ('(c) Skew: bank (p + s) mod 4', (p_idx + s_idx) % T, skew_order(k, c)),
-        ('(d) Skew + relabeling: (class + s) mod 4', (cls3[p_idx] + s_idx) % T, cols3),
+        ('(a) L0: bank p mod 4', p_idx % T, np.arange(k)),
+        ('(b) L1 relabeling: bank = class', cls[p_idx], permuted_columns(order, taps)),
+        ('(c) L2 skew: bank (p + s) mod 4', (p_idx + s_idx) % T, skew_order(k, c)),
+        ('(d) L3: bank (class + s) mod 4', (cls3[p_idx] + s_idx) % T, cols3),
     ]
     nz = win.reshape(taps, c) != 0
     rows = []
@@ -148,7 +148,7 @@ def main():
     print(f'window: {LAYER} input, index {idx} of {x.shape[0]} (map row {oy}, column {ox} of {h//2} x {side}), '
           f'{int(nz.sum())} of {k} taps nonzero; rule: first in raster order with conventional m = {med}, '
           f'the lower median over the {n_bound} windows compute-bound at W = {W}')
-    print(f'Frozen relabeling of {LAYER}: {moved} of {c} channels in a class other than p mod 4')
+    print(f'L1 relabeling of {LAYER}: {moved} of {c} channels in a class other than p mod 4')
     for title, _, per_bank, m, cyc in rows:
         print(f'  {title:<44} per bank {per_bank.tolist()}  m = {m}  cycles {cyc} '
               f'(predict_w4.window_cycles; load {load})')
