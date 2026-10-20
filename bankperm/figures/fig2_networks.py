@@ -121,7 +121,7 @@ def main():
     assert r2['bootstrap']['resamples'] == 10000
     boot_idx = np.random.default_rng(0).integers(0, 79, (10000, 79))     # as results_2.json 'bootstrap'
 
-    height_cm = 5.0                                   # the paper is at its 4-page limit (5.3 before the board results)
+    height_cm = 4.6                                   # the paper is at its 4-page limit (5.3 before the board results)
     fig = plt.figure(figsize=(8.0/2.54, height_cm/2.54), dpi=300)
     gs = fig.add_gridspec(2, 1, height_ratios=(2.2, 1.0), hspace=0.17, left=0.105, right=0.995,
                           top=1 - 0.50/height_cm, bottom=0.44/height_cm)

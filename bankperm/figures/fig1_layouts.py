@@ -154,9 +154,9 @@ def main():
               f'(predict_w4.window_cycles; load {load})')
     print(f'  perfect balance for this window: ceil({int(nz.sum())}/4) = {math.ceil(nz.sum()/T)}')
 
-    fig = plt.figure(figsize=(WIDTH_CM/2.54, 8.4/2.54), dpi=300)
+    fig = plt.figure(figsize=(WIDTH_CM/2.54, 7.6/2.54), dpi=300)
     gs = fig.add_gridspec(len(rows), 2, width_ratios=[32, 11], wspace=0.24, hspace=0.62,
-                          left=0.085, right=0.975, top=0.945, bottom=0.095)
+                          left=0.085, right=0.975, top=0.94, bottom=0.105)
     zero = np.array(to_rgb(ZERO))
     pal = np.array([to_rgb(col) for col in BANK])
     ymax = 62
