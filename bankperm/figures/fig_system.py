@@ -23,7 +23,7 @@ from matplotlib.patches import FancyBboxPatch, Rectangle, FancyArrowPatch
 from fig1_layouts import BANK, DOTTED, INK, MUTED, ZERO, setup_fonts
 
 HERE = Path(__file__).resolve().parent
-W_CM, H_CM = 8.0, 4.6
+W_CM, H_CM = 8.0, 4.4
 FILL = '#f7f6f3'                       # box background
 EDGE = '#9a9893'
 
@@ -56,7 +56,7 @@ def main():
              'skew (L2, L3): tap (s, p)\nto slot s·N + (p + s) mod N',
              'requantize the sums;\nnext layer']
     y, gap = hy + hh - 0.36, 0.14
-    heights = (1.04, 0.78, 0.78, 0.7)
+    heights = (1.0, 0.74, 0.74, 0.66)
     centers = []
     for i, what in enumerate(steps):
         h = heights[i]

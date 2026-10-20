@@ -25,7 +25,9 @@ of conv2 to conv(L-1)):
                                                                  once per output group, and the
                                                                  window port and the output port
                                                                  still take load and COUT cycles
-                                                                 per window
+                                                                 per window (load includes the core's
+                                                                 one-cycle start handshake; without it
+                                                                 the L0 bound is 6.84%)
   any_map    max(N * max(load, COUT), G * ceil(sum_w n_w / T))  any decoupling and any map
 
 fixed_map and any_map are lower bounds on a layer's cycles for unbounded buffers (they
