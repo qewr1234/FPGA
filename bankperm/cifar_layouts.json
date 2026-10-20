@@ -67,7 +67,13 @@
    "source": "Hugging Face dataset uoft-cs/cifar10, plain_text parquet (PNG bytes), converted to uint8 arrays; no pickle from the download was loaded for training",
    "train_parquet_sha256": "8428b53a88a11ac374111006708df51469e315a22ac6d66470afd9c78d2ae883",
    "test_parquet_sha256": "841389e6f2d64f28bf17310e430aebac20ec3ba611a3c5e231dc93c645ce84de",
-   "test_npz_sha256": "4cb9446a107bf8e9d10dd04f2f986558f3a333f6572eafca0c28c5dcef603660"
+   "test_npz_sha256": "4cb9446a107bf8e9d10dd04f2f986558f3a333f6572eafca0c28c5dcef603660",
+   "official_test_set_check": {
+    "what": "the npz test images and labels are identical, image by image and in order, to the official CIFAR-10 test_batch (www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz)",
+    "tgz_md5": "c58f30108f718f92721af3b95e74349a (= torchvision CIFAR10.tgz_md5)",
+    "test_batch_sha256": "f53d8d457504f7cff4ea9e021afcf0e0ad8e24a91f3fc42091b8adef61157831",
+    "also": "--data with run_cifar.load_cifar_test on the official test_batch gives the same fits, classes and per-image totals on the first 200 images"
+   }
   },
   "training": {
    "script": "cifar/train_cifar.py main(), unchanged, run through a wrapper that replaces torchvision.datasets.CIFAR10 by the same images from npz and computes Net in channels_last",
@@ -94,7 +100,8 @@
    "checkpoint_sha256": "b512bd8c44096339bc8a7388ae6951a1eff49ecb2ee1cf6495dbe77500950b27"
   },
   "quantization": {
-   "script": "cifar/quantize_cifar.py main(), unchanged, same wrapper, defaults (--calib 512: activation ranges from the first 512 TEST images, as the script does)"
+   "script": "cifar/quantize_cifar.py main(), unchanged, same wrapper, defaults (--calib 512: activation ranges from the first 512 TEST images, as the script does)",
+   "integer_accuracy_printed_by_quantize_cifar": "88.09% (10000 images); float 88.05%"
   },
   "versions": {
    "torch": "2.14.1+cpu",
@@ -896,7 +903,7 @@
    }
   }
  },
- "seconds": 334.8,
+ "seconds": 374.7,
  "per_image_totals": {
   "order": "per_image_totals[wN][column][image], column in ['L0', 'L1', 'L2', 'L3', 'perfect_balance'], image = test index",
   "w1": {
