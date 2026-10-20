@@ -62,7 +62,7 @@
   }
  },
  "provenance": {
-  "note": "made in a scratch directory for this count; the checkpoint and export are not in the repository",
+  "note": "trained and exported for this count (2026-10-20); the checkpoint (cifar_cnn.pt), the export (export/) and the wrapper scripts that ran the repository's cifar/train_cifar.py and cifar/quantize_cifar.py unchanged are in bankperm/cifar_net/",
   "data": {
    "source": "Hugging Face dataset uoft-cs/cifar10, plain_text parquet (PNG bytes), converted to uint8 arrays; no pickle from the download was loaded for training",
    "train_parquet_sha256": "8428b53a88a11ac374111006708df51469e315a22ac6d66470afd9c78d2ae883",
@@ -903,7 +903,7 @@
    }
   }
  },
- "seconds": 374.7,
+ "seconds": 308.4,
  "per_image_totals": {
   "order": "per_image_totals[wN][column][image], column in ['L0', 'L1', 'L2', 'L3', 'perfect_balance'], image = test index",
   "w1": {
