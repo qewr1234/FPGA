@@ -33,11 +33,13 @@ import re
 from pathlib import Path
 
 from docx import Document
-from docx.enum.text import WD_BREAK, WD_LINE_SPACING
+from docx.enum.text import WD_BREAK, WD_LINE_SPACING, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt
+from docx.shared import Cm, Pt, Twips
 from docx.text.paragraph import Paragraph
+
+COL_TWIPS = 5040   # one column of the template body: two equal columns, (11909 - 2*734 - 360) / 2 twips
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -425,8 +427,17 @@ def main():
             p.paragraph_format.left_indent = Cm(0.35)
             add_runs(p, '• ' + payload); place(p._p); continue
         if kind == 'equation':
-            p = doc.add_paragraph(style='Body Text'); p.paragraph_format.first_line_indent = Cm(0); p.alignment = 1
-            add_runs(p, payload); place(p._p); continue
+            p = doc.add_paragraph(style='Body Text'); p.paragraph_format.first_line_indent = Cm(0)
+            m = re.match(r'^(.*?)\s{2,}(\(\d+\))\s*$', payload)
+            if m:   # IEEE style: the formula centred in the column, its number flush right
+                tabs = p.paragraph_format.tab_stops
+                tabs.add_tab_stop(Twips(COL_TWIPS // 2), WD_TAB_ALIGNMENT.CENTER)
+                tabs.add_tab_stop(Twips(COL_TWIPS - 10), WD_TAB_ALIGNMENT.RIGHT)
+                p.alignment = 0
+                add_runs(p, '\t' + m.group(1).strip() + '\t' + m.group(2))
+            else:
+                p.alignment = 1; add_runs(p, payload)
+            place(p._p); continue
         if kind == 'figure':
             path, cap = payload
             img = (args.src.parent / path).resolve()
@@ -463,6 +474,12 @@ def main():
     # numbered references style: Word would print an extra '[n]' after the last reference
     if not sb_body.findall('.//' + qn('w:t')):
         no_numbering(Paragraph(sb_body, None))
+    # the template's document properties (title 'Paper Title (use style: paper title)', author 'IEEE')
+    # would otherwise travel with the paper and into a PDF made from it
+    cp = doc.core_properties
+    cp.title = ' '.join(title_lines)
+    cp.author = cp.last_modified_by = ', '.join(a for a in (args.authors, args.author2) if a)
+    cp.subject = cp.keywords = cp.comments = cp.category = ''
     doc.save(str(out))
     print('wrote', out)
 

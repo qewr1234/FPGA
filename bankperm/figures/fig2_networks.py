@@ -15,15 +15,15 @@ Top panel W = 4, bottom panel W = 2 (smaller).
 Where bankperm/bounds.json says no layout can pay (condition (2) holds in every
 layer: W = 2 on A and R1-R3), one x at 0 stands for all three layouts, after
 checking that L1, L2 and L3 count exactly as L0 on all 80 images there (H4).
-W = 1 is zero by shape on every network; checked the same way, stated in a note.
+W = 1 is zero by shape on every network; checked the same way, stated in the caption.
 On 10 x 45 (C = 45, C % 4 = 1) the conventional layout already has the skew's
 banks: L2 = L0 and L3 = L1 by construction (checked on every image), drawn as
-the skew at exactly 0 with the label 'conv. = skew'.
+the skew at exactly 0 with the label 'L2 = L0'.
 Pooled values are recomputed from per_image_totals and checked against
 summary_79; the bootstrap intervals are recomputed with the protocol's
 generator (np.random.default_rng(0).integers(0, 79, (10000, 79)), one draw for
 every network, width and layout, 79 images in sorted order) and checked.
-Short labels (printed): A, B, R1-R3, M1-M3, Av2, 45.
+Short labels (printed): A, B, R1-R3, M1-M3, Av2, B-45.
 Drawn at 8.0 cm, the width the build places it at (build_docx --col-fig-cm 8), so
 the 7 pt text is 7 pt in print. Colours and markers match Fig. 3 (relabeling =
 Frozen's orange square, skew aqua triangle, skew + relabeling dark gray diamond);
@@ -54,13 +54,13 @@ SHORT = {  # results_2.json label -> (short label, definition, x position: famil
     'B-32 maxout + QAT s2': ('M2', 'B-32 maxout, seed s2', 6.6),
     'B-32 maxout + QAT s3': ('M3', 'B-32 maxout, seed s3', 7.6),
     'B-32 averaging + QAT s2': ('Av2', 'B-32 averaging, seed s2', 8.9),
-    '10 x 45 ReLU + QAT': ('45', '10 x 45 ReLU', 10.2),
+    '10 x 45 ReLU + QAT': ('B-45', '10 x 45 ReLU', 10.2),
 }
 CAL = 'Set12/01.png'
 IDX = {'L0': 0, 'L1': 1, 'L2': 2, 'L3': 3}           # results_2.json layout_order_in_lists
 LAYOUTS = ('L1', 'L2', 'L3')
 DX = {'L1': -0.27, 'L2': 0.0, 'L3': 0.27}
-NAME = {'L1': 'relabeling', 'L2': 'skew', 'L3': 'skew + relabeling'}
+NAME = {'L1': 'L1 relabeling', 'L2': 'L2 skew', 'L3': 'L3 skew + relabeling'}
 DARK = '#3d3c39'                                       # skew + relabeling: darker than MUTED, still not INK
 STYLE = {'L1': dict(marker='s', mfc=ORANGE, mec=ORANGE, color=ORANGE),
          'L2': dict(marker='^', mfc=AQUA, mec=AQUA, color=AQUA),
@@ -169,11 +169,11 @@ def main():
 
     # 10 x 45: the skew is the conventional layout there
     x45 = SHORT['10 x 45 ReLU + QAT'][2]
-    ax4.annotate('conv. =\nskew', (x45 + DX['L2'], 0.35), xytext=(x45 - 0.22, 3.3), textcoords='data',
+    ax4.annotate('L2 =\nL0', (x45 + DX['L2'], 0.35), xytext=(x45 - 0.22, 3.3), textcoords='data',
                  ha='center', va='bottom', fontsize=7, color=INK, linespacing=1.05,
                  arrowprops=dict(arrowstyle='-', color=MUTED, lw=0.5, shrinkA=0.5, shrinkB=2.2))
     st45 = network_stats('10 x 45 ReLU + QAT', res['10 x 45 ReLU + QAT'], boot_idx)
-    ax2.annotate(f'{st45["w2"]["L1"][0]:.2f}', (x45 + DX['L1'], st45['w2']['L1'][0]), xytext=(-3.2, 0),
+    ax2.annotate(f'{st45["w2"]["L1"][0]:.2f}', (x45 + DX['L1'], st45['w2']['L1'][0]), xytext=(-6.0, 0),
                  textcoords='offset points', ha='right', va='center', fontsize=7, color=INK)
 
     for w, ax in axes.items():
@@ -194,9 +194,7 @@ def main():
     ax4.tick_params(axis='x', length=0)
     ax2.text(SHORT['B-32 ReLU + QAT s2'][2], 1.9, '×: 0 by shape,\nevery layout', ha='center',
              va='bottom', fontsize=7, color=MUTED, linespacing=1.1)
-    ax4.text(6.55, 14.4, 'W = 1: 0 on every\nnetwork (by shape)', ha='center', va='top', fontsize=7, color=MUTED,
-             linespacing=1.1)
-    fig.text(0.012, (gs[0].get_position(fig).y1 + gs[1].get_position(fig).y0)/2, 'saving vs. original (%)',
+    fig.text(0.012, (gs[0].get_position(fig).y1 + gs[1].get_position(fig).y0)/2, 'saving vs. L0 (%)',
              rotation=90, ha='left', va='center', fontsize=7, color=INK)
 
     handles = [Line2D([], [], ls='', ms=MS['w4'][l] + 0.3, mew=0.5, label=NAME[l],

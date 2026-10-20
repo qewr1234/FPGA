@@ -1,5 +1,5 @@
 {
- "about": "References for the related-work section bankperm/RELATED_WORK_EN.md. Field n is the [n] used there (null if not cited there); field paper_n is the [n] of bankperm/PAPER_EN.md (null if not cited there; the paper was cut to the 10 references with a paper_n on 2026-10-19, so the other entries are kept here but not cited in it). The two numberings differ. Each entry was checked on 2026-10-18 against Crossref, the arXiv API, NeurIPS proceedings metadata or the patent page; 'verified' says what was read. 'balances' is what the cited work equalizes; 'preempts_claim' is judged against the claim stated in RELATED_WORK_EN.md (Novelty position). Notes here that call the tap skew unevaluated or a baseline still to add (top-level claim, budnik_kuck, last novelty threat) predate 2928d28: PAPER_EN.md now counts the skew on the board network after the study (not run on the board).",
+ "about": "References for the related-work section bankperm/RELATED_WORK_EN.md. Field n is the [n] used there (null if not cited there); field paper_n is the [n] of bankperm/PAPER_EN.md (null if not cited there; the paper cites the 9 references with a paper_n (2026-10-20; roofline was dropped), so the other entries are kept here but not cited in it). The two numberings differ. Each entry was checked on 2026-10-18 against Crossref, the arXiv API, NeurIPS proceedings metadata or the patent page; 'verified' says what was read. 'balances' is what the cited work equalizes; 'preempts_claim' is judged against the claim stated in RELATED_WORK_EN.md (Novelty position). Notes here that call the tap skew unevaluated or a baseline still to add (top-level claim, budnik_kuck, last novelty threat) predate 2928d28: PAPER_EN.md now counts the skew on the board network after the study (not run on the board).",
  "claim": "Offline, function-preserving channel-to-bank permutation, chosen on calibration activations to minimise the per-window maximum bank nonzero count of a lockstep-bank zero-skipping integer CNN core (P=16, T=4, XC7Z020), folded into the producer's filters, bias and requantisation and the consumer's weights; RTL, bitstream and integer output unchanged; given the (ky, kx, channel) window order. On this platform the host builds the windows, so tap-level layouts (any static order of a window's taps, with the weight columns) are also exact; they are not evaluated.",
  "references": [
   {
@@ -652,7 +652,7 @@
    "how_this_work_differs": "Our per-window cycle model is a finer, data-dependent bound.",
    "preempts_claim": "no",
    "n": 25,
-   "paper_n": 8
+   "paper_n": null
   },
   {
    "id": "zhang_fpga15",
@@ -705,7 +705,7 @@
    "how_this_work_differs": "Network family and test protocol source.",
    "preempts_claim": "no",
    "n": 27,
-   "paper_n": 9
+   "paper_n": 8
   },
   {
    "id": "roth_black_foe",
@@ -729,7 +729,7 @@
    "how_this_work_differs": "Dataset source.",
    "preempts_claim": "no",
    "n": 28,
-   "paper_n": 10
+   "paper_n": 9
   },
   {
    "id": "martin_bsd",
