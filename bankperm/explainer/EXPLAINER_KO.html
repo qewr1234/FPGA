@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>논문 해설: Bank Layout Optimization for Zero-Skipping FPGA CNNs</title>
+<style>
+@page { size: A4; margin: 17mm 17mm 18mm 17mm; }
+:root { --ink: #111; --muted: #55534f; --rule: #d8d5cf; --soft: #f6f4f0; --blue: #2a78d6; --orange: #eb6834;
+        --aqua: #1baf7a; --yellow: #eda100; --gray: #52514e; }
+html { font-family: 'Noto Sans CJK KR', 'DejaVu Sans', sans-serif; font-size: 10pt; color: var(--ink); }
+body { margin: 0; line-height: 1.68; word-break: keep-all; overflow-wrap: break-word; }
+h1 { font-size: 21pt; line-height: 1.3; margin: 0 0 6pt; letter-spacing: -0.3pt; }
+h2 { font-size: 14.5pt; margin: 22pt 0 8pt; padding-bottom: 3pt; border-bottom: 1.4pt solid var(--ink); break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 14pt 0 5pt; break-after: avoid; }
+h4 { font-size: 10.5pt; margin: 10pt 0 3pt; break-after: avoid; }
+p { margin: 0 0 7pt; text-align: justify; }
+ul, ol { margin: 2pt 0 8pt; padding-left: 17pt; }
+li { margin: 0 0 3pt; }
+.newpage { break-before: page; }
+.covertoc { margin-top: 18pt; font-size: 9.8pt; }
+.cover { height: 248mm; display: flex; flex-direction: column; justify-content: center; }
+.cover .kicker { color: var(--muted); font-size: 10.5pt; margin-bottom: 10pt; }
+.cover .sub { font-size: 12pt; color: var(--muted); margin: 6pt 0 26pt; }
+.cover .meta { font-size: 9pt; color: var(--muted); line-height: 1.6; border-top: 1pt solid var(--rule); padding-top: 10pt; }
+.box { border: 1pt solid var(--rule); background: var(--soft); border-radius: 4pt; padding: 8pt 11pt; margin: 8pt 0 10pt; break-inside: avoid; }
+.box.key { border-left: 4pt solid var(--blue); }
+.box.ex { border-left: 4pt solid var(--aqua); }
+.box.warn { border-left: 4pt solid var(--orange); }
+.box .t { font-weight: 700; margin-bottom: 3pt; display: block; }
+.box p:last-child, .box ul:last-child { margin-bottom: 0; }
+.eq { font-family: 'DejaVu Sans', 'Noto Sans CJK KR', sans-serif; text-align: center; margin: 8pt 0 9pt; font-size: 10.5pt; }
+.eq .n { float: right; color: var(--muted); }
+code, .mono { font-family: 'DejaVu Sans Mono', 'Noto Sans Mono CJK KR', monospace; font-size: 8.8pt; background: #efede8; padding: 0 2pt; border-radius: 2pt; }
+figure { margin: 8pt 0 12pt; text-align: center; break-inside: avoid; }
+figure img { max-width: 100%; }
+figure.w12 img { width: 12cm; } figure.w14 img { width: 14cm; } figure.w16 img { width: 16cm; } figure.w9 img { width: 9cm; }
+figcaption { font-size: 8.6pt; color: var(--muted); text-align: left; margin-top: 4pt; line-height: 1.55; }
+table { border-collapse: collapse; margin: 6pt auto 10pt; font-size: 8.9pt; break-inside: avoid; }
+th, td { border-bottom: 0.6pt solid var(--rule); padding: 3pt 7pt; text-align: left; vertical-align: top; }
+th { border-bottom: 1pt solid var(--ink); border-top: 1pt solid var(--ink); font-weight: 700; background: #fbfaf8; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+table.full { width: 100%; }
+.cap { font-size: 8.6pt; color: var(--muted); margin: -4pt 0 10pt; text-align: center; }
+.small { font-size: 8.8pt; color: var(--muted); }
+.toc { columns: 2; column-gap: 18pt; font-size: 9.6pt; margin: 4pt 0 10pt; }
+.toc div { break-inside: avoid; margin-bottom: 2pt; }
+.qa h4 { color: var(--blue); }
+.tag { display: inline-block; font-size: 8pt; padding: 0 5pt; border-radius: 8pt; background: #e7eefb; color: #1b4f99; margin-right: 3pt; }
+.b0 { color: var(--gray); font-weight: 700; } .b1 { color: var(--blue); font-weight: 700; }
+.b2 { color: var(--aqua); font-weight: 700; } .b3 { color: #b37800; font-weight: 700; }
+.nums td:first-child { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ============================== 표지 ============================== -->
+<section class="cover">
+  <div class="kicker">IWEICT 2026 제출 논문 해설서</div>
+  <h1>Bank Layout Optimization for<br>Zero-Skipping FPGA CNNs</h1>
+  <div class="sub">논문을 처음부터 끝까지, 숫자 하나까지 이해하기 위한 안내서</div>
+  <div class="meta">
+    대상 원고: 제출본 <span class="mono">IWEICT2026_SUBMISSION_EN_12.docx</span>(저장소 <span class="mono">bankperm/PAPER_EN.md</span>와 같은 본문)<br>
+    이 문서의 모든 숫자는 논문 본문과 저장소의 결과 파일(<span class="mono">bankperm/*.json</span>)에서 왔다. 출처는 13장에 모았다.<br>
+    그림 ①–⑥은 설명용으로 새로 그렸고(작은 가상의 숫자를 쓴 그림은 그렇다고 적었다), Fig. 1–3은 논문의 그림 그대로다.
+  </div>
+  <div class="covertoc"><b>차례</b>
+<div class="toc">
+<div>1. 배경: 무엇이 문제인가</div><div>2. 시스템: 호스트와 FPGA 코어</div>
+<div>3. 창 하나의 사이클: 식 (1)</div><div>4. 어디서 이득이 가능한가: 식 (2)</div>
+<div>5. 세 가지 배치 L1, L2, L3</div><div>6. 실험 설정</div>
+<div>7. 결과</div><div>8. 왜 lockstep을 유지하나 (FIFO 질문)</div>
+<div>9. 직관: 왜 skew가 이기나</div><div>10. 한계와 미리 알던 것</div>
+<div>11. 예상 질문과 답</div><div>12. 기호표와 용어집</div>
+<div>13. 숫자의 출처</div>
+</div>
+  </div>
+</section>
+
+<!-- ============================== 0. 요약 ============================== -->
+<h2 class="newpage">0. 한 쪽 요약</h2>
+
+<div class="box key"><span class="t">문제</span>
+<p>0인 활성값을 건너뛰는 CNN 가속기는 합성곱의 한 창(window)을 여러 <b>뱅크</b>에 나눠 병렬로 처리한다. 그런데 뱅크들은 <b>함께(lockstep)</b> 다음 창으로 넘어가므로, 창마다 0이 아닌 값이 가장 많은 뱅크를 나머지가 기다린다. 이 대기가 0 건너뛰기로 얻은 이득을 깎아 먹는다.</p></div>
+
+<div class="box key"><span class="t">아이디어</span>
+<p>우리 시스템에서는 호스트(PC)가 창을 만들어 FPGA에 보낸다. 그러니 창의 각 탭(값 하나)을 <b>어느 슬롯에 넣을지</b>, 즉 어느 뱅크로 보낼지를 호스트가 소프트웨어로 정할 수 있다. 탭의 배치(layout)를 바꾸면 사이클 수는 바뀌지만 <b>FPGA 비트스트림도, 정수 출력도 그대로</b>다.</p></div>
+
+<div class="box key"><span class="t">한 일</span>
+<ul>
+<li><b>모양 조건 (2):</b> 층의 모양(K, COUT, W)만 보고 "여기서는 어떤 배치도 소용없다"를 판정하는 식.</li>
+<li><b>세 배치:</b> 활성값 통계로 맞춘 <b>채널 재배치 L1</b>(가중치에 접어 넣음), 데이터가 필요 없는 <b>skew L2</b>(채널마다 탭을 네 뱅크에 흩음), 둘을 합친 <b>L3</b>.</li>
+<li><b>검증:</b> 실제 보드(Zynq XC7Z020)에서 실행하기 <b>전에</b> 층마다 사이클을 예측해 커밋하고, 두 번의 사전등록(pre-registration) 연구로 가설을 미리 고정했다.</li>
+</ul></div>
+
+<table class="nums full">
+<tr><th>결과</th><th class="n">숫자</th><th>뜻</th></tr>
+<tr><td>skew L2 (데이터 없음)</td><td class="n">9.20%</td><td>보드 망, 테스트 영상 79장, W = 4의 코어 사이클 절감(count)</td></tr>
+<tr><td>skew + 재배치 L3</td><td class="n">9.93%</td><td>같은 조건. 재배치 L1은 7.46%, 더 공들인 재배치 L1′은 8.10%</td></tr>
+<tr><td>완벽 균형(상한)</td><td class="n">12.02%</td><td>lockstep에서 어떤 배치로도 넘을 수 없는 값. L2는 그 76.6%, L3는 82.6%</td></tr>
+<tr><td>보드 측정, 4장 합산</td><td class="n">8.13% / 8.80%</td><td>L2 / L3. 네 영상 모두 L3 &lt; L2 &lt; L1′ &lt; L1 &lt; L0 (사이클)</td></tr>
+<tr><td>사전 예측 적중</td><td class="n">176 / 180</td><td>층 단위로 1사이클까지 정확. 나머지 4층도 +1사이클. 처음 돌린 L2·L3는 72층 중 71층</td></tr>
+<tr><td>열 개 망</td><td class="n">9 / 9</td><td>채널 수가 4의 배수인 9개 망 모두 L2 &gt; L1, L3 &gt; L2 (사전등록 가설 H5, H6)</td></tr>
+<tr><td>CIFAR-10 분류기</td><td class="n">3.47 / 8.54 / 9.10%</td><td>L1 / L2 / L3 (사전등록 밖). 같은 순서</td></tr>
+<tr><td>FIFO로 뱅크를 분리하면?</td><td class="n">최대 6.5%</td><td>L0의 뱅크 규칙을 유지하면 버퍼가 무한해도 이 이상 못 줄인다(계산한 상한). skew는 9.2%</td></tr>
+</table>
+
+<p><b>읽는 순서.</b> 1–2장은 배경과 하드웨어, 3–4장은 사이클을 세는 식, 5장은 세 배치, 6–7장은 실험과 결과, 8–9장은 "왜?"에 대한 답, 10장은 한계, 11장은 예상 질문과 답이다. 기호가 헷갈리면 12장의 기호표를 보면 된다.</p>
+
+
+
+<!-- ============================== 1. 배경 ============================== -->
+<h2 class="newpage">1. 배경: 무엇이 문제인가</h2>
+
+<h3>1.1 합성곱을 "창"으로 계산하기 (im2col)</h3>
+<p>3×3 합성곱에서 출력 픽셀 하나는 입력의 3×3 이웃 9곳(위치 <b>s</b> = 0…8)과, 각 위치의 입력 채널 <b>N</b>개(채널 <b>p</b> = 0…N−1)를 본다. 그러니 출력 픽셀 하나에 필요한 입력값은 <b>K = 9N</b>개이고, 이 K개를 한 줄로 펼친 것을 <b>창(window)</b>, 그 안의 값 하나하나를 <b>탭(tap)</b>이라 부른다. 출력 채널 <b>COUT</b>개 각각에 대해, 창의 K개 탭과 그 출력 채널의 가중치 K개를 곱해 더하면(내적) 출력값이 된다.</p>
+<p>창을 펼치는 작업을 <b>im2col</b>이라 한다. 이 논문의 시스템에서는 호스트(PC)가 im2col을 해서 창을 FPGA로 보낸다. 탭의 기본 순서는 (ky, kx, 채널) 순, 즉 위치 s의 채널 p가 <b>슬롯 j = s·N + p</b>에 들어간다.</p>
+<figure class="w16"><img src="ex_window.png"><figcaption>그림 ① im2col. 3×3 이웃 × 채널 8개(설명용 N = 8)가 72개 탭의 창이 된다. 색은 그 슬롯이 가는 뱅크(j mod 4)다. N이 4의 배수이면 j mod 4 = p mod 4이므로, 한 채널(한 열)의 9개 탭이 모두 같은 색, 같은 뱅크다.</figcaption></figure>
+
+<h3>1.2 0 건너뛰기 (zero skipping)</h3>
+<p>ReLU를 거친 활성값에는 0이 많다. 0을 곱하면 0이므로 그 곱셈은 건너뛰어도 결과가 같다. 이 논문의 보드 망(R1)에서는 숨은 층 창 값의 <b>37–55%만 0이 아니다</b>. 0인 탭을 건너뛰면 곱셈과 시간이 그만큼 줄어든다. 이것이 0 건너뛰기 가속기의 기본 아이디어다(Cnvlutin [1] 등).</p>
+
+<h3>1.3 뱅크와 lockstep: 가장 바쁜 뱅크를 기다린다</h3>
+<p>한 창을 빨리 처리하려고 탭을 <b>T = 4개의 뱅크</b>로 나눈다. 각 뱅크는 자기에게 온 탭 중 0이 아닌 것만 처리한다. 문제는 네 뱅크가 <b>함께(lockstep)</b> 움직인다는 점이다. 네 뱅크가 모두 끝나야 다음 창(정확히는 다음 출력 그룹)으로 넘어가므로, 창 하나의 계산 시간은 0이 아닌 탭이 <b>가장 많은 뱅크의 탭 수 m</b>이 정한다. 다른 뱅크는 그동안 논다.</p>
+<figure class="w14"><img src="ex_lockstep.png"><figcaption>그림 ② lockstep의 대가(설명용 숫자). 두 창 모두 0이 아닌 탭은 32개다. 왼쪽처럼 12/5/9/6으로 나뉘면 12사이클, 오른쪽처럼 8/8/8/8이면 8사이클이 걸린다. 같은 일을 하는데 배치만으로 1.5배 차이가 난다.</figcaption></figure>
+<p>Cnvlutin [1]은 이 대기를 따로 집계할 만큼 알려진 문제로 다뤘다. 이 논문의 질문은 이것이다: <b>"탭을 뱅크에 어떻게 나눠 줄지를 바꿔서, m을 줄일 수 있을까? 그것도 하드웨어와 망을 건드리지 않고."</b></p>
+
+<h3>1.4 기존 해법과 이 논문의 자리</h3>
+<table class="full">
+<tr><th>접근</th><th>예</th><th>무엇을 바꾸나</th><th>이 논문과의 차이</th></tr>
+<tr><td>망을 바꾼다</td><td>S2TA [2]</td><td>블록마다 0이 아닌 값의 수를 제한하도록 학습</td><td>망을 다시 학습해야 함. 우리는 학습된 망 그대로</td></tr>
+<tr><td>하드웨어를 더한다</td><td>Sense [3]</td><td>실행 중에 채널을 다시 묶어 균형</td><td>Sense는 입력 맵이 "오프라인 학습으로 균형 맞출 수 없다"고 봄. 우리는 오프라인 배치로 상당 부분 줄일 수 있음을 보임</td></tr>
+<tr><td>오프라인 재배열 (주로 가중치)</td><td>SparTen [4], Pool &amp; Yu [5]</td><td>필터를 밀도로 정렬 / N:M 가지치기용 채널 순열을 앞 층에 접어 넣음</td><td>"순열을 앞 층에 접는다"는 기법은 같지만 목적(활성값 뱅크 균형)이 다름</td></tr>
+<tr><td>입력 순열 + 인덱스</td><td>VARA [6] (ReRAM)</td><td>학습 데이터의 활성값으로 입력 순서를 정해 0인 것끼리 모아 통째로 건너뛸 블록을 만듦. 실행 중 인덱스 유닛으로 읽음</td><td>VARA는 0을 <b>모으고</b> 인덱스를 씀. 우리는 0 아닌 값을 <b>흩고</b>, 인덱스 없이 가중치에 접음</td></tr>
+<tr><td>메모리 배치</td><td>Budnik &amp; Kuck [7] (1971)</td><td>행렬의 행과 열을 충돌 없이 병렬로 읽는 skewed storage</td><td>그 skew를 창의 탭에 적용한 것이 L2</td></tr>
+</table>
+<p>논문의 새로움 주장은 좁고 정확하다: "lockstep 0 건너뛰기 뱅크에 함께 켜지는(co-active) 채널을 정확하게(출력이 같게), 가중치에 접어 넣는 재배치로 흩는 연구는 찾지 못했다." 그리고 그 재배치를 데이터 없는 skew와 비교한 것, 모양 조건, 보드에서의 사전 예측이 기여다.</p>
+
+<!-- ============================== 2. 시스템 ============================== -->
+<h2>2. 시스템: 호스트와 FPGA 코어</h2>
+<figure class="w14"><img src="../figures/fig_system.png"><figcaption>논문 Fig. 1. 왼쪽 호스트는 배치를 오프라인에 가중치로 접어 넣고(재배치와 skew의 가중치 열 순서), 층마다 im2col로 창을 만들고, skew일 때는 탭을 skew 순서로 슬롯에 넣고, 결과를 재양자화한다. 오른쪽 코어는 비트스트림 하나로 모든 배치를 처리한다. 예시 창의 뱅크별 0 아닌 탭 수 4/1/3/2에서 lockstep 때문에 모두 4를 기다린다.</figcaption></figure>
+
+<h3>2.1 역할 분담</h3>
+<ul>
+<li><b>호스트(PC):</b> 층마다 창을 만들고(im2col), 층의 가중치와 함께 코어로 보내고, 층 사이에서 결과를 재양자화(requantize: 32비트 합을 다음 층의 7비트 입력으로 줄이는 것)한다.</li>
+<li><b>코어(FPGA):</b> 모든 합성곱을 계산한다. 가중치는 INT8, 활성값은 7비트 부호 없는 정수(0–127), 누산은 INT32, 그리고 바이어스와 ReLU까지 코어 안에서 한다.</li>
+</ul>
+
+<h3>2.2 코어 안의 구조</h3>
+<ul>
+<li><b>곱셈기 64개 = P × T = 16 × 4.</b> P = 16은 <b>출력 레인</b>(한 번에 계산하는 출력 채널 16개), T = 4는 <b>탭 뱅크</b>다. 매 사이클 각 뱅크가 탭 하나를 내면, 그 탭이 16개 레인 모두에서 각 레인의 가중치와 곱해진다.</li>
+<li><b>창 포트 W:</b> 사이클당 창의 값 W개를 받는다. 보드의 비트스트림은 W = 4다. W = 2는 RTL 시뮬레이션에서만 돌렸고, W = 1, 2, 4 모두 호스트 에뮬레이션 count로 평가했다.</li>
+<li><b>슬롯 j → 뱅크 j mod 4.</b> 창의 j번째 슬롯 값은 뱅크 j mod 4로 간다. 하드웨어에 고정된 규칙이다.</li>
+<li><b>sparse 모드(논문 전체에서 사용):</b> 각 뱅크는 0이 아닌 탭만, 뱅크 안에서의 번호(그 탭의 가중치를 찾는 주소)와 함께 저장한다. 창 버퍼가 두 개라, 다음 창을 적재하는 동안 현재 창을 계산한다(더블 버퍼링).</li>
+<li><b>이슈:</b> 이슈 사이클마다 탭이 남은 뱅크는 탭 하나를 P개 레인 모두에 보낸다. 레인마다 네 뱅크의 곱을 덧셈 트리 하나로 더해 <b>누산기 하나</b>에 쌓는다. 이슈 카운터는 하나뿐이고 가장 바쁜 뱅크의 마지막 탭까지 돈다. 이것이 lockstep의 하드웨어적 이유다(8장).</li>
+</ul>
+<div class="box ex"><span class="t">RTL에서 확인한 것</span>
+<p><span class="mono">rtl/banked_window_mac.sv</span>: 뱅크마다 tuple RAM에 {뱅크 안 번호, 활성값}을 창 버퍼 두 개 분량 저장, 하나뿐인 <span class="mono">issue_pos</span>가 가장 바쁜 뱅크의 개수(<span class="mono">win_max</span>)까지 증가, 탭이 떨어진 뱅크는 곱을 0으로, 레인마다 T개 곱의 합 <span class="mono">psum</span>이 하나의 <span class="mono">accum</span>으로.</p></div>
+
+<h3>2.3 왜 "소프트웨어 선택"인가</h3>
+<p>뱅크는 슬롯 번호가 정하고, 슬롯 번호는 호스트가 정한다. 그러니 호스트가 탭을 다른 슬롯에 넣으면(그리고 그 탭에 곱할 가중치도 같은 자리로 옮기면) 같은 비트스트림, 같은 결과로 사이클만 달라진다. 이 "어느 탭을 어느 슬롯에 둘까"가 이 논문의 <b>배치(layout)</b>다.</p>
+
+<!-- ============================== 3. 식 (1) ============================== -->
+<h2>3. 창 하나의 사이클: 식 (1)</h2>
+<div class="eq">C = max( ⌈K/W⌉ + 1,&nbsp; ⌈COUT/P⌉ · max(1, m),&nbsp; COUT ) <span class="n">(1)</span></div>
+<p>⌈x⌉는 올림이다. 세 항은 코어가 겹쳐서(파이프라인으로) 하는 세 가지 일이다. 겹쳐 진행되므로 창 하나의 시간은 셋 중 가장 긴 것이다.</p>
+<table class="full">
+<tr><th>항</th><th>뜻</th><th>보드 망 숨은 층 (K = 288, COUT = 32, W = 4)</th></tr>
+<tr><td>⌈K/W⌉ + 1</td><td><b>적재(load)</b>: 다음 창의 K개 값을 W개씩 받는 시간 + 시작 1사이클</td><td>⌈288/4⌉ + 1 = <b>73</b></td></tr>
+<tr><td>⌈COUT/P⌉ · max(1, m)</td><td><b>계산</b>: 출력을 P = 16개씩 묶은 그룹 G = ⌈COUT/P⌉개를 차례로, 그룹마다 m사이클(가장 바쁜 뱅크). 탭이 모두 0이어도 그룹당 1사이클</td><td>G = 2이므로 <b>2m</b></td></tr>
+<tr><td>COUT</td><td><b>내보내기</b>: 결과를 사이클당 1개씩</td><td><b>32</b></td></tr>
+</table>
+<p>W = 4에서 보드 망의 숨은 층은 m &gt; 36.5일 때(2m &gt; 73) <b>계산이 창의 시간을 정한다(compute-bound)</b>. 이때만 m을 줄이는 배치가 사이클을 줄인다. m ≤ 36이면 적재가 더 길어서 m을 줄여도 소용없다.</p>
+<figure class="w14"><img src="ex_cost.png"><figcaption>그림 ③ 식 (1)을 그린 것. 가로축 m, 세로축 창 하나의 사이클. W = 4(파랑)에서는 m이 36.5를 넘으면 계산 직선이 바닥(73)을 뚫고 올라가 m이 사이클을 정한다. W = 1, 2에서는 m이 최대치 72일 때도 계산(144)이 적재(289, 145)보다 짧아 배치가 아무 영향이 없다. conv5 창들의 평균 m은 L0 47.6, L3 39.7이다.</figcaption></figure>
+
+<div class="box ex"><span class="t">예: 논문 Fig. 2의 창 (보드 망 conv5, Set12 05.png)</span>
+<p>0이 아닌 탭 156개, L0에서 뱅크별 43/<b>48</b>/29/36 → m = 48, 2m = 96사이클(적재 73보다 큼). L1에서는 41/<b>44</b>/31/40 → 88, L2에서는 36/<b>42</b>/40/38 → 84, L3에서는 36/40/38/<b>42</b> → 84. 완벽하게 나누면 ⌈156/4⌉ = 39 → 78사이클이다.</p></div>
+
+<h3>3.1 count와 예측 사이클</h3>
+<ul>
+<li><b>count(사이클 count):</b> 식 (1)을 한 층의 모든 창에 대해 더한 값. 호스트 에뮬레이션으로 계산한다(보드 없이 PC에서 같은 정수 연산을 돌리며 창마다 m을 센다). 보드 망은 2×2 space-to-depth로 해상도를 절반으로 줄이므로, Set12 05.png 같은 256×256 영상에서는 층마다 창이 128 × 128 = 16,384개다.</li>
+<li><b>채움/비움(fill and drain):</b> 보드에서는 층마다 시작과 끝에 짧은 추가 시간이 있다. min(⌈K/W⌉+1, 마지막 창의 계산) + 3 + g 사이클 (g: 마지막 출력 그룹의 출력 수, COUT = 32면 16). 첫 층 conv1은 측정값 17사이클. 이 규칙은 네 망을 Set12 05.png로 보드에서 돌린 결과에서 읽어냈다.</li>
+<li><b>예측 사이클 = count + 채움/비움.</b> 보드 실행 전에 이 값을 층마다 계산해 커밋했다(7.1절).</li>
+</ul>
+<div class="box"><span class="t">왜 count를 믿을 수 있나</span>
+<p>같은 영상에서는 count로 잰 절감과 보드에서 잰 절감이 사실상 같다. 05.png의 L2: count 13,288,456 → 12,139,748, 보드 13,289,030 → 12,140,286, 둘 다 <b>8.644%</b>. 차이는 층마다 수백 사이클의 채움/비움뿐이다. 그래서 79장, 열 개 망의 결과를 count로 낸다.</p></div>
+
+<!-- ============================== 4. 식 (2) ============================== -->
+<h2>4. 어디서 이득이 가능한가: 식 (2)와 완벽 균형</h2>
+<p>한 뱅크가 받을 수 있는 탭은 많아야 ⌈K/T⌉개다(K개 슬롯을 4개 뱅크가 나눠 가짐). 그러니 m ≤ ⌈K/T⌉이고 계산 항은 많아야 ⌈COUT/P⌉·⌈K/T⌉이다. 이것이 다른 두 항의 바닥보다 작거나 같으면, <b>어떤 입력에서도 어떤 창도 계산이 시간을 정하지 못하고</b>, 따라서 어떤 배치도 count를 바꿀 수 없다:</p>
+<div class="eq">⌈COUT/P⌉ · ⌈K/T⌉ ≤ max( ⌈K/W⌉ + 1, COUT ) <span class="n">(2)</span></div>
+<p>즉 <b>(2)가 깨지는 것은 이득의 필요조건</b>이다(충분조건은 아니다: (2)가 깨져도 실제 입력에서 m이 충분히 커야 이득이 난다). 올림을 빼고 정리하면 (2)는 <b>COUT ≤ P·T/W</b>, 즉 W = 4이면 COUT ≤ 16, W = 2이면 32, W = 1이면 64다. 층의 모양(K, COUT)과 코어(P, T, W)만으로, 데이터 없이 판정된다.</p>
+<table>
+<tr><th>층 (예)</th><th class="n">K</th><th class="n">COUT</th><th class="n">계산 최대</th><th class="n">W = 1 바닥</th><th class="n">W = 2 바닥</th><th class="n">W = 4 바닥</th><th>이득 가능</th></tr>
+<tr><td>32출력 숨은 층 (A, R1–R3 등)</td><td class="n">288</td><td class="n">32</td><td class="n">2·72 = 144</td><td class="n">289</td><td class="n">145</td><td class="n">73</td><td>W = 4만</td></tr>
+<tr><td>64출력 숨은 층 (B)</td><td class="n">576</td><td class="n">64</td><td class="n">4·144 = 576</td><td class="n">577</td><td class="n">289</td><td class="n">145</td><td>W = 2, 4</td></tr>
+<tr><td>45출력 숨은 층 (B-45)</td><td class="n">405</td><td class="n">45</td><td class="n">3·102 = 306</td><td class="n">406</td><td class="n">204</td><td class="n">103</td><td>W = 2, 4</td></tr>
+<tr><td>R1의 마지막 층 conv10</td><td class="n">324</td><td class="n">4</td><td class="n">1·81 = 81</td><td class="n">325</td><td class="n">163</td><td class="n">82</td><td>없음</td></tr>
+<tr><td>R1의 첫 층 conv1</td><td class="n">36</td><td class="n">32</td><td class="n">2·9 = 18</td><td class="n">37</td><td class="n">32</td><td class="n">32</td><td>없음</td></tr>
+</table>
+<p class="cap">바닥 = max(⌈K/W⌉+1, COUT). 계산 최대 &gt; 바닥일 때만 이득이 가능하다. 32출력 층은 W = 2에서 144 대 145로 아슬아슬하게 이득이 불가능하다.</p>
+<p>이 표가 논문 결과의 모양을 미리 말해 준다. 디노이저의 32출력 층은 <b>W = 4에서만</b> 배치가 의미 있고, 마지막 층(COUT ≤ 4)은 어떤 W에서도 안 된다. 그래서 배치는 conv2부터 conv(L−1)까지의 입력에만 적용한다. 실제로 (2)가 성립하는 모든 곳에서 count가 L0와 정확히 같았다(사전등록 가설 H1, H4).</p>
+
+<h3>4.1 완벽 균형: lockstep 배치의 상한</h3>
+<p>창 하나에 0이 아닌 탭이 n개면, 4개 뱅크에 아무리 잘 나눠도 m은 ⌈n/4⌉보다 작아질 수 없다. 이 최선의 경우를 <b>완벽 균형(perfect balance)</b>이라 한다. 창마다 데이터를 보고 따로 나눠도 마찬가지이므로, lockstep 코어에서 <b>어떤 배치도 완벽 균형보다 나을 수 없다</b>. 보드 망에서 완벽 균형의 절감은 12.02%이고, 7.3절의 "share"는 각 배치가 이 상한의 몇 %를 얻었는지다.</p>
+
+<!-- ============================== 5. 세 배치 ============================== -->
+<h2 class="newpage">5. 세 가지 배치 L1, L2, L3</h2>
+
+<h3>5.1 L0: 기존 배치와 그 약점</h3>
+<p>기존 순서에서 탭 (s, p)는 슬롯 s·N + p에 있고, N이 4의 배수이면 뱅크는 <b>p mod 4</b>다. 즉 각 뱅크가 N/4개 채널을 <b>통째로</b>(9개 위치 모두) 맡는다. 어떤 채널이 자주 0이 아니면(예: 밝은 영역에 잘 반응하는 채널), 그 채널의 9개 탭이 모두 한 뱅크로 가고, 그런 채널이 같은 뱅크에 몰리면 그 뱅크가 늘 바쁘다.</p>
+<figure class="w16"><img src="ex_layouts.png"><figcaption>그림 ④ L0와 L2의 뱅크 지도(설명용 N = 8). 칸의 숫자가 그 탭의 뱅크다. 주황 테두리의 채널 1은 L0에서 9개 탭이 모두 뱅크 1로, L2에서는 뱅크 0/1/2/3에 2/3/2/2개로 흩어진다.</figcaption></figure>
+
+<h3>5.2 L1: 채널 재배치(relabeling), 가중치에 접어 넣기</h3>
+<p>π를 "숨은 맵의 위치 p에 원래 채널 π(p)가 온다"는 순열이라 하자. 앞 층(<b>생산자</b>)이 출력 채널을 π 순서로 계산하도록 가중치 행, 바이어스, 재양자화 스케일을 재배열하고, 다음 층(<b>소비자</b>)의 가중치 열도 맞춘다(탭 s·N + p의 가중치는 채널 π(p)의 것). 모두 오프라인에 한 번 하는 일이고, 실행 중에는 추가 작업이 없다.</p>
+<figure class="w14"><img src="ex_relabel.png"><figcaption>그림 ⑤ 재배치를 접어 넣기(설명용 채널 4개). 생산자가 채널을 c, a, d, b 순서로 내놓게 하고, 소비자의 가중치 열도 같은 순서로 바꿔 두면, 소비자는 같은 곱들을 더하므로 결과가 같다. 바뀌는 것은 어느 채널이 어느 위치(따라서 어느 뱅크 묶음)에 있는가뿐이다.</figcaption></figure>
+<p><b>왜 출력이 정확히 같은가.</b> ReLU와 재양자화는 채널마다 따로 작용하므로 채널 순서를 바꿔도 각 채널의 값은 같다. 소비자는 같은 INT32 곱들을 순서만 바꿔 더한다. 그래서 <b>모든 입력에서 정수 출력이 같다</b>. 어떤 채널끼리 같은 뱅크를 쓰는지(class = 채널 자리 p mod 4)는 π가 정한다.</p>
+<ul>
+<li>L층 망에서 conv1부터 conv(L−2)까지의 출력을 재배치한다. 마지막 층은 이득이 불가능하므로(4장) 입력을 그대로 둔다.</li>
+<li>maxout·평균 망(두 맵 j와 j+N의 최대 또는 평균)에서는 짝인 두 맵이 함께 움직인다.</li>
+<li><b>한계:</b> 채널 단위로만 바꾼다. 한 채널의 9개 탭은 여전히 같은 뱅크에 있다.</li>
+</ul>
+
+<h3>5.3 L2: skew (데이터가 필요 없다)</h3>
+<p>Budnik &amp; Kuck의 skewed storage [7]를 탭에 적용한다. N이 4의 배수일 때, 호스트가 위치 s의 채널 p를 <b>슬롯 s·N + (p + s) mod N</b>에 넣는다. 그러면 뱅크는 <b>(p + s) mod 4</b>가 되어, 위치가 하나 바뀔 때마다 같은 채널의 뱅크가 하나씩 밀린다. 9개 위치에서 (p + s) mod 4는 p의 원래 뱅크를 3번(s = 0, 4, 8), 나머지를 2번씩 지나므로, <b>한 채널의 9개 탭이 3/2/2/2로 네 뱅크에 흩어진다</b>(그림 ④ 오른쪽).</p>
+<ul>
+<li>창의 탭과 소비자 가중치 열을 같은 순열로 바꾸므로 각 출력은 같은 곱들의 합이다.</li>
+<li><b>정수 결과가 같은 이유:</b> 정수 덧셈은 순서를 바꿔도 결과가 같다. 넘침(overflow)만 없으면 된다. 어떤 순서로 더해도 부분합은 |bias| + K·127·128 &lt; 2³¹을 넘지 않으므로 INT32 결과가 같다.</li>
+<li>데이터도, 맞추기(fitting)도, RTL 변경도 필요 없다. 호스트 비용은 im2col 뒤 재배열 4.2 ms(05.png 기준)뿐.</li>
+<li><b>N mod 4 = 1인 B-45(채널 45개):</b> 기존 순서에서 이미 j mod 4 = (45s + p) mod 4 = (s + p) mod 4이므로 L0가 곧 skew다. 그래서 B-45에서는 L2 = L0, L3 = L1이다.</li>
+</ul>
+
+<h3>5.4 L3: skew 위에서 다시 재배치</h3>
+<p>skew 아래에서 뱅크 b는 위치 s에서 class (b − s) mod 4의 채널을 담는다(class = p mod 4). 9개 위치를 지나며 class b는 위치 0, 4, 8에서 세 번, 나머지 class는 두 번씩 뱅크 b에 온다. 그러니 skew는 어떤 class가 0 아닌 값을 많이 가질 때 그 과잉을 <b>희석할 뿐 없애지는 못한다</b>. 그리고 어떤 채널들이 한 class를 이루는지는 여전히 자유다. L3는 L2에서 출발해 이 skew 규칙 아래서 재배치를 다시 맞춘 뒤 skew한다(논문 Fig. 2d).</p>
+
+<figure class="w12"><img src="../figures/fig1_layouts.png"><figcaption>논문 Fig. 2. 보드 망 conv5의 실제 창 하나(Set12 05.png)를 네 배치로 본 것. 칸: 0이 아니면 뱅크 색. 막대: 뱅크별 0 아닌 탭 수, 굵은 테두리가 가장 바쁜 뱅크 m. 점선 m = 36.5는 2m이 적재 73과 같아지는 높이다. m: 48 → 44 → 42 → 42.</figcaption></figure>
+
+<h3>5.5 재배치를 맞추는 방법 (fitting)</h3>
+<ul>
+<li><b>층마다 따로:</b> 재배치된 창은 원래 창의 열을 바꾼 것일 뿐이라, 층마다 독립적으로 맞출 수 있다.</li>
+<li><b>데이터:</b> 보정(calibration) 영상 한 장(Set12 01.png)에서 층마다 창 2048개를 뽑는다.</li>
+<li><b>목적함수:</b> 그 창들의 식 (1) 평균(W = 4).</li>
+<li><b>탐색:</b> 항등 순열에서 출발해, 서로 다른 class의 두 채널을 맞바꾸는 제안을 400번 하고, 목적함수가 줄 때만 받아들인다(탐욕적 국소 탐색). 원래 뱅크 규칙으로 하면 L1, skew 규칙으로 하면 L3.</li>
+<li><b>L1′(보드 망 전용):</b> 더 공들인 재배치. Set12 01–03, 영상마다 잡음 두 번, 항등 순열과 무작위 시작점 4개에서 각각 탐색(층마다 5 × 401 = 2005번 평가). "재배치에 데이터와 탐색을 더 주면 skew를 이기나?"를 확인하려는 것이다(결과: 8.10% &lt; skew 9.20%).</li>
+<li>망 하나를 맞추는 데 30초 미만(L1, L3). L2는 맞출 것이 없다.</li>
+</ul>
+
+<h3>5.6 정말 출력이 같은지 확인한 것</h3>
+<ul>
+<li>호스트 에뮬레이션: 모든 망의 L1이 테스트 영상 2장에서, 보드 망의 L1과 L1′이 80장 모두에서 원래 출력을 그대로 냈다.</li>
+<li>L2와 L3는 모든 망에서 Set12 05.png의 모든 층, 모든 창의 INT32 누산값이 같았다(L3는 채널 순서만 다름).</li>
+<li>보드에서는 모든 층의 출력이 정수 모델과 일치했다.</li>
+</ul>
+
+<!-- ============================== 6. 실험 설정 ============================== -->
+<h2>6. 실험 설정</h2>
+<h3>6.1 열 개의 망</h3>
+<p>모두 σ = 25 가우시안 잡음을 지우는 DnCNN 계열 정수 디노이저 [8]이고 입력은 7비트다. A를 뺀 모든 망은 양자화를 고려한 학습(QAT)을 거쳤다.</p>
+<table class="full">
+<tr><th>이름</th><th>구조</th><th>숨은 채널 N</th><th>비고</th></tr>
+<tr><td>A</td><td>7층</td><td class="n">32</td><td>QAT 없음</td></tr>
+<tr><td>B</td><td>10층, 2×2 space-to-depth 입력</td><td class="n">64</td><td>64출력 층이라 W = 2에서도 이득 가능</td></tr>
+<tr><td>R1, R2, R3</td><td>B와 같은 구조, ReLU (학습 시드 s1–s3)</td><td class="n">32</td><td><b>R1 = 보드 망</b>, Set12 05.png에서 29.54 dB</td></tr>
+<tr><td>M1, M2, M3</td><td>maxout: 64개를 계산해 짝마다 최대 (시드 s1–s3)</td><td class="n">32</td><td>재배치 때 짝이 함께 이동</td></tr>
+<tr><td>Av2</td><td>짝의 평균 (시드 s2)</td><td class="n">32</td><td></td></tr>
+<tr><td>B-45</td><td>B와 같은 구조, ReLU</td><td class="n">45</td><td>N mod 4 = 1: L2 = L0, L3 = L1</td></tr>
+</table>
+<p class="small">space-to-depth: 2×2 픽셀 블록을 채널 4개로 바꿔 해상도를 절반으로 줄이는 것. 보드 망 R1은 conv1(K = 36, 출력 32), conv2–conv9(K = 288, 출력 32), conv10(K = 324, 출력 4)의 10층이다.</p>
+
+<h3>6.2 영상과 통계</h3>
+<ul>
+<li><b>영상:</b> Set12(12장)와 BSD68(68장), 모두 80장, 잡음은 영상마다 한 번 뽑는다.</li>
+<li><b>pooled(합산) 절감:</b> 보정 영상 Set12 01.png를 뺀 79장의 사이클을 모두 더한 뒤 계산한 절감률이다. 영상별 절감률의 평균이 아니다. 08.png처럼 큰 영상은 그만큼 무겁게 반영된다.</li>
+<li><b>95% 구간:</b> paired bootstrap. 79장에서 영상을 복원추출로 다시 뽑아 합산 절감을 여러 번 계산한다. 같은 영상 묶음에서 두 배치를 비교하므로 "paired"다. 구간은 영상의 변동만 반영하고, 맞추기나 학습의 변동은 반영하지 않는다.</li>
+<li><b>%p(퍼센트포인트):</b> 두 절감률의 차. 9.93% − 9.20% = 0.73%p.</li>
+</ul>
+
+<h3>6.3 사전등록(pre-registration)이란</h3>
+<p>실험하기 <b>전에</b> 무엇을 어떻게 하고 무엇을 기대하는지(레시피, 평가 방법, 가설)를 문서로 고정해 커밋해 두는 것이다. 결과를 본 뒤 유리하게 방법을 바꾸거나 좋은 결과만 고르는 일을 막는다. 이 논문에는 프로토콜이 두 개 있다.</p>
+<table class="full">
+<tr><th>프로토콜</th><th>대상</th><th>가설</th></tr>
+<tr><td><span class="mono">PROTOCOL.md</span> (1차)</td><td>재배치 L1, 열 개 망</td><td><b>H1</b> (2)가 성립하는 곳에서 L1 count = L0 · <b>H2</b> W = 4에서 L1 절감 &gt; 0 · <b>H3</b> W = 2에서 (2)가 허용하는 곳의 L1 절감 &gt; 0</td></tr>
+<tr><td><span class="mono">PROTOCOL_2.md</span> (2차)</td><td>skew L2, 조합 L3</td><td><b>H4</b> (2)가 성립하는 곳에서 L2, L3 count = L0 · <b>H5</b> W = 4에서 L2 &gt; L1 · <b>H6</b> W = 4에서 L3 &gt; L2</td></tr>
+</table>
+<p>사전등록 전에 이미 알던 것이 있었고, 논문은 그것을 숨기지 않고 VI장에 밝혔다(이 문서 10장).</p>
+
+<h3>6.4 보드</h3>
+<ul>
+<li>Zynq XC7Z020용 W = 4 비트스트림. 100 MHz에서 타이밍을 만족하고, LUT 11,151개(21%), BRAM36 환산 140개 중 71개, DSP 0개를 쓴다. 보드 프리셋인 50 MHz에서 돌렸다.</li>
+<li>비트스트림 하나로 모든 배치를 돌린다. 드라이버는 층마다 출력을 정수 모델과 대조하고, 사이클 카운터 <b>CYCLES</b>와 DMA 대기 카운터 <b>IN_STALL</b>을 읽는다.</li>
+<li>다섯 배치(L0, L1, L1′, L2, L3)를 Set12 05–08에서 한 번씩 돌렸다. conv2–conv10의 사이클은 실행 전에 예측해 커밋했다.</li>
+<li>그 밖의 모든 사이클 숫자는 호스트 에뮬레이션 count다. 에뮬레이션은 모든 망의 기준 PSNR을 80장 모두에서 재현한다(같은 정수 연산이라는 확인).</li>
+</ul>
+
+<!-- ============================== 7. 결과 ============================== -->
+<h2 class="newpage">7. 결과</h2>
+<h3>7.1 보드 측정 (논문 Table I)</h3>
+<table>
+<tr><th>배치</th><th class="n">05</th><th class="n">06</th><th class="n">07</th><th class="n">08</th></tr>
+<tr><td>L0 (10⁶ 사이클)</td><td class="n">13.289</td><td class="n">13.466</td><td class="n">13.412</td><td class="n">51.977</td></tr>
+<tr><td>L1 재배치</td><td class="n">7.02</td><td class="n">7.91</td><td class="n">7.22</td><td class="n">5.93</td></tr>
+<tr><td>L1′ 재배치</td><td class="n">7.60</td><td class="n">9.01</td><td class="n">7.89</td><td class="n">6.58</td></tr>
+<tr><td>L2 skew</td><td class="n">8.64</td><td class="n">9.97</td><td class="n">8.95</td><td class="n">7.31</td></tr>
+<tr><td>L3 skew + 재배치</td><td class="n">9.39</td><td class="n">10.68</td><td class="n">9.63</td><td class="n">7.95</td></tr>
+</table>
+<p class="cap">L0 줄은 총 사이클, 나머지는 L0 대비 절감(%). 08.png는 512×512, 나머지는 256×256이다.</p>
+<ul>
+<li><b>순서:</b> 네 영상 모두 L3 &lt; L2 &lt; L1′ &lt; L1 &lt; L0(사이클), 예측과 같다. 네 장 합산 절감은 L2 8.13%, L3 8.80%.</li>
+<li><b>층 단위 예측:</b> 180개 층(5배치 × 4영상 × conv2–conv10의 9층) 중 <b>176개</b>에서 CYCLES − IN_STALL이 예측과 정확히 같았다.</li>
+<li><b>틀린 4개:</b> 모두 conv8이고 1사이클 많았다. 실행 후에 보니 정확히 "마지막 창의 계산이 30사이클"인 층들이었다(다른 conv2–conv9 층은 32–56). 채움/비움 규칙을 읽어낸 실행에는 없던 경우다. 예측은 고치지 않고 그대로 보고했다.</li>
+<li><b>처음 돌린 배치:</b> L2와 L3는 보드에서 처음 돌렸는데 72층 중 71층이 정확했다. conv10은 어느 배치든 L0와 같은 창을 보므로 그것을 빼면 64층 중 63층이다.</li>
+</ul>
+<div class="box warn"><span class="t">이 일치가 증명하지 않는 것</span>
+<p>이 비트스트림의 IN_STALL은 창 경계에서 DMA가 데이터를 늦게 주는 경우를 세지 않는다. 그래서 모든 배치에 똑같이 생기는 정체는 채움/비움 규칙 안에 숨어 있을 수 있다. 예측의 일치가 배제하는 것은 "배치마다 다르게 생기는 정체"뿐이다.</p></div>
+<p><b>보드 절감(8.13%)이 count(9.20%)보다 작은 이유</b>는 영상 묶음이 다르기 때문이다(4장 대 79장, 4장 중에서는 큰 08.png의 절감이 가장 작다). 같은 영상에서는 count와 보드 절감이 같다(3.1절의 05.png 예).</p>
+
+<h3>7.2 열 개 망, 두 프로토콜 (논문 Fig. 3)</h3>
+<figure class="w12"><img src="../figures/fig2_networks.png"><figcaption>논문 Fig. 3. 79장 합산 절감, 위 W = 4, 아래 W = 2. 주황 네모 L1, 초록 세모 L2, 검은 마름모 L3. ×는 (2)가 모든 층에서 성립해 모든 배치가 L0와 같은 곳(W = 1은 모든 망이 그렇다). B-45에서 L2 = L0.</figcaption></figure>
+<ul>
+<li><b>H1 성립:</b> (2)가 성립하는 곳(W = 1의 모든 망, W = 2의 A와 R1–R3)에서 재배치 count가 L0와 80장 모두 같았다.</li>
+<li><b>H2 성립:</b> W = 4에서 L1 절감이 열 개 망 모두 양수, 1.09–10.80%.</li>
+<li><b>H3 성립:</b> W = 2에서 (2)가 허용하는 여섯 망 모두 양수(다섯 망 3.36–7.37%, B-45 0.022%).</li>
+<li><b>H4 성립:</b> (2)가 성립하는 곳에서 L2와 L3도 모든 층, 80장 모두 L0와 같았다.</li>
+<li><b>H5 성립:</b> W = 4에서 N mod 4 = 0인 아홉 망 모두 L2가 L1보다 0.90–2.36%p 더 줄였다.</li>
+<li><b>H6 성립:</b> 아홉 망 모두 L3가 L2보다 0.48–1.18%p 더 줄였다(R1에서 0.73, 95% 구간 [0.70, 0.75]).</li>
+<li><b>가설 밖의 확인:</b> L3는 보정 영상 한 장으로만 맞췄는데도 711개 영상–망 쌍(9망 × 79장) 모두에서 L2보다 count가 작았고, 합산으로는 맞춘 69개 층 모두에서 작았다. W = 2에서도 이득이 가능한 다섯 망에서 L3 &gt; L2 &gt; L1 순.</li>
+<li>열 개 망에서는 어떤 영상도, 어떤 W에서도 어떤 배치가 L0보다 count가 커진 적이 없다.</li>
+</ul>
+
+<h3>7.3 보드 망, 79장 (논문 Table II)</h3>
+<table>
+<tr><th>배치</th><th>맞춘 영상</th><th class="n">합산 절감 (%) [95% 구간]</th><th class="n">share (%)</th></tr>
+<tr><td>밀도 균형 (SparTen식 [4])</td><td>1</td><td class="n">3.69 [3.50, 3.88]</td><td class="n">30.7</td></tr>
+<tr><td>Sense식 정렬 [3]</td><td>각 테스트 영상</td><td class="n">4.89</td><td class="n">40.7</td></tr>
+<tr><td>L1 재배치</td><td>1</td><td class="n">7.46 [7.16, 7.78]</td><td class="n">62.1</td></tr>
+<tr><td>L1′ 재배치</td><td>3†</td><td class="n">8.10 [7.80, 8.39]</td><td class="n">67.4</td></tr>
+<tr><td>L2 skew</td><td>없음</td><td class="n">9.20 [8.82, 9.58]</td><td class="n">76.6</td></tr>
+<tr><td>L3 skew + 재배치</td><td>1</td><td class="n">9.93 [9.54, 10.32]</td><td class="n">82.6</td></tr>
+<tr><td>완벽 균형</td><td>—</td><td class="n">12.02 [11.59, 12.44]</td><td class="n">100</td></tr>
+</table>
+<p class="cap">share = 그 배치의 절감 ÷ 완벽 균형의 절감. †: 맞춘 3장 중 2장(Set12 02, 03)이 79장에 들어 있다. 밀도·Sense식은 세 변형 중 가장 좋은 것.</p>
+<ul>
+<li>79장 <b>각각에서</b> L2가 두 재배치보다, L3가 L2보다 많이 줄였다.</li>
+<li>데이터가 필요 없는 L2가 완벽 균형 절감의 76.6%를, L3가 82.6%를 얻었다. L3는 L2가 남긴 불균형의 26%를 더 없앴다: (9.93 − 9.20) ÷ (12.02 − 9.20) ≈ 0.26. 호스트 비용은 L2와 같다(같은 재배열, 재배치는 가중치 안에).</li>
+<li><b>가장 눈여겨볼 비교:</b> L1 레시피를 <b>각 테스트 영상 자신에</b> 맞춰도(실제로는 쓸 수 없는, 유리한 조건) 8.45%로, 데이터 없는 skew 9.20%에 못 미친다.</li>
+<li>Sense식(채널별 0 아닌 수로 정렬)과 SparTen식 밀도 균형은 더 적게 줄였다.</li>
+</ul>
+
+<h3>7.4 CIFAR-10 분류기 (사전등록 밖)</h3>
+<p>디노이저가 아닌 망에서도 같은지 보려고, 저장소의 <span class="mono">cifar/</span> 스크립트로 CIFAR-10 분류기(3×3 합성곱 6개, 채널 3→32→32→64→64→128→128)를 15 epoch 학습했다(정수 정확도 88.09%). 테스트 영상 0번 한 장으로 맞추고 나머지 9,999장에서 셌다. 숨은 입력은 모두(conv2–conv6) 배치를 바꿨다.</p>
+<table>
+<tr><th>W = 4</th><th class="n">L1</th><th class="n">L2</th><th class="n">L3</th><th class="n">완벽 균형</th></tr>
+<tr><td>합산 절감 (%)</td><td class="n">3.47</td><td class="n">8.54</td><td class="n">9.10</td><td class="n">13.08</td></tr>
+</table>
+<ul>
+<li>순서가 디노이저와 같다. L2와 L3는 9,999장 모두에서 이득이었다.</li>
+<li>L1은 176장에서 L0보다 나빠졌다. 32×32 영상 한 장에서 나오는 창이 적어(1024/256/256/64/64개) 보정 영상에 과적합했기 때문이다(보정 영상에서는 8.22%).</li>
+<li>W = 1에서는 128출력 층(conv5, conv6)이 (2)를 깨서 이득이 가능해지는데, 세 배치 모두 일부 영상에서 아주 조금(0.4% 미만) 나빠졌다. 논문은 이것도 적었다.</li>
+</ul>
+
+<h3>7.5 비용과 전체 시간</h3>
+<ul>
+<li>맞추기: 망당 30초 미만(L1, L3). L2는 0.</li>
+<li>호스트(x86 서버, 단일 스레드) 작업, 05.png: 입력·im2col·재양자화에 31–32 ms. 코어는 50 MHz에서 266 ms.</li>
+<li>둘을 연달아 하면 L1′의 코어 절감 7.60%가 전체 시간으로는 6.3–6.8%다. 호스트가 다음 영상을 코어와 겹쳐 처리하면 7.60%를 다 얻는다. skew 재배열은 4.2 ms를 더한다.</li>
+<li>창과 결과의 전송 시간은 이 계산에 없고, Zynq의 ARM 코어는 서버보다 느릴 것이다.</li>
+</ul>
+
+<!-- ============================== 8. FIFO ============================== -->
+<h2 class="newpage">8. 왜 lockstep을 유지하나: "FIFO를 쓰면 되지 않나?"</h2>
+<p>가장 예상되는 반론은 이것이다: "lockstep이 문제라면 뱅크마다 큐(FIFO)를 두어 빨리 끝난 뱅크가 다음 창을 먼저 하게 하면 되지 않나? 이 문제는 스스로 만든 것 아닌가?" 논문(Sec. II 끝 "Why lockstep")의 답은 두 부분이다.</p>
+<h3>8.1 비용</h3>
+<p>지금 코어는 레인마다 네 뱅크의 곱을 한 번에 더해 누산기 하나에 쌓는다. 뱅크가 서로 다른 창을 처리하게 하려면 뱅크·레인·앞서 간 창마다 부분합을 따로 저장해야 하고, 더 깊은 버퍼와 마지막 합산 단계가 필요하다.</p>
+<h3>8.2 효과: L0의 불균형은 창마다 바뀌지 않는다</h3>
+<figure class="w16"><img src="ex_decouple.png"><figcaption>그림 ⑥ FIFO가 도움이 되는 경우와 안 되는 경우(설명용 숫자, 창 3개). (가) 바쁜 뱅크가 창마다 바뀌면 FIFO로 서로 메워 18 → 10사이클. (나) 늘 같은 뱅크(0)가 바쁘면 FIFO가 있어도 그 뱅크의 총량 17사이클이 그대로 걸린다.</figcaption></figure>
+<p>L0에서는 같은 채널이 늘 같은 뱅크에 있으므로, 자주 켜지는 채널을 가진 뱅크는 층 전체에서 계속 바쁘다(그림 ⑥의 (나)). 보드 망에서 한 층 전체를 놓고 보면 가장 바쁜 뱅크가 평균 뱅크의 최대 <b>1.35배</b>의 탭을 처리한다(conv9). skew를 적용한 층(conv2–conv9)에서는 1.04배 이하다.</p>
+<p>그래서 저장소의 <span class="mono">decouple_bound.py</span>로 상한을 계산했다. 뱅크를 분리해도 뱅크 b는 자기 몫의 0 아닌 탭을 출력 그룹마다 한 번씩 처리해야 하므로, 층의 시간은 적어도 <b>max(N·max(적재, COUT), G·max<sub>b</sub> Σ<sub>w</sub> n<sub>w,b</sub>)</b>다(n<sub>w,b</sub>: 창 w에서 뱅크 b의 0 아닌 탭 수). 이 하한으로 계산하면:</p>
+<table>
+<tr><th>보드 망, 79장, L0 count 대비</th><th class="n">절감</th></tr>
+<tr><td>L0의 뱅크 규칙 + 뱅크 분리, 버퍼 무한 (상한)</td><td class="n">최대 6.54%</td></tr>
+<tr><td>같은 조건의 창 단위 시뮬레이션</td><td class="n">6.00%</td></tr>
+<tr><td>같은 조건, 지금처럼 창 버퍼 2개 (시뮬레이션)</td><td class="n">0.64%</td></tr>
+<tr><td><b>lockstep 그대로 + skew L2</b></td><td class="n"><b>9.20%</b></td></tr>
+<tr><td>skew + 뱅크 분리 (상한 / 버퍼 3개 시뮬레이션)</td><td class="n">12.96% / 12.15%</td></tr>
+</table>
+<p>즉 <b>하드웨어를 바꿔(FIFO) 얻을 수 있는 것보다, 배치만 바꿔(skew) 얻는 것이 더 크다.</b> 반대로 skew와 뱅크 분리를 합치면 완벽 균형(12.02%)도 넘을 수 있다. 둘은 경쟁이 아니라 보완 관계이고, 이 논문의 주제는 "하드웨어를 바꾸지 않고 배치만으로"다.</p>
+<div class="box warn"><span class="t">흔한 오해: "12.02%가 모든 뱅크 변경의 천장"</span>
+<p>완벽 균형은 <b>창 하나 안에서</b> 가장 고르게 나눈 경우이므로 lockstep 배치의 상한이다. 뱅크를 분리하면 창들 사이에서도 일을 나눌 수 있어 이보다 나을 수 있다(위 표의 12.96%). 그래서 논문은 12.02%를 "lockstep 배치가 얻을 수 있는 최대"라고만 쓴다.</p></div>
+<p class="small">이 상한과 시뮬레이션은 보드나 RTL에서 만든 것이 아니라 창 데이터로 계산한 것이며, 두 프로토콜이 끝난 뒤에 계산했다(사전등록 밖). 2차 검증에서 별도 스크립트로 9장의 900개 값이 정확히 재현되었다.</p>
+
+<!-- ============================== 9. 직관 ============================== -->
+<h2>9. 직관: 왜 skew가 재배치보다 잘 되고, 합치면 조금만 더 좋아지나</h2>
+<ol>
+<li><b>L0의 불균형은 "채널 단위로 몰림"에서 온다.</b> 자주 켜지는 채널 하나의 9개 탭이 전부 한 뱅크로 간다.</li>
+<li><b>재배치(L1)는 "어느 채널끼리 한 뱅크"만 바꾼다.</b> 채널의 9개 탭은 여전히 한 뱅크에 묶여 있다. 그리고 π는 하나로 고정되어 모든 영상, 모든 위치에 같이 쓰인다. 어떤 채널이 자주 켜지는지는 영상마다, 영상의 영역마다 다르므로 고정된 묶음으로 맞추는 데 한계가 있다. 각 테스트 영상에 따로 맞춰도 8.45%에 그친다.</li>
+<li><b>skew(L2)는 채널 하나의 탭을 3/2/2/2로 흩는다.</b> 어떤 채널이 켜지든 그 일이 네 뱅크에 나뉜다. 그래서 데이터 없이, 영상에 상관없이 균형이 좋아진다.</li>
+<li><b>skew 뒤에 남는 불균형</b>은 같은 class(p mod 4)가 한 뱅크에 세 번 오는 데서 온다(5.4절). 한 class에 바쁜 채널이 몰려 있으면 여전히 치우친다. L3는 class 구성을 다시 맞춰 이 나머지를 줄인다. 하지만 skew가 이미 대부분을 흩었으므로 추가 이득은 작다(0.48–1.18%p, 남은 불균형의 26%). 논문이 "둘은 일부만 더해진다"고 쓴 이유다.</li>
+<li><b>왜 W = 4에서만 보이나.</b> W가 크면 적재가 빨라 계산(뱅크 불균형)이 창 시간을 정하는 일이 잦아진다. 32출력 층은 W = 4에서만 조건 (2)가 깨진다(4장).</li>
+</ol>
+
+<!-- ============================== 10. 한계 ============================== -->
+<h2>10. 한계와 미리 알던 것</h2>
+<h3>10.1 범위</h3>
+<ul>
+<li>보드: 망 하나(R1), 영상 네 장, 각 한 번 실행.</li>
+<li>count: σ = 25의 DnCNN 계열 디노이저 열 개(영상마다 잡음 한 번), 그리고 프로토콜 밖의 CIFAR-10 분류기 하나(15 epoch).</li>
+<li>배치마다 맞추기는 한 번(구간은 영상만 다시 뽑는다). BSD68은 망을 개발할 때도 쓰였다.</li>
+<li>뱅크 분리는 상한만 계산했고 만들지 않았다. 다른 P, T, 커널 크기, 에너지는 평가하지 않았다.</li>
+</ul>
+<h3>10.2 사전등록 전에 알던 것 (논문 VI장)</h3>
+<ul>
+<li>1차 전: R1에서 L1의 절감을 이미 셌고, 다른 재배치 탐색으로 B와 M1에서 W = 4 절감이 있다는 것을 알았다.</li>
+<li>2차 전: L2를 R1에서(80장 모두), 다른 네 망에서 한 장씩, B와 M1에서는 여덟 장씩 셌고, L3를 R1의 일곱 장에서 셌다.</li>
+<li>L1′은 BSD68 count를 본 뒤 보드용으로 골랐다.</li>
+<li>L0, L1, L1′은 보드 영상에서 이미 돌린 적이 있다. 채움/비움 규칙은 L0를 포함한 05.png 실행에서 읽었고, 예측 코드는 세 배치의 05.png 총합을 재현해야만 결과를 쓰도록 되어 있었다. 그래서 05.png의 이 세 배치 27개 층(3 × 9)은 "표본 밖 예측"이 아니다.</li>
+</ul>
+<p>이런 것을 굳이 적는 이유: 사전등록의 신뢰는 "무엇을 미리 알았는지"를 밝힐 때 생긴다. 숨기면 좋은 결과가 우연인지 선택인지 독자가 알 수 없다.</p>
+
+<!-- ============================== 11. Q&A ============================== -->
+<h2 class="newpage">11. 예상 질문과 답</h2>
+<div class="qa">
+<h4>Q1. 결국 채널 순열 아닌가? 무엇이 새로운가?</h4>
+<p>채널 순열을 가중치에 접는 기법 자체는 Pool &amp; Yu [5] 등에 있다. 새로운 것은 (1) 그것을 lockstep 0 건너뛰기 뱅크의 활성값 균형에, 출력이 정확히 같게 적용한 것, (2) 데이터 없는 skew가 그 재배치보다 낫다는 비교(아홉 망 모두, 영상마다), (3) 어디서 이득이 가능한지 모양만으로 정하는 조건 (2), (4) 보드에서 실행 전에 층 단위로 사이클을 예측해 맞힌 것이다.</p>
+<h4>Q2. 뱅크마다 FIFO를 두면 되지 않나?</h4>
+<p>8장. 하드웨어가 커지고, L0의 뱅크 규칙에서는 무한 버퍼여도 최대 6.5%로, 하드웨어 변경 없는 skew(9.2%)보다 작다. 둘을 합치면 더 좋을 수 있으므로 보완 관계다.</p>
+<h4>Q3. 왜 50 MHz인가? 100 MHz면?</h4>
+<p>보드 프리셋이 50 MHz다. 비트스트림은 100 MHz 타이밍을 만족한다. 사이클 수는 DMA가 따라오면 클럭과 무관하지만, 100 MHz에서 DMA가 따라오는지는 재지 않았다. 전체 시간은 7.5절(50 MHz 기준).</p>
+<h4>Q4. 디노이저 말고 다른 망에서도 되나?</h4>
+<p>구조가 다른 디노이저 열 개(채널 32, 45, 64, maxout, 평균)와 CIFAR-10 분류기에서 같은 순서였다(7.4절). 그리고 어떤 층에서 이득이 가능한지는 조건 (2)로 데이터 없이 판정할 수 있다.</p>
+<h4>Q5. 보드 절감(8.13%)과 count(9.20%)가 왜 다른가?</h4>
+<p>영상 묶음이 다르다(4장 대 79장). 같은 영상에서는 count 절감과 보드 절감이 같다(05.png의 L2: 둘 다 8.644%).</p>
+<h4>Q6. 예측이 틀린 네 층은 무엇인가?</h4>
+<p>모두 conv8, +1사이클. 마지막 창의 계산이 30사이클인 경우로, 규칙을 읽어낸 실행에 없던 경우다. 실행 뒤에 원인을 찾았고 예측은 고치지 않았다.</p>
+<h4>Q7. 정수 출력이 정말 같은가?</h4>
+<p>재배치는 채널별 연산(ReLU, 재양자화)만 거치고 같은 곱을 더한다. skew는 덧셈 순서만 바꾸고 넘침이 없다(|bias| + K·127·128 &lt; 2³¹). 실제로 80장 출력, 모든 창의 누산값, 보드의 층 출력에서 확인했다(5.6절).</p>
+<h4>Q8. 왜 W = 4에서만 효과가 있나?</h4>
+<p>32출력 층은 W = 1, 2에서 적재가 계산보다 늘 길어서(조건 (2) 성립) 배치가 영향을 줄 수 없다. 64출력 층(B)과 45출력 층(B-45)은 W = 2에서도 이득이 있다.</p>
+<h4>Q9. VARA와는 무엇이 다른가?</h4>
+<p>VARA는 ReRAM 가속기에서 0인 입력끼리 <b>모아</b> 통째로 건너뛸 블록을 만들고, 실행 중 인덱스 유닛으로 읽는다. 우리는 0이 아닌 값을 뱅크에 <b>흩어</b> 균형을 맞추고, 순열을 가중치에 접어 인덱스가 필요 없다. 그리고 skew는 데이터조차 필요 없다.</p>
+<h4>Q10. 미리 알던 것이 있는데 사전등록이 의미 있나?</h4>
+<p>알던 것은 모두 VI장에 밝혔다(10.2절). 1차 프로토콜의 가설 H1–H3, 2차의 H4–H6은 미리 알지 못한 망과 영상, W에까지 걸쳐 있고, 모두 성립했다. 보드의 L2·L3는 그 전에 보드에서 돌린 적이 없다.</p>
+<h4>Q11. 채널 수가 4의 배수가 아니면?</h4>
+<p>B-45(45채널)에서는 기존 순서가 이미 skew와 같다((45s + p) mod 4 = (s + p) mod 4). 그래서 L2 = L0, L3 = L1이고, 재배치(L1)만 이득을 준다(W = 4에서 1%대).</p>
+<h4>Q12. 에너지는?</h4>
+<p>재지 않았다. 사이클과 호스트 시간만 쟀다.</p>
+<h4>Q13. 왜 L1′도 보드에서 돌렸나?</h4>
+<p>재배치에 데이터(3장 × 잡음 2번)와 탐색(시작점 5개)을 더 주면 skew를 따라잡는지 보려는 것이다. L1′(8.10%)은 L1(7.46%)보다 낫지만 skew(9.20%)에는 못 미쳤고, 보드에서도 네 영상 모두 L2보다 사이클이 많았다.</p>
+</div>
+
+<!-- ============================== 12. 기호와 용어 ============================== -->
+<h2 class="newpage">12. 기호표와 용어집</h2>
+<table class="full">
+<tr><th>기호</th><th>뜻</th><th>보드 망의 값</th></tr>
+<tr><td>K</td><td>창의 탭 수 = 9N (3×3 커널)</td><td>288 (conv2–conv9)</td></tr>
+<tr><td>N</td><td>층의 입력 채널 수</td><td>32</td></tr>
+<tr><td>COUT</td><td>층의 출력 채널 수</td><td>32 (마지막 층 4)</td></tr>
+<tr><td>P</td><td>출력 레인 수</td><td>16</td></tr>
+<tr><td>T</td><td>탭 뱅크 수</td><td>4</td></tr>
+<tr><td>W</td><td>창 포트가 사이클당 받는 값 수</td><td>보드 4</td></tr>
+<tr><td>G = ⌈COUT/P⌉</td><td>출력 그룹 수</td><td>2</td></tr>
+<tr><td>m</td><td>창에서 0 아닌 탭이 가장 많은 뱅크의 탭 수</td><td>conv5 평균 47.6 (L0)</td></tr>
+<tr><td>n</td><td>창의 0 아닌 탭 수</td><td></td></tr>
+<tr><td>s, p</td><td>3×3 위치(0–8), 채널(0–N−1)</td><td></td></tr>
+<tr><td>j</td><td>슬롯 번호, 뱅크 = j mod 4</td><td></td></tr>
+<tr><td>π</td><td>재배치 순열: 위치 p에 원래 채널 π(p)</td><td></td></tr>
+<tr><td>class</td><td>채널 자리 p mod 4 (L0에서 같은 뱅크를 쓰는 채널 묶음)</td><td></td></tr>
+<tr><td>g</td><td>마지막 출력 그룹의 출력 수(채움/비움 식)</td><td>16</td></tr>
+</table>
+<table class="full">
+<tr><th>용어</th><th>뜻</th></tr>
+<tr><td>탭 / 창 / 슬롯</td><td>창의 값 하나 / 출력 하나에 필요한 K개 값 / 창 안의 자리(뱅크를 정함)</td></tr>
+<tr><td>lockstep</td><td>네 뱅크가 함께 다음 일로 넘어가는 방식</td></tr>
+<tr><td>배치(layout)</td><td>어느 탭을 어느 슬롯에 두는가. L0 기존, L1/L1′ 재배치, L2 skew, L3 skew + 재배치</td></tr>
+<tr><td>접기(folding)</td><td>재배치를 앞뒤 층 가중치에 미리 반영해 실행 중 추가 작업을 없애는 것</td></tr>
+<tr><td>재양자화</td><td>INT32 합을 다음 층의 7비트 입력으로 줄이는 것(채널마다 스케일)</td></tr>
+<tr><td>QAT</td><td>양자화를 고려한 학습</td></tr>
+<tr><td>count</td><td>식 (1)을 층의 모든 창에 대해 더한 사이클 수(호스트 에뮬레이션)</td></tr>
+<tr><td>채움/비움, 예측 사이클</td><td>층마다 붙는 짧은 추가 시간 / count + 채움/비움</td></tr>
+<tr><td>CYCLES, IN_STALL</td><td>보드의 사이클 카운터, DMA 입력 대기 카운터</td></tr>
+<tr><td>합산(pooled) 절감</td><td>79장의 사이클을 다 더한 뒤 계산한 절감률</td></tr>
+<tr><td>paired bootstrap</td><td>영상을 다시 뽑아 구간을 구하되, 두 배치를 같은 영상 묶음에서 비교</td></tr>
+<tr><td>완벽 균형, share</td><td>m = ⌈n/4⌉인 이상적 경우 / 그 절감 중 얻은 비율</td></tr>
+<tr><td>사전등록</td><td>실험 전에 방법과 가설을 고정해 커밋하는 것</td></tr>
+<tr><td>maxout, space-to-depth</td><td>두 맵 중 큰 값을 출력 / 2×2 픽셀을 4채널로 바꾸는 것</td></tr>
+<tr><td>PSNR, σ</td><td>잡음 제거 품질(dB, 클수록 좋음) / 가우시안 잡음의 세기(0–255 척도)</td></tr>
+</table>
+
+<!-- ============================== 13. 출처 ============================== -->
+<h2>13. 숫자의 출처 (저장소 <span class="mono">bankperm/</span>)</h2>
+<table class="full">
+<tr><th>내용</th><th>파일</th></tr>
+<tr><td>조건 (2), 층별 이득 가능 여부</td><td><span class="mono">bounds.py</span> → <span class="mono">bounds.json</span></td></tr>
+<tr><td>L1 열 개 망, H1–H3</td><td><span class="mono">PROTOCOL.md</span>, <span class="mono">fit.py</span>, <span class="mono">evaluate.py</span> → <span class="mono">perms.json</span>, <span class="mono">results.json</span></td></tr>
+<tr><td>L2, L3 열 개 망, H4–H6, 711쌍, 69층</td><td><span class="mono">PROTOCOL_2.md</span>, <span class="mono">evaluate_2.py</span> → <span class="mono">results_2.json</span>, <span class="mono">perms_2.json</span></td></tr>
+<tr><td>Table II, 기준선, 구간</td><td><span class="mono">baselines.json</span>, <span class="mono">stats_2.json</span>, <span class="mono">skew_count.json</span></td></tr>
+<tr><td>보드 예측과 측정 (Table I, 176/180)</td><td><span class="mono">board_prediction_2.json</span>, <span class="mono">board_prediction_3.json</span>, <span class="mono">board_measured_2.json</span>, <span class="mono">board_measured_3.json</span></td></tr>
+<tr><td>호스트 시간 (7.5절)</td><td><span class="mono">host_time.json</span></td></tr>
+<tr><td>FIFO 상한 (8장)</td><td><span class="mono">decouple_bound.py</span> → <span class="mono">decouple_bound.json</span></td></tr>
+<tr><td>CIFAR-10 (7.4절)</td><td><span class="mono">cifar_layouts.py</span> → <span class="mono">cifar_layouts.json</span>, 망은 <span class="mono">cifar_net/</span></td></tr>
+<tr><td>그림</td><td><span class="mono">figures/fig_system.py</span>, <span class="mono">fig1_layouts.py</span>, <span class="mono">fig2_networks.py</span>, 이 문서의 그림은 <span class="mono">explainer/diagrams.py</span></td></tr>
+<tr><td>RTL</td><td><span class="mono">rtl/banked_window_mac.sv</span> (저장소 최상위)</td></tr>
+</table>
+<p class="small">각 문장이 어느 파일의 어느 값에서 왔는지는 <span class="mono">bankperm/README.md</span>의 표 "Measured, counted, predicted"에 한 줄씩 있다.</p>
+
+</body>
+</html>
