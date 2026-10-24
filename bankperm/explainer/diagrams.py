@@ -132,8 +132,6 @@ def ex_layouts():
         counts = [sum(1 for s in range(9) if rule(s, 1) == b) for b in range(4)]
         ax.text(N/2, -0.6, '채널 1(주황 테두리)의 9개 탭,\n뱅크 0/1/2/3에: ' + ' / '.join(str(c) for c in counts),
                 ha='center', va='top', fontsize=7.5, color=INK, linespacing=1.3)
-    fig.text(0.5, 0.02, '칸 안의 숫자는 그 탭의 뱅크. 자주 켜지는 채널이 있으면 L0에서는 그 채널의 탭이 한 뱅크에 몰리고, '
-             'L2에서는 3/2/2/2로 흩어진다.', ha='center', fontsize=7.5, color=MUTED, wrap=True)
     save(fig, 'ex_layouts.png')
 
 
@@ -152,7 +150,7 @@ def ex_cost():
     ax.axvline(36.5, color=MUTED, lw=0.6, ls=':')
     ax.annotate('m = 36.5에서 2m = 73\n(W = 4의 적재와 같아짐)', (36.5, 73), xytext=(4, 100), fontsize=7.5,
                 arrowprops=dict(arrowstyle='-', color=MUTED, lw=0.6))
-    for m, txt, dy in ((47.6, 'L0 평균 m 47.6', 12), (39.7, 'L3 평균 m 39.7', -26)):
+    for m, txt, dy in ((47.6, 'L0 평균 m 47.6', -16), (39.7, 'L3 평균 m 39.7', -26)):
         ax.plot([m], [2*m], 'o', ms=4, color=ORANGE, zorder=5)
         ax.annotate(txt, (m, 2*m), xytext=(m + 2, 2*m + dy), fontsize=7.5, color=ORANGE)
     ax.text(72, 150, 'm ≤ ⌈K/T⌉ = 72이므로\n계산은 최대 144사이클:\nW = 1, 2에서는 늘 적재가 더 김',
@@ -177,30 +175,30 @@ def ex_relabel():
     def column(x, y, items, title, sub):
         for i, k in enumerate(items):
             ax.add_patch(Rectangle((x, y - i*0.62), 1.3, 0.55, fc=cols[k], ec='none'))
-            ax.text(x + 0.65, y - i*0.62 + 0.27, f'채널 {names[k]}', ha='center', va='center', fontsize=7.5,
+            ax.text(x + 0.65, y - i*0.62 + 0.27, f'채널 {names[k]}', ha='center', va='center', fontsize=8.5,
                     color='white' if k in (0, 1) else INK)
-        ax.text(x + 0.65, y + 0.9, title, ha='center', fontsize=8.5, fontweight='bold')
-        ax.text(x + 0.65, y - 4*0.62 + 0.25, sub, ha='center', va='top', fontsize=7, color=MUTED, linespacing=1.3)
+        ax.text(x + 0.65, y + 0.9, title, ha='center', fontsize=9.5, fontweight='bold')
+        ax.text(x + 0.65, y - 4*0.62 + 0.25, sub, ha='center', va='top', fontsize=8.5, color=MUTED, linespacing=1.3)
 
     column(0.5, 3.4, [0, 1, 2, 3], '원래 생산자 층', '출력 채널 순서\na, b, c, d')
     column(4.2, 3.4, order, '재배치한 생산자 층', '가중치 행·바이어스·\n재양자화 스케일을\nπ 순서로')
-    column(7.9, 3.4, order, '숨은 맵', '같은 값, 채널 순서만\n바뀜: 위치 q마다\n다른 뱅크 그룹')
+    column(7.9, 3.4, order, '숨은 맵', '같은 값, 채널 순서만\n바뀜: 위치 p마다\n다른 뱅크 그룹')
     ax.add_patch(FancyArrowPatch((2.0, 2.5), (4.0, 2.5), arrowstyle='-|>', mutation_scale=10, lw=1, color=INK))
-    ax.text(3.0, 2.75, 'π로 접기', ha='center', fontsize=8)
+    ax.text(3.0, 2.75, 'π로 접기', ha='center', fontsize=9)
     ax.add_patch(FancyArrowPatch((5.7, 2.5), (7.7, 2.5), arrowstyle='-|>', mutation_scale=10, lw=1, color=INK))
     ax.add_patch(FancyArrowPatch((9.4, 2.5), (10.6, 2.5), arrowstyle='-|>', mutation_scale=10, lw=1, color=INK))
     ax.add_patch(FancyBboxPatch((10.7, 1.3), 2.3, 2.6, boxstyle='round,pad=0.05,rounding_size=0.15', fc=FILL, ec=EDGE,
                                 lw=0.6))
-    ax.text(11.85, 3.55, '소비자 층', ha='center', fontsize=8.5, fontweight='bold')
+    ax.text(11.85, 3.55, '소비자 층', ha='center', fontsize=9.5, fontweight='bold')
     ax.text(11.85, 3.15, '가중치 열도 같은\nπ로 바꿔 둠\n→ 같은 곱을 더함\n→ 정수 출력 동일', ha='center',
-            va='top', fontsize=7.5, linespacing=1.35)
+            va='top', fontsize=8.5, linespacing=1.35)
     save(fig, 'ex_relabel.png')
 
 
 def ex_decouple():
     """Lockstep against decoupled banks over three windows: transient and persistent imbalance."""
     cases = [('불균형이 창마다 다른 뱅크로 옮겨 다닐 때', [[6, 2, 2, 2], [2, 6, 2, 2], [2, 2, 6, 2]]),
-             ('불균형이 늘 같은 뱅크에 있을 때(L0의 실제 모습)', [[6, 2, 4, 3], [5, 3, 2, 4], [6, 2, 3, 2]])]
+             ('불균형이 늘 같은 뱅크에 있을 때(L0에서 층 전체에 남는 몫)', [[6, 2, 4, 3], [5, 3, 2, 4], [6, 2, 3, 2]])]
     fig, axes = plt.subplots(2, 2, figsize=(6.8, 3.9), gridspec_kw=dict(hspace=0.75, wspace=0.12))
     wcol = ['#cfe0f6', '#fde0c8', '#d3f0e4']
     for r, (title, wins) in enumerate(cases):
@@ -226,6 +224,7 @@ def ex_decouple():
             ax.plot([t_end, t_end], [-0.2, 4.05], color=INK, lw=0.9)
             ax.text(t_end, 4.15, f'{t_end}사이클', fontsize=7.5, va='bottom', ha='center')
             ax.set_xlim(0, 21); ax.set_ylim(-0.2, 4.7)
+            ax.set_xticks(range(0, 21, 5)); ax.set_xlabel('사이클', fontsize=7, labelpad=1)
             ax.set_yticks([b + 0.4 for b in range(4)]); ax.set_yticklabels([f'뱅크{b}' for b in range(4)], fontsize=7)
             ax.tick_params(axis='x', labelsize=6.5, length=2); ax.tick_params(axis='y', length=0)
             for sp in ('top', 'right', 'left'):

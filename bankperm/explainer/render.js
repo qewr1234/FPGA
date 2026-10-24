@@ -8,7 +8,7 @@ const { chromium } = require('playwright');
   const page = await browser.newPage();
   await page.goto('file://' + path.join(here, 'EXPLAINER_KO.html'), { waitUntil: 'networkidle' });
   await page.pdf({
-    path: path.join(here, 'EXPLAINER_KO.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true,
+    path: path.join(here, 'EXPLAINER_KO.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true, outline: true, tagged: true,
     displayHeaderFooter: true, headerTemplate: '<div></div>',
     footerTemplate: '<div style="width:100%;font-size:7.5pt;color:#777;text-align:center;font-family:Noto Sans CJK KR,sans-serif">' +
       '논문 해설 · <span class="pageNumber"></span> / <span class="totalPages"></span></div>',
